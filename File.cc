@@ -33,7 +33,7 @@ void Page :: EmptyItOut () {
 	// get rid of all of the records
 	while (1) {
 		Record temp;
-		if (!GetFirst (&temp))
+		if (!GetFirst (&temp, true))
 			break;
 	}	
 
