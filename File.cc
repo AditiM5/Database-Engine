@@ -76,7 +76,6 @@ int Page::GetRecord(Record *firstOne, off_t offset) {
     }
 
 
-
     return 1;
 }
 
@@ -186,6 +185,7 @@ void File::GetPage(Page *putItHere, off_t whichPage) {
     whichPage++;
 
     if (whichPage >= curLength) {
+        cerr << "curLength of the file is : " << curLength << endl;
         cerr << "whichPage " << whichPage << " length " << curLength << endl;
         cerr << "BAD: you tried to read past the end of the file\n";
         exit(1);

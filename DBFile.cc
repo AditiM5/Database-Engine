@@ -13,7 +13,7 @@
 using namespace std;
 
 DBFile::DBFile() {
-
+    currentPage = new (std::nothrow) Page();
 }
 
 int DBFile::Create(const char *f_path, fType f_type, void *startup) {
@@ -106,7 +106,7 @@ int DBFile::Close() {
 
 void DBFile::Add(Record *rec) {
     // Get last page in the file
-    file->GetPage(currentPage, file->GetLength());
+//    file->GetPage(currentPage, file->GetLength() - 1);
 
     if (!currentPage->Append(rec)) {
         // write the full page to file
