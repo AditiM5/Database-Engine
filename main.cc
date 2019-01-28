@@ -7,31 +7,30 @@
 using namespace std;
 
 extern "C" {
-	int yyparse(void);   // defined in y.tab.c
+int yyparse(void);   // defined in y.tab.c
 }
 
 extern struct AndList *final;
 
-int main () {
+int main_1() {
+    DBFile dbFile;
+    Schema lineitem ("catalog", "lineitem");
+    char fileName[] = "/home/suraj/Projects/p1/P1/data/test.tbl";
+    dbFile.Load(lineitem, fileName);
+    dbFile.Close();
 
-	DBFile dbFile;
-	Schema lineitem ("catalog", "lineitem");
-	char fileName[] = "/home/suraj/Projects/p1/P1/data/test.tbl";
-	dbFile.Load(lineitem, fileName);
-	dbFile.Close();
-
-	char tempFileName[] = "/home/suraj/Projects/p1/P1/temp";
-	File file;
-	file.Open(1, tempFileName);
-	cout << file.GetLength() << endl;
-	int count = 0;
+    char tempFileName[] = "/home/suraj/Projects/p1/P1/temp";
+    File file;
+    file.Open(1, tempFileName);
+    cout << file.GetLength() << endl;
+    int count = 0;
 
     for (int i = 0; i < file.GetLength() - 1; ++i) {
         Page temp;
         Record tempRec;
         file.GetPage(&temp, i);
 
-        while(temp.GetFirst(&tempRec)) {
+        while(temp.GetFirst(&tempRec, false)) {
             tempRec.Print(&lineitem);
             cout << endl;
         }
@@ -82,7 +81,22 @@ int main () {
 //                	temp.Print (&mySchema);
 //
 //        }
-
 }
+
+int main() {
+    DBFile dbFile;
+    Schema lineitem("catalog", "lineitem");
+    const char temp[] = "temp";
+    dbFile.Create(temp, heap, NULL);
+    FILE *tableFile = fopen ("/Users/aditimalladi/Documents/UF/Semester2/DBI-Project/data/lineitem.tbl", "r");
+    Record tempRec;
+    while (tempRec.SuckNextRecord (&lineitem, tableFile) == 1) {
+        dbFile.Add(&tempRec);
+    }
+    dbFile.Close();
+    return 0;
+}
+
+
 
 
