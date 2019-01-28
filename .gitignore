@@ -1,4 +1,3 @@
-data/
 *.o
 *.out
 y.tab.c
