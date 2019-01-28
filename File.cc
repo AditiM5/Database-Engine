@@ -31,7 +31,7 @@ void Page::EmptyItOut() {
     // get rid of all of the records
     while (1) {
         Record temp;
-        if (!GetFirst(&temp, true))
+        if (!GetFirst(&temp))
             break;
     }
 
@@ -41,7 +41,7 @@ void Page::EmptyItOut() {
 }
 
 
-int Page::GetFirst(Record *firstOne, bool removeRecord) {
+int Page::GetFirst(Record *firstOne) {
 
     // move to the first record
     myRecs->MoveToStart();
@@ -52,16 +52,10 @@ int Page::GetFirst(Record *firstOne, bool removeRecord) {
     }
 
     // and remove it
-    if (removeRecord) {
-        myRecs->Remove(firstOne);
-        numRecs--;
-
-        char *b = firstOne->GetBits();
-        curSizeInBytes -= ((int *) b)[0];
-    } else {
-        firstOne = myRecs->Current(0);
-    }
-
+    myRecs->Remove(firstOne);
+    numRecs--;
+    char *b = firstOne->GetBits();
+    curSizeInBytes -= ((int *) b)[0];
     return 1;
 }
 

@@ -67,6 +67,7 @@ void DBFile::Load(Schema &f_schema, const char *loadpath) {
 
     // ensure data is written to disk
     fsync(file->myFilDes);
+
     // move the pointer to the beginning??
 
 }
@@ -117,17 +118,16 @@ void DBFile::Add(Record *rec) {
         // append record to empty page
         currentPage->Append(rec);
     }
-    file->AddPage(currentPage, file->GetLength());
-
+//    file->AddPage(currentPage, file->GetLength());
 //    currentRecord = rec;
 }
 
 int DBFile::GetNext(Record *fetchme) {
-    if (!currentPage->GetFirst(fetchme, true)) {
+    if (!currentPage->GetFirst(fetchme)) {
         // assuming the page is empty here so we move to the next page
         if (file->GetLength() > currPageNum + 1) {
             file->GetPage(currentPage, ++currPageNum);
-            currentPage->GetFirst(fetchme, true);
+            currentPage->GetFirst(fetchme);
             return 1;
         } else {
             cout << "ERROR : No more pages left to navigate to !!!\n";
@@ -141,11 +141,11 @@ int DBFile::GetNext(Record *fetchme) {
 int DBFile::GetNext(Record *fetchme, CNF &cnf, Record &literal) {
     Record temp;
 
-    if (!currentPage->GetFirst(&temp, true)) {
+    if (!currentPage->GetFirst(&temp)) {
         // assuming the page is empty here so we move to the next page
         if (file->GetLength() > currPageNum + 1) {
             file->GetPage(currentPage, ++currPageNum);
-            currentPage->GetFirst(&temp, true);
+            currentPage->GetFirst(&temp);
         } else {
             cout << "ERROR : No more pages left to navigate to !!!\n";
             return 0;

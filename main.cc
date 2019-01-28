@@ -14,7 +14,7 @@ extern struct AndList *final;
 
 int main() {
     DBFile dbFile;
-    Schema lineitem ("catalog", "lineitem");
+    Schema lineitem("catalog", "lineitem");
     char fileName[] = "data/lineitem.tbl";
     dbFile.Load(lineitem, fileName);
     dbFile.Close();
@@ -25,17 +25,25 @@ int main() {
     cout << file.GetLength() << endl;
     int count = 0;
 
-    for (int i = 0; i < file.GetLength() - 1; ++i) {
-        Page temp;
-        Record tempRec;
-        file.GetPage(&temp, i);
+//    for (int i = 0; i < file.GetLength() - 1; ++i) {
+//        Page temp;
+//        Record tempRec;
+//        file.GetPage(&temp, i);
+//
+//        while (temp.GetFirst(&tempRec)) {
+//            tempRec.Print(&lineitem);
+//            count++;
+//            cout << endl;
+//        }
+//    }
+//    cout << count << endl;
 
-        while(temp.GetFirst(&tempRec, false)) {
-            tempRec.Print(&lineitem);
-            cout << endl;
-        }
+    Record tempRec;
+    while (dbFile.GetNext(&tempRec)) {
+        count++;
     }
-    cout << count << endl;
+    cout << "The count: " << count << endl;
+    return 0;
 
     return 0;
 
@@ -86,16 +94,21 @@ int main() {
 
 //int main() {
 //    DBFile dbFile;
+//    int count = 0;
 //    Schema lineitem("catalog", "lineitem");
 //    const char tempMain[] = "tempMain";
 //    dbFile.Create(tempMain, heap, NULL);
-//    FILE *tableFile = fopen ("data/lineitem.tbl", "r");
+//    FILE *tableFile = fopen("data/lineitem.tbl", "r");
 //    Record tempRec;
-//    while (tempRec.SuckNextRecord (&lineitem, tableFile) == 1) {
+//    while (tempRec.SuckNextRecord(&lineitem, tableFile) == 1) {
 //        dbFile.Add(&tempRec);
 //    }
 //    dbFile.Close();
 //    dbFile.Load(lineitem, tempMain);
+//    while (dbFile.GetNext(&tempRec)) {
+//        count++;
+//    }
+//    cout << "The count: " << count << endl;
 //    return 0;
 //}
 
