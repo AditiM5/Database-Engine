@@ -32,8 +32,7 @@ public:
 
 	// retrieves the first record from a page and returns it; returns
 	// a zero if there were no records on the page
-	// deletes the record if removeRecord flag is True
-	int GetFirst (Record *firstOne, bool removeRecord);
+	int GetFirst (Record *firstOne);
 
 	int GetRecord (Record *firstOne, off_t offset);
 
