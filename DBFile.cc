@@ -68,6 +68,8 @@ void DBFile::Load(Schema &f_schema, const char *loadpath) {
     // ensure data is written to disk
     fsync(file->myFilDes);
 
+    file->GetPage(currentPage, 0);
+
     // move the pointer to the beginning??
 
 }
@@ -123,6 +125,7 @@ void DBFile::Add(Record *rec) {
 }
 
 int DBFile::GetNext(Record *fetchme) {
+
     if (!currentPage->GetFirst(fetchme)) {
         // assuming the page is empty here so we move to the next page
         if (file->GetLength() > currPageNum + 1) {

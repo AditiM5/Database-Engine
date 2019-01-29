@@ -15,36 +15,17 @@ extern struct AndList *final;
 int main() {
     DBFile dbFile;
     Schema lineitem("catalog", "lineitem");
-    char fileName[] = "data/lineitem.tbl";
+    char fileName[] = "data/test2.tbl";
     dbFile.Load(lineitem, fileName);
     dbFile.Close();
 
-    char tempFileName[] = "temp";
-    File file;
-    file.Open(1, tempFileName);
-    cout << file.GetLength() << endl;
-    int count = 0;
-
-//    for (int i = 0; i < file.GetLength() - 1; ++i) {
-//        Page temp;
-//        Record tempRec;
-//        file.GetPage(&temp, i);
-//
-//        while (temp.GetFirst(&tempRec)) {
-//            tempRec.Print(&lineitem);
-//            count++;
-//            cout << endl;
-//        }
-//    }
-//    cout << count << endl;
+    int count = 1;
 
     Record tempRec;
     while (dbFile.GetNext(&tempRec)) {
-        count++;
+        cout << "Inner count" << count++ << endl;
     }
     cout << "The count: " << count << endl;
-    return 0;
-
     return 0;
 
 //	// try to parse the CNF
