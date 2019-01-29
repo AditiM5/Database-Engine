@@ -19,7 +19,7 @@ main: Record.o Comparison.o ComparisonEngine.o Schema.o File.o DBFile.o y.tab.o 
 ifeq ($(UNAME_S),Darwin)
 	$(CC) -o main Record.o Comparison.o ComparisonEngine.o Schema.o File.o DBFile.o y.tab.o lex.yy.o main.o -ll
 else
-	$(CC) -o main Record.o Comparison.o ComparisonEngine.o Schema.o File.o y.tab.o lex.yy.o main.o -lfl
+	$(CC) -o main Record.o Comparison.o ComparisonEngine.o Schema.o File.o DBFile.o y.tab.o lex.yy.o main.o -lfl
 endif
 	
 test.o: test.cc
