@@ -12,11 +12,17 @@ class Record;
 using namespace std;
 
 class Page {
+
+	friend class DBFile;
+
 private:
 	TwoWayList <Record> *myRecs;
 	
 	int curSizeInBytes;
 	int numRecs;
+
+    // flag used to keep a check on whether the page has been written to disk or not
+    bool pageToDisk;
 
 public:
 	// constructor

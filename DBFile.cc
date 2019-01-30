@@ -13,7 +13,7 @@
 using namespace std;
 
 DBFile::DBFile() {
-    currentPage = new (std::nothrow) Page();
+    currentPage = new(std::nothrow) Page();
 }
 
 int DBFile::Create(const char *f_path, fType f_type, void *startup) {
@@ -69,6 +69,8 @@ void DBFile::Load(Schema &f_schema, const char *loadpath) {
     fsync(file->myFilDes);
 
     file->GetPage(currentPage, 0);
+    currPageNum = 0;
+    currentPage->pageToDisk = true;
 
     // move the pointer to the beginning??
 
@@ -89,6 +91,10 @@ int DBFile::Open(const char *f_path) {
 }
 
 void DBFile::MoveFirst() {
+    if (!currentPage->pageToDisk) {
+        file->AddPage(currentPage, file->GetLength());
+        currentPage->pageToDisk = true;
+    }
     file->GetPage(currentPage, 0);
     currPageNum = 0;
 
@@ -109,7 +115,7 @@ int DBFile::Close() {
 
 void DBFile::Add(Record *rec) {
     // Get last page in the file
-//    file->GetPage(currentPage, file->GetLength() - 1);
+    file->GetPage(currentPage, file->GetLength() - 2);
 
     if (!currentPage->Append(rec)) {
         // write the full page to file
@@ -119,6 +125,9 @@ void DBFile::Add(Record *rec) {
         currentPage->EmptyItOut();
         // append record to empty page
         currentPage->Append(rec);
+        currentPage->pageToDisk = false;
+    }else{
+        currentPage->pageToDisk = false;
     }
 //    file->AddPage(currentPage, file->GetLength());
 //    currentRecord = rec;
@@ -126,9 +135,11 @@ void DBFile::Add(Record *rec) {
 
 int DBFile::GetNext(Record *fetchme) {
 
+    cout << "The currPageNum right now: " << currPageNum << endl;
+    cout << "The file Length" << file->GetLength() << endl;
     if (!currentPage->GetFirst(fetchme)) {
         // assuming the page is empty here so we move to the next page
-        if (file->GetLength() > currPageNum + 1) {
+        if (file->GetLength() > currPageNum + 2) {
             file->GetPage(currentPage, ++currPageNum);
             currentPage->GetFirst(fetchme);
             return 1;

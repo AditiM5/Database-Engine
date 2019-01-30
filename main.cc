@@ -15,15 +15,29 @@ extern struct AndList *final;
 int main() {
     DBFile dbFile;
     Schema lineitem("catalog", "lineitem");
-    char fileName[] = "data/test2.tbl";
-    dbFile.Load(lineitem, fileName);
-    dbFile.Close();
+    char fileName[] = "data/test.tbl";
+//    dbFile.Load(lineitem, fileName);
+//    dbFile.Close();
 
-    int count = 1;
+    char tempMain[] = "tempMain";
+    dbFile.Create(tempMain, heap, NULL);
+    FILE *tableFile = fopen(fileName, "r");
 
+    int count = 0;
     Record tempRec;
+
+    while (tempRec.SuckNextRecord(&lineitem, tableFile) == 1) {
+        dbFile.Add(&tempRec);
+        count++;
+    }
+    dbFile.MoveFirst();
+    cout<< "Count for ADD: "<< count << endl;
+
+    count = 0;
     while (dbFile.GetNext(&tempRec)) {
+        tempRec.Print(&lineitem);
         cout << "Inner count" << count++ << endl;
+        count++;
     }
     cout << "The count: " << count << endl;
     return 0;

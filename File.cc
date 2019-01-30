@@ -19,6 +19,8 @@ Page::Page() {
         cout << "ERROR : Not enough memory. EXIT !!!\n";
         exit(1);
     }
+
+    pageToDisk = false;
 }
 
 Page::~Page() {
@@ -69,7 +71,6 @@ int Page::GetRecord(Record *firstOne, off_t offset) {
         return 0;
     }
 
-
     return 1;
 }
 
@@ -92,7 +93,6 @@ int Page::Append(Record *addMe) {
 
     return 1;
 }
-
 
 void Page::ToBinary(char *bits) {
 
