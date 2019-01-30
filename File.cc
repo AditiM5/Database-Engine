@@ -202,6 +202,8 @@ void File::GetPage(Page *putItHere, off_t whichPage) {
 
 void File::AddPage(Page *addMe, off_t whichPage) {
 
+    cout << "The value of whichpage before increment" << whichPage << endl;
+
     // this is because the first page has no data
     whichPage++;
 
@@ -261,11 +263,9 @@ void File::Open(int fileLen, const char *fName) {
 
     // read in the buffer if needed
     if (fileLen != 0) {
-
         // read in the first few bits, which is the page size
         lseek(myFilDes, 0, SEEK_SET);
         read(myFilDes, &curLength, sizeof(off_t));
-
     } else {
         curLength = 0;
     }

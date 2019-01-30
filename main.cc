@@ -27,19 +27,22 @@ int main() {
     Record tempRec;
 
     while (tempRec.SuckNextRecord(&lineitem, tableFile) == 1) {
+//        tempRec.Print(&lineitem);
         dbFile.Add(&tempRec);
         count++;
     }
-    dbFile.MoveFirst();
-    cout<< "Count for ADD: "<< count << endl;
 
+    dbFile.MoveFirst();
+    cout << "Count for ADD: " << count << endl;
     count = 0;
-    while (dbFile.GetNext(&tempRec)) {
-        tempRec.Print(&lineitem);
-        cout << "Inner count" << count++ << endl;
-        count++;
-    }
-    cout << "The count: " << count << endl;
+    dbFile.Add(&tempRec);
+
+//
+//    while (dbFile.GetNext(&tempRec)) {
+//        tempRec.Print(&lineitem);
+//        cout << "Inner count" << count++ << endl;
+//    }
+//    cout << "The count: " << count << endl;
     return 0;
 
 //	// try to parse the CNF

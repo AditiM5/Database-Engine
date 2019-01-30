@@ -21,6 +21,7 @@ int DBFile::Create(const char *f_path, fType f_type, void *startup) {
         case heap:
             file = new File();
             file->Open(0, f_path);
+            currPageNum = 0;
             return 1;
             break;
 
@@ -92,11 +93,22 @@ int DBFile::Open(const char *f_path) {
 
 void DBFile::MoveFirst() {
     if (!currentPage->pageToDisk) {
-        file->AddPage(currentPage, file->GetLength());
+        if (!file->GetLength()) {
+            cout<< "The first add" << endl;
+            file->AddPage(currentPage, file->GetLength());
+        } else {
+            cout << "Before writing the page the second time FIleLength: " << file->GetLength() << endl;
+            file->AddPage(currentPage, file->GetLength() - 1);
+        }
+        cout << "file->GetLength(): " << file->GetLength() << endl;
+        fsync(file->myFilDes);
+        cout << "Writing page to disk" << endl;
         currentPage->pageToDisk = true;
     }
+//    cout << "Reaching here!" << endl;
     file->GetPage(currentPage, 0);
     currPageNum = 0;
+//    cout << "file->GetLength(): " << file->GetLength();
 
 //    if (!currentPage->GetFirst(currentRecord, false)) {
 //        cout << "ERROR : Page has no records. EXIT !!!\n";
@@ -115,9 +127,13 @@ int DBFile::Close() {
 
 void DBFile::Add(Record *rec) {
     // Get last page in the file
-    file->GetPage(currentPage, file->GetLength() - 2);
+    cout << "file->GetLength(): " << file->GetLength();
+    if (file->GetLength() != 0) {
+        file->GetPage(currentPage, file->GetLength() - 2);
+    }
 
     if (!currentPage->Append(rec)) {
+        cout << "Page Full" << endl;
         // write the full page to file
         file->AddPage(currentPage, file->GetLength());
         currPageNum++;
@@ -126,7 +142,8 @@ void DBFile::Add(Record *rec) {
         // append record to empty page
         currentPage->Append(rec);
         currentPage->pageToDisk = false;
-    }else{
+    } else {
+        cout << "It's getting appended to current page" << endl;
         currentPage->pageToDisk = false;
     }
 //    file->AddPage(currentPage, file->GetLength());
