@@ -140,7 +140,13 @@ void DBFile::Add(Record *rec) {
 //        cout << "Page Full. Writing page!!!!" << endl;
 //        cout<< "Length of the file BLAHHH : " << file->GetLength() << endl;
         // write the full page to file
-        file->AddPage(currentPage, file->GetLength());
+        if (!file->GetLength()) {
+            cout << "The first add" << endl;
+            file->AddPage(currentPage, file->GetLength());
+        } else {
+            cout << "Before writing the page the second time FIleLength: " << file->GetLength() << endl;
+            file->AddPage(currentPage, file->GetLength() - 1);
+        }
         currPageNum++;
         // empty the page out
 //        currentPage->EmptyItOut();
@@ -163,7 +169,14 @@ int DBFile::GetNext(Record *fetchme) {
 //    cout << "The currPageN/um right now: " << currPageNum << endl;
 //    cout << "The file Length" << file->GetLength() << endl;
     if (!currentPage->pageToDisk) {
-        file->AddPage(currentPage, file->GetLength() - 1);
+        cout << "Saving page in GetNext() " << endl;
+        if (!file->GetLength()) {
+            cout << "The first add" << endl;
+            file->AddPage(currentPage, file->GetLength());
+        } else {
+            cout << "Before writing the page the second time FIleLength: " << file->GetLength() << endl;
+            file->AddPage(currentPage, file->GetLength() - 1);
+        }
         fsync(file->myFilDes);
         currentPage->pageToDisk = true;
     }

@@ -15,7 +15,7 @@ extern struct AndList *final;
 int main() {
     DBFile dbFile;
     Schema lineitem("catalog", "lineitem");
-    char fileName[] = "data/test2.tbl";
+    char fileName[] = "data/test.tbl";
 //    dbFile.Load(lineitem, fileName);
 //    dbFile.Close();
 
@@ -30,18 +30,21 @@ int main() {
 //        tempRec.Print(&lineitem);
         dbFile.Add(&tempRec);
         count++;
+//        cout << "Writ?ng rec: " << count << endl;
     }
-
 
     dbFile.MoveFirst();
 
-    fclose(tableFile);
-    tableFile = fopen(fileName, "r");
-    while (tempRec.SuckNextRecord(&lineitem, tableFile) == 1) {
-//        tempRec.Print(&lineitem);
-        dbFile.Add(&tempRec);
-        count++;
-    }
+    cout << "File pages: " << dbFile.file->GetLength() << endl;
+
+//
+//    fclose(tableFile);
+//    tableFile = fopen(fileName, "r");
+//    while (tempRec.SuckNextRecord(&lineitem, tableFile) == 1) {
+////        tempRec.Print(&lineitem);
+//        dbFile.Add(&tempRec);
+//        count++;
+//    }
 
     cout << "Count for ADD: " << count << endl;
 
