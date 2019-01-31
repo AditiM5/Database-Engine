@@ -1,4 +1,4 @@
-CC = g++ -O2 -Wno-deprecated
+CC = g++ -O2 -Wno-deprecated -Wno-unused-result
 MAKE = make
 UNAME_S := $(shell uname -s)
 
@@ -53,7 +53,7 @@ ifeq ($(UNAME_S), Darwin)
 else
 	sed $(tag) y.tab.c -e "s/  __attribute__ ((__unused__))$$/# ifndef __cplusplus\n  __attribute__ ((__unused__));\n# endif/"
 endif
-	g++ -c y.tab.c
+	g++ -c -Wno-write-strings y.tab.c
 
 lex.yy.o: Lexer.l
 	lex  Lexer.l
@@ -66,6 +66,7 @@ clean:
 	rm -f lex.yy.c
 	rm -f y.tab.h
 
-rebuild:
+rebuild_and_run:
 	$(MAKE) clean
 	$(MAKE) main
+	./main
