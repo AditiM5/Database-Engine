@@ -127,24 +127,28 @@ int DBFile::Close() {
 
 void DBFile::Add(Record *rec) {
     // Get last page in the file
-    cout << "file->GetLength(): " << file->GetLength();
+//    cout << "file->GetLength(): " << file->GetLength() << endl;
     if (file->GetLength() != 0) {
+        cout << "Called???" << endl;
         file->GetPage(currentPage, file->GetLength() - 2);
     }
 
     if (!currentPage->Append(rec)) {
-        cout << "Page Full" << endl;
+        cout << "Page Full. Writing page!!!!" << endl;
+        cout<< "Length of the file BLAHHH : " << file->GetLength() << endl;
         // write the full page to file
         file->AddPage(currentPage, file->GetLength());
         currPageNum++;
         // empty the page out
-        currentPage->EmptyItOut();
+//        currentPage->EmptyItOut();
+        delete currentPage;
+        currentPage = new Page();
         // append record to empty page
         currentPage->Append(rec);
         currentPage->pageToDisk = false;
     } else {
         cout << "It's getting appended to current page" << endl;
-        currentPage->pageToDisk = false;
+//        currentPage->pageToDisk = false;
     }
 //    file->AddPage(currentPage, file->GetLength());
 //    currentRecord = rec;

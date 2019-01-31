@@ -80,6 +80,7 @@ int Page::Append(Record *addMe) {
 
     // first see if we can fit the record
     if (curSizeInBytes + ((int *) b)[0] > PAGE_SIZE) {
+        cout << "page overflow" << endl;
         return 0;
     }
 
@@ -178,6 +179,8 @@ void File::GetPage(Page *putItHere, off_t whichPage) {
     // this is because the first page has no data
     whichPage++;
 
+//    cout << "Getting page(after inc): " << whichPage << endl;
+
     if (whichPage >= curLength) {
         cerr << "curLength of the file is : " << curLength << endl;
         cerr << "whichPage " << whichPage << " length " << curLength << endl;
@@ -202,7 +205,7 @@ void File::GetPage(Page *putItHere, off_t whichPage) {
 
 void File::AddPage(Page *addMe, off_t whichPage) {
 
-    cout << "The value of whichpage before increment" << whichPage << endl;
+//    cout << "The value of whichpage before increment" << whichPage << endl;
 
     // this is because the first page has no data
     whichPage++;

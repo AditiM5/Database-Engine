@@ -32,17 +32,15 @@ int main() {
         count++;
     }
 
-    dbFile.MoveFirst();
     cout << "Count for ADD: " << count << endl;
-    count = 0;
-    dbFile.Add(&tempRec);
 
-//
+    count = 0;
 //    while (dbFile.GetNext(&tempRec)) {
-//        tempRec.Print(&lineitem);
-//        cout << "Inner count" << count++ << endl;
+////        tempRec.Print(&lineitem);
+//        count++;
+//
 //    }
-//    cout << "The count: " << count << endl;
+//    cout << "GetNext count: " << count << endl;
     return 0;
 
 //	// try to parse the CNF
