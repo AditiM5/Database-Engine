@@ -15,7 +15,7 @@ extern struct AndList *final;
 int main() {
     DBFile dbFile;
     Schema lineitem("catalog", "lineitem");
-    char fileName[] = "data/test.tbl";
+    char fileName[] = "data/test2.tbl";
 //    dbFile.Load(lineitem, fileName);
 //    dbFile.Close();
 
@@ -32,15 +32,26 @@ int main() {
         count++;
     }
 
+
+    dbFile.MoveFirst();
+
+    fclose(tableFile);
+    tableFile = fopen(fileName, "r");
+    while (tempRec.SuckNextRecord(&lineitem, tableFile) == 1) {
+//        tempRec.Print(&lineitem);
+        dbFile.Add(&tempRec);
+        count++;
+    }
+
     cout << "Count for ADD: " << count << endl;
 
     count = 0;
-//    while (dbFile.GetNext(&tempRec)) {
-////        tempRec.Print(&lineitem);
-//        count++;
-//
-//    }
-//    cout << "GetNext count: " << count << endl;
+    while (dbFile.GetNext(&tempRec)) {
+        tempRec.Print(&lineitem);
+        count++;
+
+    }
+    cout << "GetNext count: " << count << endl;
     return 0;
 
 //	// try to parse the CNF

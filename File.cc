@@ -80,7 +80,8 @@ int Page::Append(Record *addMe) {
 
     // first see if we can fit the record
     if (curSizeInBytes + ((int *) b)[0] > PAGE_SIZE) {
-        cout << "page overflow" << endl;
+        cout << "page overflow: "  << endl;
+        cout << "Page Size in Append: " << curSizeInBytes << " Rec Size: " << ((int *) b)[0] << endl;
         return 0;
     }
 

@@ -94,15 +94,15 @@ int DBFile::Open(const char *f_path) {
 void DBFile::MoveFirst() {
     if (!currentPage->pageToDisk) {
         if (!file->GetLength()) {
-            cout<< "The first add" << endl;
+            cout << "The first add" << endl;
             file->AddPage(currentPage, file->GetLength());
         } else {
             cout << "Before writing the page the second time FIleLength: " << file->GetLength() << endl;
             file->AddPage(currentPage, file->GetLength() - 1);
         }
+        cout << "Writing page to disk" << endl;
         cout << "file->GetLength(): " << file->GetLength() << endl;
         fsync(file->myFilDes);
-        cout << "Writing page to disk" << endl;
         currentPage->pageToDisk = true;
     }
 //    cout << "Reaching here!" << endl;
@@ -129,35 +129,46 @@ void DBFile::Add(Record *rec) {
     // Get last page in the file
 //    cout << "file->GetLength(): " << file->GetLength() << endl;
     if (file->GetLength() != 0) {
-        cout << "Called???" << endl;
-        file->GetPage(currentPage, file->GetLength() - 2);
+        if (!currPageNum + 1 == file->GetLength()) {
+            cout << "Getting last page. File Len: " << file->GetLength() << endl;
+            file->GetPage(currentPage, file->GetLength() - 2);
+            currPageNum = file->GetLength() - 1;
+        }
     }
 
     if (!currentPage->Append(rec)) {
-        cout << "Page Full. Writing page!!!!" << endl;
-        cout<< "Length of the file BLAHHH : " << file->GetLength() << endl;
+//        cout << "Page Full. Writing page!!!!" << endl;
+//        cout<< "Length of the file BLAHHH : " << file->GetLength() << endl;
         // write the full page to file
         file->AddPage(currentPage, file->GetLength());
         currPageNum++;
         // empty the page out
 //        currentPage->EmptyItOut();
         delete currentPage;
-        currentPage = new Page();
+        currentPage = new(std::nothrow) Page();
+//        cout << "Page Size: " << currentPage->curSizeInBytes << endl;
         // append record to empty page
         currentPage->Append(rec);
-        currentPage->pageToDisk = false;
     } else {
-        cout << "It's getting appended to current page" << endl;
-//        currentPage->pageToDisk = false;
+//        cout << "It's getting appended to current page" << endl;
     }
+    // set to false as we're always appending a record to a page
+    currentPage->pageToDisk = false;
 //    file->AddPage(currentPage, file->GetLength());
 //    currentRecord = rec;
 }
 
 int DBFile::GetNext(Record *fetchme) {
 
-    cout << "The currPageNum right now: " << currPageNum << endl;
-    cout << "The file Length" << file->GetLength() << endl;
+//    cout << "The currPageN/um right now: " << currPageNum << endl;
+//    cout << "The file Length" << file->GetLength() << endl;
+    if (!currentPage->pageToDisk) {
+        file->AddPage(currentPage, file->GetLength() - 1);
+        fsync(file->myFilDes);
+        currentPage->pageToDisk = true;
+    }
+//    file->GetPage(currentPage, 0);
+//    currPageNum = 0;
     if (!currentPage->GetFirst(fetchme)) {
         // assuming the page is empty here so we move to the next page
         if (file->GetLength() > currPageNum + 2) {
