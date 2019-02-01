@@ -40,7 +40,7 @@ public:
 	// a zero if there were no records on the page
 	int GetFirst (Record *firstOne);
 
-	int GetRecord (Record *firstOne, off_t offset);
+	int GetRecord (Record *firstOne, int offset);
 
 	// this appends the record to the end of a page.  The return value
 	// is a one on success and a zero if there is no more space
