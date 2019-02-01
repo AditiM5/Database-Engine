@@ -15,29 +15,38 @@ extern struct AndList *final;
 int main() {
     DBFile dbFile;
     Schema lineitem("catalog", "lineitem");
-    char fileName[] = "data/test2.tbl";
-//    dbFile.Load(lineitem, fileName);
+    char fileName[] = "data/test.tbl";
+    dbFile.Load(lineitem, fileName);
 //    dbFile.Close();
 
     char tempMain[] = "tempMain";
-    dbFile.Create(tempMain, heap, NULL);
+//    dbFile.Create(tempMain, heap, NULL);
     FILE *tableFile = fopen(fileName, "r");
 
     int count = 0;
     Record tempRec;
-    Page *page;
 
-    while (tempRec.SuckNextRecord(&lineitem, tableFile) == 1) {
-//        tempRec.Print(&lineitem);
-        dbFile.Add(&tempRec);
-        count++;
-//        cout << "Writ?ng rec: " << count << endl;
-    }
-
-    page = dbFile.currentPage;
+//    while (tempRec.SuckNextRecord(&lineitem, tableFile) == 1) {
+////        tempRec.Print(&lineitem);
+//        dbFile.Add(&tempRec);
+//        count++;
+////        cout << "Writ?ng rec: " << count << endl;
+//    }
+//    cout << "Recs written: " << count << endl;
 
 //    dbFile.MoveFirst();
 
+    count = 0;
+    while (dbFile.GetNext(&tempRec)) {
+        tempRec.Print(&lineitem);
+//        cout << ++count << endl;
+        count++;
+    }
+
+//    cout << "GetNext count: " << count << endl;
+
+//
+//    count = 0;
 //
 //    fclose(tableFile);
 //    tableFile = fopen(fileName, "r");
@@ -46,21 +55,20 @@ int main() {
 //        dbFile.Add(&tempRec);
 //        count++;
 //    }
-
-//    cout << "Count for ADD: " << count << endl;
-
-    count = 0;
-//    while (dbFile.GetNext(&tempRec)) {
-//        tempRec.Print(&lineitem);
-//        count++;
 //
+//    dbFile.MoveFirst();
+//
+//    cout << "Count for ADD: " << count << endl;
+//
+//    count = 0;
+//    while (dbFile.GetNext(&tempRec)) {
+////        tempRec.Print(&lineitem);
+//        count++;
 //    }
+//
+//    cout << "GetNext count: " << count << endl;
 
-    for (int i = 0; i< 1 ; i++) {
-        page->GetRecord(&tempRec, 4);
-        tempRec.Print(&lineitem);
-    }
-    cout << "GetNext count: " << count << endl;
+
     return 0;
 }
 

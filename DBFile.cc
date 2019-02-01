@@ -40,41 +40,40 @@ void DBFile::Load(Schema &f_schema, const char *loadpath) {
     }
 
     Record temp;
-    Page page;
+    Page *page = new Page();
 
     // Using a temp file to load data
     file = new File();
     file->Open(0, "temp");
-
-    int counter = 1;
-
+    
     while (temp.SuckNextRecord(&f_schema, tableFile) == 1) {
-
-        cout << "Appending record " << counter++ << endl;
         // check for page overflow
-        if (!page.Append(&temp)) {
+        if (!currentPage->Append(&temp)) {
             // write the full page to file
-            file->AddPage(&page, file->GetLength());
+            if (!file->GetLength()) {
+                file->AddPage(currentPage, file->GetLength());
+            } else {
+                file->AddPage(currentPage, file->GetLength() - 1);
+            }
             // empty the page out
-            page.EmptyItOut();
+            currentPage->EmptyItOut();
             // append record to empty page
-            page.Append(&temp);
-            cout << "Appending record " << counter++ << endl;
+            currentPage->Append(&temp);
         }
     }
-
-    // add last page to the file!!!
-    file->AddPage(&page, file->GetLength());
+    
+    if(!currentPage->pageToDisk) {
+        if (!file->GetLength()) {
+            file->AddPage(currentPage, file->GetLength());
+        } else {
+            file->AddPage(currentPage, file->GetLength() - 1);
+        }
+        currentPage->pageToDisk = true;
+    }
 
     // ensure data is written to disk
     fsync(file->myFilDes);
-
-    file->GetPage(currentPage, 0);
-    currPageNum = 0;
-    currentPage->pageToDisk = true;
-
-    // move the pointer to the beginning??
-
+    MoveFirst();
 }
 
 int DBFile::Open(const char *f_path) {
@@ -83,41 +82,36 @@ int DBFile::Open(const char *f_path) {
     file->GetPage(currentPage, 0);
     currPageNum = 0;
 
-//    if (!currentPage->GetFirst(currentRecord, false)) {
-//        cout << "ERROR : Page has no records. EXIT !!!\n";
-//        exit(1);
-//    }
-
     return 1;
 }
 
 void DBFile::MoveFirst() {
     if (!currentPage->pageToDisk) {
         if (!file->GetLength()) {
-            cout << "The first add" << endl;
             file->AddPage(currentPage, file->GetLength());
         } else {
-            cout << "Before writing the page the second time FIleLength: " << file->GetLength() << endl;
             file->AddPage(currentPage, file->GetLength() - 1);
         }
-        cout << "Writing page to disk" << endl;
-        cout << "file->GetLength(): " << file->GetLength() << endl;
         fsync(file->myFilDes);
         currentPage->pageToDisk = true;
     }
-//    cout << "Reaching here!" << endl;
+
     file->GetPage(currentPage, 0);
     currPageNum = 0;
-//    cout << "file->GetLength(): " << file->GetLength();
-
-//    if (!currentPage->GetFirst(currentRecord, false)) {
-//        cout << "ERROR : Page has no records. EXIT !!!\n";
-//        exit(1);
-//    }
 }
 
 int DBFile::Close() {
     // close() returns 0 on success!
+    if (!currentPage->pageToDisk) {
+        if (!file->GetLength()) {
+            file->AddPage(currentPage, file->GetLength());
+        } else {
+            file->AddPage(currentPage, file->GetLength() - 1);
+        }
+        fsync(file->myFilDes);
+        currentPage->pageToDisk = true;
+    }
+    
     if (!file->Close()) {
         return 1;
     } else {
@@ -127,61 +121,43 @@ int DBFile::Close() {
 
 void DBFile::Add(Record *rec) {
     // Get last page in the file
-//    cout << "file->GetLength(): " << file->GetLength() << endl;
     if (file->GetLength() != 0) {
         if (!currPageNum + 1 == file->GetLength()) {
-            cout << "Getting last page. File Len: " << file->GetLength() << endl;
             file->GetPage(currentPage, file->GetLength() - 2);
             currPageNum = file->GetLength() - 1;
         }
     }
 
     if (!currentPage->Append(rec)) {
-//        cout << "Page Full. Writing page!!!!" << endl;
-//        cout<< "Length of the file BLAHHH : " << file->GetLength() << endl;
         // write the full page to file
         if (!file->GetLength()) {
-            cout << "The first add" << endl;
             file->AddPage(currentPage, file->GetLength());
         } else {
-            cout << "Before writing the page the second time FIleLength: " << file->GetLength() << endl;
             file->AddPage(currentPage, file->GetLength() - 1);
         }
         currPageNum++;
         // empty the page out
-//        currentPage->EmptyItOut();
         delete currentPage;
         currentPage = new(std::nothrow) Page();
-//        cout << "Page Size: " << currentPage->curSizeInBytes << endl;
         // append record to empty page
         currentPage->Append(rec);
-    } else {
-//        cout << "It's getting appended to current page" << endl;
     }
     // set to false as we're always appending a record to a page
     currentPage->pageToDisk = false;
-//    file->AddPage(currentPage, file->GetLength());
-//    currentRecord = rec;
 }
 
 int DBFile::GetNext(Record *fetchme) {
 
-//    cout << "The currPageN/um right now: " << currPageNum << endl;
-//    cout << "The file Length" << file->GetLength() << endl;
     if (!currentPage->pageToDisk) {
-        cout << "Saving page in GetNext() " << endl;
         if (!file->GetLength()) {
-            cout << "The first add" << endl;
             file->AddPage(currentPage, file->GetLength());
         } else {
-            cout << "Before writing the page the second time FIleLength: " << file->GetLength() << endl;
             file->AddPage(currentPage, file->GetLength() - 1);
         }
         fsync(file->myFilDes);
         currentPage->pageToDisk = true;
     }
-//    file->GetPage(currentPage, 0);
-//    currPageNum = 0;
+
     if (!currentPage->GetFirst(fetchme)) {
         // assuming the page is empty here so we move to the next page
         if (file->GetLength() > currPageNum + 2) {
@@ -189,7 +165,6 @@ int DBFile::GetNext(Record *fetchme) {
             currentPage->GetFirst(fetchme);
             return 1;
         } else {
-            cout << "ERROR : No more pages left to navigate to !!!\n";
             return 0;
         }
     }
