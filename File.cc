@@ -61,15 +61,17 @@ int Page::GetFirst(Record *firstOne) {
     return 1;
 }
 
-int Page::GetRecord(Record *firstOne, off_t offset) {
+int Page::GetRecord(Record *firstOne, int offset) {
 
     // move to the first record
-    myRecs->MoveToStart();
+//    firstOne = myRecs->Current(0);
 
     // make sure there is data
     if (!myRecs->RightLength()) {
         return 0;
     }
+
+    firstOne = myRecs->Current(offset);
 
     return 1;
 }

@@ -117,7 +117,7 @@ void
 TwoWayList<Type>::MoveToFinish() {
 
     // check for empty list
-    if(list->last->previous = list->first) {
+    if(list->last->previous == list->first) {
         list->current = list->last;
     } else {
         list->current = list->last->previous;
@@ -279,7 +279,7 @@ TwoWayList<Type>::Current(int offset) {
     for (int i = 0; i < offset; i++) {
         temp = temp->next;
         if(temp == list->last) {
-            temp = list->first->next;
+            return NULL;
         }
     }
     return temp->data;

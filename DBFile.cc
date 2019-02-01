@@ -182,7 +182,7 @@ int DBFile::GetNext(Record *fetchme) {
     }
 //    file->GetPage(currentPage, 0);
 //    currPageNum = 0;
-    if (!currentPage->GetFirst(fetchme)) {
+    if (!currentPage->GetRecord(fetchme, 0)) {
         // assuming the page is empty here so we move to the next page
         if (file->GetLength() > currPageNum + 2) {
             file->GetPage(currentPage, ++currPageNum);
