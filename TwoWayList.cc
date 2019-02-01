@@ -246,6 +246,13 @@ TwoWayList<Type>::Insert(Type *Item) {
     Node *left = list->current;
     Node *right = list->current->next;
 
+    // check for empty list
+    if (list->first->next == list->last) {
+        list->rightSize = 1;
+    } else {
+        list->leftSize += 1;
+    }
+
     left->next = temp;
     temp->previous = left;
     temp->next = right;
@@ -259,23 +266,21 @@ TwoWayList<Type>::Insert(Type *Item) {
 
     temp->data->Consume(Item);
 
-    if(list->current->next == list->last)
-        list->rightSize = 1;
-
-    list->leftSize += 1;
-
     list->current = temp;
 
 
 }
 
-// get a reference to the currentitemin the list
+// get a reference to the current item in the list
 template<class Type>
 Type *
 TwoWayList<Type>::Current(int offset) {
     Node *temp = list->current;
     for (int i = 0; i < offset; i++) {
         temp = temp->next;
+        if(temp == list->last) {
+            temp = list->first->next;
+        }
     }
     return temp->data;
 }
@@ -308,6 +313,12 @@ TwoWayList<Type>::Remove(Type *Item) {
 
     prev->next = next;
     next->previous = prev;
+}
+
+template <class Type>
+bool
+TwoWayList<Type>::IsListEmpty() {
+    return list->first->next == list->last;
 }
 
 #endif

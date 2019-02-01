@@ -47,6 +47,8 @@ public:
 
     TwoWayList(TwoWayList &List);
 
+    bool IsListEmpty();
+
     struct Node {
         // data
         Type *data;

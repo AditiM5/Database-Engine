@@ -25,19 +25,28 @@ int main() {
 
     while (tempRec.SuckNextRecord(&lineitem, tableFile) == 1) {
         myRecs->Insert(&tempRec);
+        cout << "LL: " << myRecs->LeftLength() << " RL: " << myRecs->RightLength() << endl;
         count++;
     }
 
-    cout << "LL: " << myRecs->LeftLength() << " RL: " << myRecs->RightLength() << endl;
+//    cout << "LL: " << myRecs->LeftLength() << " RL: " << myRecs->RightLength() << endl;
 
 
-    Record *temp;
-//    myRecs->MoveToStart();
-    for (int i = 0; i < 100; ++i) {
-        myRecs->Advance();
-        temp = myRecs->list->current->data;
-        temp->Print(&lineitem);
+//    Record *temp;
+//    for (int i = 0; i < 10; ++i) {
+//        temp = myRecs->list->current->data;
+//        temp->Print(&lineitem);
+//        myRecs->Advance();
+//    }
+
+    Record delTemp;
+
+    for (int i = 0; i < 10; ++i) {
+        myRecs->Remove(&delTemp);
+        delTemp.Print(&lineitem);
+        cout << "LL: " << myRecs->LeftLength() << " RL: " << myRecs->RightLength() << endl;
     }
+
 
 //    myRecs->Advance();
 //
