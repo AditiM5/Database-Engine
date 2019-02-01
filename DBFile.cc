@@ -127,7 +127,6 @@ int DBFile::Close() {
 
 void DBFile::Add(Record *rec) {
     // Get last page in the file
-//    cout << "file->GetLength(): " << file->GetLength() << endl;
     if (file->GetLength() != 0) {
         if (!currPageNum + 1 == file->GetLength()) {
             cout << "Getting last page. File Len: " << file->GetLength() << endl;
@@ -137,8 +136,6 @@ void DBFile::Add(Record *rec) {
     }
 
     if (!currentPage->Append(rec)) {
-//        cout << "Page Full. Writing page!!!!" << endl;
-//        cout<< "Length of the file BLAHHH : " << file->GetLength() << endl;
         // write the full page to file
         if (!file->GetLength()) {
             cout << "The first add" << endl;
@@ -149,10 +146,8 @@ void DBFile::Add(Record *rec) {
         }
         currPageNum++;
         // empty the page out
-//        currentPage->EmptyItOut();
         delete currentPage;
         currentPage = new(std::nothrow) Page();
-//        cout << "Page Size: " << currentPage->curSizeInBytes << endl;
         // append record to empty page
         currentPage->Append(rec);
     } else {
@@ -160,14 +155,9 @@ void DBFile::Add(Record *rec) {
     }
     // set to false as we're always appending a record to a page
     currentPage->pageToDisk = false;
-//    file->AddPage(currentPage, file->GetLength());
-//    currentRecord = rec;
 }
 
 int DBFile::GetNext(Record *fetchme) {
-
-//    cout << "The currPageN/um right now: " << currPageNum << endl;
-//    cout << "The file Length" << file->GetLength() << endl;
     if (!currentPage->pageToDisk) {
         cout << "Saving page in GetNext() " << endl;
         if (!file->GetLength()) {
@@ -180,8 +170,9 @@ int DBFile::GetNext(Record *fetchme) {
         fsync(file->myFilDes);
         currentPage->pageToDisk = true;
     }
-//    file->GetPage(currentPage, 0);
-//    currPageNum = 0;
+
+    cout << "Getting next" << endl;
+
     if (!currentPage->GetRecord(fetchme, 0)) {
         // assuming the page is empty here so we move to the next page
         if (file->GetLength() > currPageNum + 2) {

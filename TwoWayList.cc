@@ -56,6 +56,14 @@ TwoWayList<Type>::TwoWayList() {
     list->first->next = list->last;
     list->last->previous = list->first;
 
+//    cout << "Current pointer: " << list->current << endl;
+//    cout << "Current Next pointer: " << list->current->next << endl;
+//    cout << "First pointer: " << list->first << endl;
+//    cout << "First Next pointer: " << list->first->next << endl;
+//    cout << "Last pointer: " << list->last << endl;
+//    cout << "Last Prev pointer: " << list->last->previous << endl;
+
+
 }
 
 // basic deconstructor function
@@ -99,6 +107,7 @@ TwoWayList<Type>::MoveToStart() {
 
     // check for empty list
     if(list->first->next == list->last) {
+        cout << "Empty list in move to start" << endl;
         list->current = list->first;
     } else {
         list->current = list->first->next;
@@ -237,14 +246,32 @@ template<class Type>
 void
 TwoWayList<Type>::Insert(Type *Item) {
 
+//    cout << "INSERTING" << endl;
+
     Node *temp = new(std::nothrow) Node;
     if (temp == NULL) {
         cout << "ERROR : Not enough memory. EXIT !!!\n";
         exit(1);
     }
 
-    Node *left = list->current;
-    Node *right = list->current->next;
+//    cout << "Current pointer: " << list->current << endl;
+//    cout << "First pointer: " << list->first << endl;
+
+    Node *left;
+    Node *right;
+
+    if(list->first->next == list->last) {
+        cout << "Empty list on insert" << endl;
+        right = list->last;
+        left = list->first;
+    } else {
+        right = list->current->next;
+        left = list->current;
+    }
+
+//    cout << "In insert" << endl;
+//    cout << "Left pointer(current): " << left << endl;
+//    cout << "Right pointer(current->next): " << list->current->next << endl;
 
     // check for empty list
     if (list->first->next == list->last) {
@@ -256,27 +283,26 @@ TwoWayList<Type>::Insert(Type *Item) {
     left->next = temp;
     temp->previous = left;
     temp->next = right;
+    right->previous = temp;
+
     temp->data = new(std::nothrow) Type;
     if (temp->data == NULL) {
         cout << "ERROR : Not enough memory. EXIT !!!\n";
         exit(1);
     }
 
-    right->previous = temp;
-
     temp->data->Consume(Item);
 
     list->current = temp;
-
-
 }
 
 // get a reference to the current item in the list
 template<class Type>
-Type *
-TwoWayList<Type>::Current(int offset) {
+Type * TwoWayList<Type>::Current(int offset) {
+    cout << "Current call offset: " << offset << endl;
     Node *temp = list->current;
     for (int i = 0; i < offset; i++) {
+//        cout << "In current loop" << endl;
         temp = temp->next;
         if(temp == list->last) {
             return NULL;

@@ -1,6 +1,5 @@
 
 #include <iostream>
-#include "TwoWayList.cc"
 #include "Record.h"
 #include <stdlib.h>
 #include "DBFile.h"
@@ -61,9 +60,7 @@ int main() {
 
     DBFile dbFile;
     Schema lineitem("catalog", "lineitem");
-    char fileName[] = "data/test.tbl";
-//    dbFile.Load(lineitem, fileName);
-//    dbFile.Close();
+    char fileName[] = "data/test2.tbl";
 
     char tempMain[] = "tempMain";
     // CREATE
@@ -78,28 +75,18 @@ int main() {
 //        tempRec.Print(&lineitem);
         dbFile.Add(&tempRec);
         count++;
-//        cout << "Writ?ng rec: " << count << endl;
+//        cout << "Writing rec: " << count << endl;
     }
     cout << "Count : " << count << endl;
-//    dbFile.MoveFirst();
-//    fclose(tableFile);
-//    tableFile = fopen(fileName, "r");
-//    while (tempRec.SuckNextRecord(&lineitem, tableFile) == 1) {
-////        tempRec.Print(&lineitem);
-//        dbFile.Add(&tempRec);
-//        count++;
-//    }
 
-//    cout << "Count for ADD: " << count << endl;
-
-    //GETNEXT of what is added
     count = 0;
-    while (dbFile.GetNext(&tempRec)) {
-//        tempRec.Print(&lineitem);
+    Record tempRec2;
+    while (dbFile.GetNext(&tempRec2)) {
+        tempRec.Print(&lineitem);
         count++;
-
     }
     cout << "GetNext count: " << count << endl;
+
     return 0;
 
 }

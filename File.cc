@@ -73,6 +73,9 @@ int Page::GetRecord(Record *firstOne, int offset) {
 
     firstOne = myRecs->Current(offset);
 
+    cout << "GetRecord pointer: " << firstOne << endl;
+    cout << "Current pointer: " << myRecs->list->current << endl;
+
     return 1;
 }
 
@@ -105,9 +108,12 @@ void Page::ToBinary(char *bits) {
 
     char *curPos = bits + sizeof(int);
 
+    cout << "I'm here" << endl;
+
     // and copy the records one-by-one
     myRecs->MoveToStart();
     for (int i = 0; i < numRecs; i++) {
+        cout << "TOBinary index: " << i << endl;
         char *b = myRecs->Current(0)->GetBits();
 
         // copy over the bits of the current record
@@ -115,7 +121,10 @@ void Page::ToBinary(char *bits) {
         curPos += ((int *) b)[0];
 
         // and traverse the list
-        myRecs->Advance();
+        if (i < numRecs-1) {
+//            cout << "a" << endl;
+            myRecs->Advance();
+        }
     }
 }
 
