@@ -47,8 +47,6 @@ public:
 
     TwoWayList(TwoWayList &List);
 
-private:
-
     struct Node {
         // data
         Type *data;

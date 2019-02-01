@@ -97,9 +97,17 @@ template<class Type>
 void
 TwoWayList<Type>::MoveToStart() {
 
-    list->current = list->first;
+    // check for empty list
+    if(list->first->next == list->last) {
+        list->current = list->first;
+    } else {
+        list->current = list->first->next;
+    }
+
     list->rightSize += list->leftSize;
     list->leftSize = 0;
+
+
 
 }
 
@@ -108,7 +116,13 @@ template<class Type>
 void
 TwoWayList<Type>::MoveToFinish() {
 
-    list->current = list->last->previous;
+    // check for empty list
+    if(list->last->previous = list->first) {
+        list->current = list->last;
+    } else {
+        list->current = list->last->previous;
+    }
+
     list->leftSize += list->rightSize;
     list->rightSize = 0;
 
@@ -191,9 +205,14 @@ template<class Type>
 void
 TwoWayList<Type>::Advance() {
 
-    (list->rightSize)--;
-    (list->leftSize)++;
-    list->current = list->current->next;
+    // check if we reached the end of the list
+    if (list->current->next == list->last) {
+        MoveToStart();
+    } else {
+        (list->rightSize)--;
+        (list->leftSize)++;
+        list->current = list->current->next;
+    }
 
 }
 
@@ -202,9 +221,14 @@ template<class Type>
 void
 TwoWayList<Type>::Retreat() {
 
-    (list->rightSize)++;
-    (list->leftSize)--;
-    list->current = list->current->previous;
+    // check if we reached the beginning of the list
+    if(list->current->previous == list->first) {
+        MoveToFinish();
+    } else {
+        (list->rightSize)++;
+        (list->leftSize)--;
+        list->current = list->current->previous;
+    }
 
 }
 
@@ -235,7 +259,13 @@ TwoWayList<Type>::Insert(Type *Item) {
 
     temp->data->Consume(Item);
 
-    list->rightSize += 1;
+    if(list->current->next == list->last)
+        list->rightSize = 1;
+
+    list->leftSize += 1;
+
+    list->current = temp;
+
 
 }
 
@@ -243,27 +273,41 @@ TwoWayList<Type>::Insert(Type *Item) {
 template<class Type>
 Type *
 TwoWayList<Type>::Current(int offset) {
-    Node *temp = list->current->next;
+    Node *temp = list->current;
     for (int i = 0; i < offset; i++) {
         temp = temp->next;
     }
     return temp->data;
 }
 
-// remove an item from the current poition
+// remove an item from the current position
 template<class Type>
 void
 TwoWayList<Type>::Remove(Type *Item) {
 
-    Node *temp = list->current->next;
-    list->current->next = temp->next;
-    temp->next->previous = list->current;
+    Node *temp = list->current;
+    Node *prev = list->current->previous;
+    Node *next = list->current->next;
+
+    // if list becomes empty point current to first node
+    if (next == list->last && prev == list->first) {
+        list->current = list->first;
+        list->rightSize = 0;
+        list->leftSize = 0;
+    } else if(next == list->last) {
+        list->current = prev;
+        (list->leftSize)--;
+    } else {
+        list->current = next;
+        (list->rightSize)--;
+    }
 
     Item->Consume(temp->data);
 
     delete temp;
 
-    (list->rightSize)--;
+    prev->next = next;
+    next->previous = prev;
 }
 
 #endif
