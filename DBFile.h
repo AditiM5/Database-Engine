@@ -21,6 +21,8 @@ class DBFile {
     int currPageNum;
 //    Record *currentRecord;
 
+    void WriteCurrentPageToDisk();
+
 public:
 
     DBFile();

@@ -362,5 +362,16 @@ void Record :: Print (Schema *mySchema) {
 	cout << "\n";
 }
 
+void Record :: ClearRecord() {
+    if (bits != NULL) {
+        delete [] bits;
+    }
+    bits = NULL;
+}
+
+bool Record :: IsRecordEmpty(){
+	return bits== NULL;
+}
+
 
 

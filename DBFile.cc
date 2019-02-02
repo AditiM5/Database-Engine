@@ -40,39 +40,25 @@ void DBFile::Load(Schema &f_schema, const char *loadpath) {
     }
 
     Record temp;
-    Page *page = new Page();
 
     // Using a temp file to load data
     file = new File();
     file->Open(0, "temp");
-    
+
     while (temp.SuckNextRecord(&f_schema, tableFile) == 1) {
         // check for page overflow
         if (!currentPage->Append(&temp)) {
-            // write the full page to file
-            if (!file->GetLength()) {
-                file->AddPage(currentPage, file->GetLength());
-            } else {
-                file->AddPage(currentPage, file->GetLength() - 1);
-            }
+            WriteCurrentPageToDisk();
             // empty the page out
-            currentPage->EmptyItOut();
+            delete currentPage;
+            currentPage = new (std::nothrow) Page();
             // append record to empty page
             currentPage->Append(&temp);
         }
     }
-    
-    if(!currentPage->pageToDisk) {
-        if (!file->GetLength()) {
-            file->AddPage(currentPage, file->GetLength());
-        } else {
-            file->AddPage(currentPage, file->GetLength() - 1);
-        }
-        currentPage->pageToDisk = true;
-    }
 
-    // ensure data is written to disk
-    fsync(file->myFilDes);
+    WriteCurrentPageToDisk();
+
     MoveFirst();
 }
 
@@ -86,32 +72,17 @@ int DBFile::Open(const char *f_path) {
 }
 
 void DBFile::MoveFirst() {
-    if (!currentPage->pageToDisk) {
-        if (!file->GetLength()) {
-            file->AddPage(currentPage, file->GetLength());
-        } else {
-            file->AddPage(currentPage, file->GetLength() - 1);
-        }
-        fsync(file->myFilDes);
-        currentPage->pageToDisk = true;
-    }
+
+    WriteCurrentPageToDisk();
 
     file->GetPage(currentPage, 0);
     currPageNum = 0;
 }
 
 int DBFile::Close() {
-    // close() returns 0 on success!
-    if (!currentPage->pageToDisk) {
-        if (!file->GetLength()) {
-            file->AddPage(currentPage, file->GetLength());
-        } else {
-            file->AddPage(currentPage, file->GetLength() - 1);
-        }
-        fsync(file->myFilDes);
-        currentPage->pageToDisk = true;
-    }
-    
+
+    WriteCurrentPageToDisk();
+
     if (!file->Close()) {
         return 1;
     } else {
@@ -129,12 +100,7 @@ void DBFile::Add(Record *rec) {
     }
 
     if (!currentPage->Append(rec)) {
-        // write the full page to file
-        if (!file->GetLength()) {
-            file->AddPage(currentPage, file->GetLength());
-        } else {
-            file->AddPage(currentPage, file->GetLength() - 1);
-        }
+        WriteCurrentPageToDisk();
         currPageNum++;
         // empty the page out
         delete currentPage;
@@ -148,15 +114,7 @@ void DBFile::Add(Record *rec) {
 
 int DBFile::GetNext(Record *fetchme) {
 
-    if (!currentPage->pageToDisk) {
-        if (!file->GetLength()) {
-            file->AddPage(currentPage, file->GetLength());
-        } else {
-            file->AddPage(currentPage, file->GetLength() - 1);
-        }
-        fsync(file->myFilDes);
-        currentPage->pageToDisk = true;
-    }
+    WriteCurrentPageToDisk();
 
     if (!currentPage->GetFirst(fetchme)) {
         // assuming the page is empty here so we move to the next page
@@ -175,21 +133,28 @@ int DBFile::GetNext(Record *fetchme) {
 int DBFile::GetNext(Record *fetchme, CNF &cnf, Record &literal) {
     Record temp;
 
-    if (!currentPage->GetFirst(&temp)) {
-        // assuming the page is empty here so we move to the next page
-        if (file->GetLength() > currPageNum + 1) {
-            file->GetPage(currentPage, ++currPageNum);
-            currentPage->GetFirst(&temp);
+    if (GetNext(&temp)) {
+        ComparisonEngine comp;
+        if (comp.Compare(&temp, &literal, &cnf)) {
+            fetchme->Copy(&temp);
         } else {
-            cout << "ERROR : No more pages left to navigate to !!!\n";
-            return 0;
+            fetchme->ClearRecord();
         }
+        return 1;
+    } else {
+        return 0;
     }
 
-    ComparisonEngine comp;
-    if (comp.Compare(&temp, &literal, &cnf)) {
-        fetchme->Copy(&temp);
-        return 1;
+}
+
+void DBFile::WriteCurrentPageToDisk() {
+    if (!currentPage->pageToDisk) {
+        if (!file->GetLength()) {
+            file->AddPage(currentPage, file->GetLength());
+        } else {
+            file->AddPage(currentPage, file->GetLength() - 1);
+        }
+        fsync(file->myFilDes);
+        currentPage->pageToDisk = true;
     }
-    return 0;
 }
