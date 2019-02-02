@@ -2,11 +2,9 @@
 #include "DBFile.h"
 #include "test.h"
 
-using namespace std::chrono;
-
 // make sure that the file path/dir information below is correct
-const char *dbfile_dir = "temp/"; // dir where binary heap files should be stored
-const char *tpch_dir = "data/"; // dir where dbgen tpch files (extension *.tbl) can be found
+const char *dbfile_dir = ""; // dir where binary heap files should be stored
+const char *tpch_dir = "/cise/tmp/dbi_sp11/DATA/10M/"; // dir where dbgen tpch files (extension *.tbl) can be found
 const char *catalog_path = "catalog"; // full path of the catalog file
 
 using namespace std;
@@ -26,14 +24,8 @@ void test1() {
     sprintf(tbl_path, "%s%s.tbl", tpch_dir, rel->name());
     cout << " tpch file will be loaded from " << tbl_path << endl;
 
-    auto start = high_resolution_clock::now();
     dbfile.Load(*(rel->schema()), tbl_path);
-    auto stop = high_resolution_clock::now();
 
-    auto duration = duration_cast<microseconds>(stop - start);
-
-    cout << "Time taken by function: "
-         << duration.count() / 1000000 << "seconds" << endl;
     dbfile.Close();
 }
 
@@ -126,7 +118,7 @@ void test5() {
         dbfile.Add(&tempRec);
         count++;
     }
-    cout<<"Added "<<count<<" records "<<endl;
+    cout << "Added " << count << " records " << endl;
 
     //scanning
     dbfile.MoveFirst();
@@ -143,7 +135,7 @@ void test5() {
         dbfile.Add(&tempRec);
         count++;
     }
-    cout<<"Added "<<count<<" records again"<<endl;
+    cout << "Added " << count << " records again" << endl;
 
     dbfile.MoveFirst();
 
