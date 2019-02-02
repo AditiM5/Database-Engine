@@ -14,6 +14,7 @@ using namespace std;
 
 DBFile::DBFile() {
     currentPage = new(std::nothrow) Page();
+
 }
 
 int DBFile::Create(const char *f_path, fType f_type, void *startup) {
@@ -23,7 +24,6 @@ int DBFile::Create(const char *f_path, fType f_type, void *startup) {
             file->Open(0, f_path);
             currPageNum = 0;
             return 1;
-            break;
 
         default:
             cout << "ERROR : Unknown file type. EXIT !!!\n";
@@ -41,38 +41,29 @@ void DBFile::Load(Schema &f_schema, const char *loadpath) {
 
     Record temp;
 
-    // Using a temp file to load data
-    file = new File();
-    file->Open(0, "temp");
-
     while (temp.SuckNextRecord(&f_schema, tableFile) == 1) {
         // check for page overflow
         if (!currentPage->Append(&temp)) {
             WriteCurrentPageToDisk();
             // empty the page out
             delete currentPage;
-            currentPage = new (std::nothrow) Page();
+            currentPage = new(std::nothrow) Page();
             // append record to empty page
             currentPage->Append(&temp);
         }
     }
 
     WriteCurrentPageToDisk();
-
-    MoveFirst();
+//    MoveFirst();
 }
 
 int DBFile::Open(const char *f_path) {
     file = new File();
     file->Open(1, f_path);
-    file->GetPage(currentPage, 0);
-    currPageNum = 0;
-
     return 1;
 }
 
 void DBFile::MoveFirst() {
-
     WriteCurrentPageToDisk();
 
     file->GetPage(currentPage, 0);
@@ -80,7 +71,6 @@ void DBFile::MoveFirst() {
 }
 
 int DBFile::Close() {
-
     WriteCurrentPageToDisk();
 
     if (!file->Close()) {
@@ -113,7 +103,6 @@ void DBFile::Add(Record *rec) {
 }
 
 int DBFile::GetNext(Record *fetchme) {
-
     WriteCurrentPageToDisk();
 
     if (!currentPage->GetFirst(fetchme)) {
@@ -126,25 +115,22 @@ int DBFile::GetNext(Record *fetchme) {
             return 0;
         }
     }
-
     return 1;
 }
 
 int DBFile::GetNext(Record *fetchme, CNF &cnf, Record &literal) {
     Record temp;
-
-    if (GetNext(&temp)) {
-        ComparisonEngine comp;
-        if (comp.Compare(&temp, &literal, &cnf)) {
-            fetchme->Copy(&temp);
+    while (1) {
+        if (GetNext(&temp)) {
+            ComparisonEngine comp;
+            if (comp.Compare(&temp, &literal, &cnf)) {
+                fetchme->Copy(&temp);
+                return 1;
+            }
         } else {
-            fetchme->ClearRecord();
+            return 0;
         }
-        return 1;
-    } else {
-        return 0;
     }
-
 }
 
 void DBFile::WriteCurrentPageToDisk() {

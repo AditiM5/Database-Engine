@@ -19,8 +19,7 @@ Page::Page() {
         cout << "ERROR : Not enough memory. EXIT !!!\n";
         exit(1);
     }
-
-    pageToDisk = false;
+    pageToDisk = true;
 }
 
 Page::~Page() {
