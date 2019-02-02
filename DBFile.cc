@@ -72,7 +72,7 @@ void DBFile::MoveFirst() {
 
 int DBFile::Close() {
     WriteCurrentPageToDisk();
-
+    fsync(file->myFilDes);
     if (!file->Close()) {
         return 1;
     } else {
@@ -120,9 +120,9 @@ int DBFile::GetNext(Record &fetchme) {
 
 int DBFile::GetNext(Record &fetchme, CNF &cnf, Record &literal) {
     Record temp;
+    ComparisonEngine comp;
     while (1) {
         if (GetNext(temp)) {
-            ComparisonEngine comp;
             if (comp.Compare(&temp, &literal, &cnf)) {
                 fetchme.Copy(&temp);
                 return 1;
@@ -140,7 +140,7 @@ void DBFile::WriteCurrentPageToDisk() {
         } else {
             file->AddPage(currentPage, file->GetLength() - 1);
         }
-        fsync(file->myFilDes);
+//        fsync(file->myFilDes);
         currentPage->pageToDisk = true;
     }
 }

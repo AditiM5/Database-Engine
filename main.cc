@@ -31,7 +31,7 @@ int main() {
 
     DBFile dbFile;
 //    Schema lineitem("catalog", "lineitem");
-    char fileName[] = "data/test.tbl";
+    char fileName[] = "data/lineitem.tbl";
 //    dbFile.Close();
 
     char tempMain[] = "tempMain";
