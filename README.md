@@ -1,7 +1,3 @@
-012408-1606P
-
---updated Lexer.l
-
 # README
 
 ### Test driver for Assignment 1 heap DBFile (spring 2019 dbi) :
