@@ -1,0 +1,2 @@
+r_regionkey: [3], r_name: [EUROPE], r_comment: [ly final courts cajole furiously final excuse]
+ selected 1 recs

@@ -1,0 +1,9 @@
+p_partkey: [1022], p_name: [slate mint plum drab khaki], p_mfgr: [Manufacturer#1], p_brand: [Brand#13], p_type: [SMALL BURNISHED COPPER], p_size: [33], p_container: [WRAP CAN], p_retailprice: [923.02], p_comment: [sly quickly ]
+p_partkey: [3001], p_name: [powder wheat blush gainsboro saddle], p_mfgr: [Manufacturer#1], p_brand: [Brand#13], p_type: [PROMO POLISHED TIN], p_size: [36], p_container: [MED CAN], p_retailprice: [904], p_comment: [fily. sly]
+p_partkey: [3022], p_name: [chiffon orange plum violet saddle], p_mfgr: [Manufacturer#1], p_brand: [Brand#13], p_type: [LARGE BURNISHED BRASS], p_size: [41], p_container: [LG BAG], p_retailprice: [925.02], p_comment: [ding asymptotes sl]
+p_partkey: [4005], p_name: [sienna sky steel green orchid], p_mfgr: [Manufacturer#1], p_brand: [Brand#13], p_type: [ECONOMY PLATED STEEL], p_size: [34], p_container: [SM JAR], p_retailprice: [909], p_comment: [al packages. pending,]
+p_partkey: [8000], p_name: [plum chiffon yellow goldenrod pale], p_mfgr: [Manufacturer#1], p_brand: [Brand#13], p_type: [LARGE PLATED STEEL], p_size: [36], p_container: [LG PKG], p_retailprice: [908], p_comment: [ts-- carefully ]
+p_partkey: [10011], p_name: [spring lawn saddle drab cyan], p_mfgr: [Manufacturer#1], p_brand: [Brand#13], p_type: [PROMO ANODIZED NICKEL], p_size: [32], p_container: [JUMBO BAG], p_retailprice: [921.01], p_comment: [r instructions:]
+p_partkey: [17008], p_name: [puff indian snow ghost grey], p_mfgr: [Manufacturer#1], p_brand: [Brand#13], p_type: [MEDIUM BRUSHED COPPER], p_size: [46], p_container: [MED BOX], p_retailprice: [925], p_comment: [e blithely ]
+p_partkey: [24005], p_name: [khaki ghost metallic navy yellow], p_mfgr: [Manufacturer#1], p_brand: [Brand#13], p_type: [ECONOMY ANODIZED BRASS], p_size: [38], p_container: [JUMBO PKG], p_retailprice: [929], p_comment: [ironic packages. caref]
+ selected 8 recs
