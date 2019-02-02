@@ -102,14 +102,14 @@ void DBFile::Add(Record *rec) {
     currentPage->pageToDisk = false;
 }
 
-int DBFile::GetNext(Record *fetchme) {
+int DBFile::GetNext(Record &fetchme) {
     WriteCurrentPageToDisk();
 
-    if (!currentPage->GetFirst(fetchme)) {
+    if (!currentPage->GetFirst(&fetchme)) {
         // assuming the page is empty here so we move to the next page
         if (file->GetLength() > currPageNum + 2) {
             file->GetPage(currentPage, ++currPageNum);
-            currentPage->GetFirst(fetchme);
+            currentPage->GetFirst(&fetchme);
             return 1;
         } else {
             return 0;
@@ -118,13 +118,13 @@ int DBFile::GetNext(Record *fetchme) {
     return 1;
 }
 
-int DBFile::GetNext(Record *fetchme, CNF &cnf, Record &literal) {
+int DBFile::GetNext(Record &fetchme, CNF &cnf, Record &literal) {
     Record temp;
     while (1) {
-        if (GetNext(&temp)) {
+        if (GetNext(temp)) {
             ComparisonEngine comp;
             if (comp.Compare(&temp, &literal, &cnf)) {
-                fetchme->Copy(&temp);
+                fetchme.Copy(&temp);
                 return 1;
             }
         } else {
