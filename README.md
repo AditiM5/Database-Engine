@@ -40,6 +40,8 @@ and then follow the on-screen instructions.
 2. Next replace the stub files DBFile.h and DBFile.cc with your own code. If you are using additional headers, modify the Makefile to include them as well. Then compile and execute the driver. Select the load option and convert the tpch-files into heap dbfiles. By default, the heap file is written in the same directory as the executable and have the extension ".bin".
 
 3. Once load of a file has been selected, you can select option 2 or 3 to scan/filter all the records from the heap DBfile.  If option 3 is selected, a CNF should be supplied. Some example CNF's are given below. They are numbered q1,q2..q12. Use the table below to identify the tpch file associated with each CNF.
+
+
 | table      | CNF     |
 | -----------|:-------:|
 | region     | q1 q2   |
