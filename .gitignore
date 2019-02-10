@@ -3,3 +3,13 @@
 y.tab.c
 lex.yy.c
 y.tab.h
+data/
+*.txt
+main
+test.out
+*.bin
+temp/
+temp*
+.idea/
+.vscode/
+

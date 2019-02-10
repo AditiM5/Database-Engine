@@ -14,6 +14,7 @@ using namespace std;
 class Page {
 
 	friend class DBFile;
+	friend class BigQ;
 
 private:
 	TwoWayList <Record> *myRecs;
@@ -56,6 +57,7 @@ public:
 class File {
 
 	friend class DBFile;
+	friend class BigQ;
 
 private:
 

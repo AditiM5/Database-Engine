@@ -1,4 +1,4 @@
-CC = g++ -O2 -Wno-deprecated -Wno-unused-result
+CC = g++ -O2 -Wno-deprecated -Wno-unused-result -Wno-write-strings -Wno-format-overflow
 MAKE = make
 UNAME_S := $(shell uname -s)
 
@@ -8,18 +8,18 @@ ifdef linux
 tag = -n
 endif
 
-test.out: Record.o Comparison.o ComparisonEngine.o Schema.o File.o DBFile.o y.tab.o lex.yy.o test.o
+test.out: Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFile.o Pipe.o y.tab.o lex.yy.o test.o
 ifeq ($(UNAME_S),Darwin)
-	$(CC) -o test.out Record.o Comparison.o ComparisonEngine.o Schema.o File.o DBFile.o y.tab.o lex.yy.o test.o -ll
+	$(CC) -o test.out Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFile.o Pipe.o y.tab.o lex.yy.o test.o -ll -lpthread
 else
-	$(CC) -o test.out Record.o Comparison.o ComparisonEngine.o Schema.o File.o DBFile.o y.tab.o lex.yy.o test.o -lfl
+	$(CC) -o test.out Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFile.o Pipe.o y.tab.o lex.yy.o test.o -lfl -lpthread
 endif
 	
-main: Record.o Comparison.o ComparisonEngine.o Schema.o File.o DBFile.o y.tab.o lex.yy.o main.o
+main: Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFile.o Pipe.o y.tab.o lex.yy.o main.o
 ifeq ($(UNAME_S),Darwin)
-	$(CC) -o main Record.o Comparison.o ComparisonEngine.o Schema.o File.o DBFile.o y.tab.o lex.yy.o main.o -ll
+	$(CC) -o main Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFile.o Pipe.o y.tab.o lex.yy.o main.o -ll -lpthread
 else
-	$(CC) -o main Record.o Comparison.o ComparisonEngine.o Schema.o File.o DBFile.o y.tab.o lex.yy.o main.o -lfl
+	$(CC) -o main Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFile.o Pipe.o y.tab.o lex.yy.o main.o -lfl -lpthread
 endif
 	
 test.o: test.cc
@@ -33,6 +33,12 @@ Comparison.o: Comparison.cc
 	
 ComparisonEngine.o: ComparisonEngine.cc
 	$(CC) -g -c ComparisonEngine.cc
+
+Pipe.o: Pipe.cc
+	$(CC) -g -c Pipe.cc
+
+BigQ.o: BigQ.cc
+	$(CC) -g -c BigQ.cc
 	
 DBFile.o: DBFile.cc
 	$(CC) -g -c DBFile.cc
@@ -67,6 +73,9 @@ clean:
 	rm -f y.tab.h
 
 rebuild_and_run:
-	$(MAKE) clean
 	$(MAKE) main
 	./main
+
+clean_rebuild_run:
+	$(MAKE) clean
+	$(MAKE) rebuild_and_run
