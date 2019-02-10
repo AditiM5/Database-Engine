@@ -169,6 +169,10 @@ void Page::FromBinary(char *bits) {
     delete temp;
 }
 
+int Page::NumRecords() {
+    return (myRecs->RightLength + myRecs->LeftLength);
+}
+
 File::File() {
 }
 

@@ -13,9 +13,12 @@ class BigQ {
 	Record *tempRec;
 	File *file;
 	Page *currentPage;
-	int currPageNum;
+	int *currPageNum;
 
 	void WriteCurrentPageToDisk();
+	void SortRecords(Page *page, OrderMaker *sortorder);
+	void MergeSort(Record records[], int start, int end, OrderMaker *sortorder);
+	void Merge(Record records[], int start, int mid, int end, OrderMaker *sortorder);
 
 public:
 
