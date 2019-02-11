@@ -1,6 +1,5 @@
 #include "File.h"
 #include "TwoWayList.cc"
-
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -167,10 +166,6 @@ void Page::FromBinary(char *bits) {
     }
 
     delete temp;
-}
-
-int Page::NumRecords() {
-    return (myRecs->RightLength + myRecs->LeftLength);
 }
 
 File::File() {

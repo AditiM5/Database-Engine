@@ -64,7 +64,7 @@ public:
 			cout << "Can't parse your sort CNF.\n";
 			exit (1);
 		}
-		cout << " \n";
+//		cout << " \n";
 		Record literal;
 		CNF sort_pred;
 		sort_pred.GrowFromParseTree (final, schema (), literal); // constructs CNF predicate

@@ -51,8 +51,6 @@ public:
 	// empty it out
 	void EmptyItOut ();
 
-	// returns the number of records in a page
-	int NumRecords();
 
 };
 

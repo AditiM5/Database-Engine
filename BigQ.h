@@ -1,5 +1,6 @@
 #ifndef BIGQ_H
 #define BIGQ_H
+
 #include <pthread.h>
 #include <iostream>
 #include "Pipe.h"
@@ -9,21 +10,34 @@
 using namespace std;
 
 class BigQ {
+    friend void* proxyFunction(void *fooPtr, void *args);
 
-	Record *tempRec;
-	File *file;
-	Page *currentPage;
-	int *currPageNum;
+private:
+    File *file;
+    Page *currentPage;
+    int *currPageNum;
 
-	void WriteCurrentPageToDisk();
-	void SortRecords(Page *page, OrderMaker *sortorder);
-	void MergeSort(Record records[], int start, int end, OrderMaker *sortorder);
-	void Merge(Record records[], int start, int mid, int end, OrderMaker *sortorder);
+    void WriteCurrentPageToDisk();
+
+    void SortRecords(Page *page, OrderMaker *sortorder);
+
+    void MergeSort(Record records[], int start, int end, OrderMaker *sortorder);
+
+    void Merge(Record records[], int start, int mid, int end, OrderMaker *sortorder);
+
 
 public:
 
-	BigQ (Pipe &in, Pipe &out, OrderMaker &sortorder, int runlen);
-	~BigQ ();
+    pthread_t threadID;
+
+    BigQ(Pipe &in, Pipe &out, OrderMaker &sortorder, int runlen);
+//    static void *WorkerHelper(void *context, void *args){
+//        return ((BigQ *)context)->Worker(args);
+//    }
+
+    void Worker(void *args);
+
+    ~BigQ();
 };
 
 #endif

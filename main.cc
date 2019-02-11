@@ -3,6 +3,10 @@
 #include "Record.h"
 #include <stdlib.h>
 #include "DBFile.h"
+#include "Pipe.h"
+#include "BigQ.h"
+#include <pthread.h>
+
 
 using namespace std;
 
@@ -13,55 +17,37 @@ int yyparse(void);   // defined in y.tab.c
 extern struct AndList *final;
 
 int main() {
-//    cout << "Enter in your CNF: ";
-//    if (yyparse() != 0) {
-//        cout << "Can't parse your CNF.\n";
-//        exit (1);
-//    }
 // suck up the schema from the file
     Schema lineitem ("catalog", "lineitem");
-
-    // grow the CNF expression from the parse tree
-//    CNF myComparison;
-//    Record literal;
-//    myComparison.GrowFromParseTree (final, &lineitem, literal);
-
-    // print out the comparison to the screen
-//    myComparison.Print ();
-
     DBFile dbFile;
-//    Schema lineitem("catalog", "lineitem");
     char fileName[] = "data/lineitem.tbl";
-//    dbFile.Close();
-
-    char tempMain[] = "tempMain";
     dbFile.Create(tempMain, heap, NULL);
-//    dbFile.Load(lineitem, fileName);
     FILE *tableFile = fopen(fileName, "r");
 
     int count = 0;
     Record tempRec;
-//
+    Pipe in = new Pipe(100);
+    Pine out = new Pipe(100);
     while (tempRec.SuckNextRecord(&lineitem, tableFile) == 1) {
 //        tempRec.Print(&lineitem);
-        dbFile.Add(&tempRec);
+//        dbFile.Add(&tempRec);
+        in->Insert(&tempRec);
         count++;
 //        cout << "Writ?ng rec: " << count << end l;
     }
     cout << "Recs written: " << count << endl;
-//    dbFile.Close();
 
-//    dbFile.Load(lineitem, "tempMain");
-    dbFile.MoveFirst();
+    BigQ *tempBigQ = new BigQ(in, out, );
+    pthread_join(&(tempBigQ->threadID), NULL);
 
-    count = 0;
-    while (dbFile.GetNext(tempRec)) {
-//        tempRec.Print(&lineitem);
-        count++;
-    }
 
-    cout << "GetNext count: " << count << endl;
-
+//    count = 0;
+//    while (dbFile.GetNext(tempRec)) {
+////        tempRec.Print(&lineitem);
+//        count++;
+//    }
+//
+//    cout << "GetNext count: " << count << endl;
     return 0;
 }
 
