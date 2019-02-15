@@ -7,9 +7,6 @@ Pipe :: Pipe (int bufferSize) {
 
 	// set up the mutex assoicated with the pipe
 	pthread_mutex_init (&pipeMutex, NULL);
-
-	cout << "Init mutex: " << pthread_mutex_init (&pipeMutex, NULL) << endl;
-
 	// set up the condition variables associated with the pipe
 	pthread_cond_init (&producerVar, NULL);
 	pthread_cond_init (&consumerVar, NULL);

@@ -80,7 +80,7 @@ void BigQ::Worker(void *args) {
     // currPageNum = params->currPageNum;
 
     in = params->in;
-    // out = params->out;
+    out = params->out;
     sortorder = params->sortorder;
     runlen = params->runlen;
 
