@@ -8,6 +8,8 @@ Pipe :: Pipe (int bufferSize) {
 	// set up the mutex assoicated with the pipe
 	pthread_mutex_init (&pipeMutex, NULL);
 
+	cout << "Init mutex: " << pthread_mutex_init (&pipeMutex, NULL) << endl;
+
 	// set up the condition variables associated with the pipe
 	pthread_cond_init (&producerVar, NULL);
 	pthread_cond_init (&consumerVar, NULL);
@@ -30,7 +32,7 @@ Pipe :: Pipe (int bufferSize) {
 Pipe :: ~Pipe () {
 
 	// free everything up!
-	delete [] buffered;
+	// delete [] buffered;
 
 	pthread_mutex_destroy (&pipeMutex);
 	pthread_cond_destroy (&producerVar);
@@ -69,6 +71,8 @@ void Pipe :: Insert (Record *insertMe) {
 
 
 int Pipe :: Remove (Record *removeMe) {
+
+	cout << "Removing Record from pipe" << endl;
 	 
 	// first, get a mutex on the pipeline
 	pthread_mutex_lock (&pipeMutex);
@@ -76,6 +80,8 @@ int Pipe :: Remove (Record *removeMe) {
 	// next, see if there is anything in the pipeline; if
 	// there is, then do the removal
 	if (lastSlot != firstSlot) {
+
+		cout << "Pipe not empty" << endl;
 		
 		removeMe->Consume (&buffered [firstSlot % totSpace]);
 
@@ -83,10 +89,12 @@ int Pipe :: Remove (Record *removeMe) {
 	// puts some data into the pipeline
 	} else {
 
+		cout << "Pipe empty not done" << endl;
+
 		// the pipeline is empty so we first see if this
 		// is because it was turned off
 		if (done) {
-
+			cout << "Pipe empty and done 1" << endl;
 			pthread_mutex_unlock (&pipeMutex);
 			return 0;
 		}
@@ -98,6 +106,7 @@ int Pipe :: Remove (Record *removeMe) {
 		// the pipe, we need to check if it is still open
 		if (done && lastSlot == firstSlot) {
 			pthread_mutex_unlock (&pipeMutex);
+			cout << "Pipe empty and done 2" << endl;
 			return 0;
 		}
 
@@ -120,7 +129,7 @@ int Pipe :: Remove (Record *removeMe) {
 void Pipe :: ShutDown () {
 
 	// first, get a mutex on the pipeline
-        pthread_mutex_lock (&pipeMutex);
+    pthread_mutex_lock (&pipeMutex);
 
 	// note that we are now done with the pipeline
 	done = 1;

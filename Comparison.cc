@@ -146,6 +146,8 @@ int CNF :: GetSortOrders (OrderMaker &left, OrderMaker &right) {
 			continue;		
 		}
 
+		cout << "Made it till here!!!" << endl;
+
 		// since we are here, we have found a join attribute!!!
 		// so all we need to do is add the new comparison info into the
 		// relevant structures

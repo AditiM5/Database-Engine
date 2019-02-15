@@ -10,7 +10,7 @@ struct BigQParams {
     Record *tempRec;
     File *file;
     Page *currentPage;
-    int *currPageNum;
+    // int *currPageNum;
 
     BigQ *ref;
 };
@@ -31,14 +31,14 @@ BigQ::BigQ(Pipe &in, Pipe &out, OrderMaker &sortorder, int runlen) {
         exit(1);
     }
 
-    currPageNum = new int;
-    *currPageNum = 0;
+    // currPageNum = new int;
+    // *currPageNum = 0;
 
     file = new File();
     file->Open(0, "tempSortFile.bin");
 
     // initialize current page number
-    currPageNum = 0;
+    // currPageNum = 0;
 
 
     ////////////////////
@@ -46,7 +46,7 @@ BigQ::BigQ(Pipe &in, Pipe &out, OrderMaker &sortorder, int runlen) {
     BigQParams params;
     params.currentPage = currentPage;
     params.file = file;
-    params.currPageNum = currPageNum;
+    // params.currPageNum = currPageNum;
 
     params.in = &in;
     params.out = &out;
@@ -61,6 +61,7 @@ BigQ::BigQ(Pipe &in, Pipe &out, OrderMaker &sortorder, int runlen) {
 }
 
 void BigQ::Worker(void *args) {
+	cout << "Starting worker thread" << endl;
     // read data from in pipe sort them into runlen pages
     BigQParams *params = (BigQParams *) args;
 
@@ -72,14 +73,14 @@ void BigQ::Worker(void *args) {
     Record *tempRec;
     File *file;
     Page *currentPage;
-    int *currPageNum;
+    int currPageNum = 0;
 
     currentPage = params->currentPage;
     file = params->file;
-    currPageNum = params->currPageNum;
+    // currPageNum = params->currPageNum;
 
     in = params->in;
-    out = params->out;
+    // out = params->out;
     sortorder = params->sortorder;
     runlen = params->runlen;
 
@@ -90,14 +91,20 @@ void BigQ::Worker(void *args) {
         exit(1);
     }
 
-    while (in->Remove(tempRec) && *currPageNum < runlen) {
+    cout << "In pipe: " << in << endl;
+
+	// cout << "Current Page Num: " << currPageNum << endl;
+
+    while (in->Remove(tempRec) && currPageNum < runlen) {
+		cout << "Is rec empty: " << tempRec->IsRecordEmpty() << endl;
+		cout << "In worker" << endl;
         if (!currentPage->Append(tempRec)) {
             // sort records before writing to disk
             SortRecords(currentPage, sortorder);
             // write current page to disk
             WriteCurrentPageToDisk();
             // increment page number
-            (*currPageNum)++;
+            currPageNum++;
             // empty the page out
             delete currentPage;
             currentPage = new(std::nothrow) Page();
@@ -107,7 +114,7 @@ void BigQ::Worker(void *args) {
     }
 
     // deal with the remaining records
-    if (*currPageNum < runlen) {
+    if (currPageNum < runlen) {
         // sort and write records to disk
         SortRecords(currentPage, sortorder);
         WriteCurrentPageToDisk();
@@ -116,13 +123,21 @@ void BigQ::Worker(void *args) {
         currentPage = new(std::nothrow) Page();
     }
 
-    file->Close();
+    // file->Close();
 
     // construct priority queue over sorted runs and dump sorted data
     // into the out pipe
 
+    // Get the first page
+    file->GetPage(currentPage, 0);
+
+    while(currentPage->GetFirst(tempRec)){
+        out->Insert(tempRec);
+    }
+
     // finally shut down the out pipe
     out->ShutDown();
+	pthread_exit(NULL);
 
 }
 
@@ -139,6 +154,7 @@ void BigQ::WriteCurrentPageToDisk() {
 }
 
 void BigQ::SortRecords(Page *page, OrderMaker *sortorder) {
+	cout << "Sorting records" << endl;
     Record *records = new Record[page->numRecs];
 
     // copy records into the array
@@ -155,7 +171,7 @@ void BigQ::SortRecords(Page *page, OrderMaker *sortorder) {
     }
 
     // cleanup
-    delete[] records;
+    // delete[] records;
 }
 
 void BigQ::MergeSort(Record records[], int start, int end, OrderMaker *sortorder) {
