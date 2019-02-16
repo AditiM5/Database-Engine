@@ -13,11 +13,8 @@ class BigQ {
     friend void* proxyFunction(void *fooPtr, void *args);
 
 private:
-    File *file;
-    Page *currentPage;
-    int *currPageNum;
 
-    void WriteCurrentPageToDisk();
+    void WritePageToDisk(File *file, Page *page);
 
     void SortRecords(Page *page, OrderMaker *sortorder);
 
@@ -31,11 +28,8 @@ public:
     pthread_t threadID;
 
     BigQ(Pipe &in, Pipe &out, OrderMaker &sortorder, int runlen);
-//    static void *WorkerHelper(void *context, void *args){
-//        return ((BigQ *)context)->Worker(args);
-//    }
 
-    void Worker(void *args);
+    void* Worker(void *args);
 
     ~BigQ();
 };
