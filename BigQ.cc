@@ -103,7 +103,8 @@ void BigQ::WritePageToDisk(File *file, Page *page) {
 
 void BigQ::SortRecords(Page *page, OrderMaker *sortorder) {
 	cout << "Sorting records" << endl;
-    Record records[page->numRecs];
+    int numRecs = page->numRecs;
+    Record records[numRecs];
 
     if(records == NULL) {
         cout << "Error allocating memory for records" << endl;
@@ -111,15 +112,15 @@ void BigQ::SortRecords(Page *page, OrderMaker *sortorder) {
     }
 
     // copy records into the array
-    for (int i = 0; i < page->numRecs; i++) {
+    for (int i = 0; i < numRecs; i++) {
         page->GetFirst(&records[i]);
     }
     cout << "Merge" << endl;
     // sort the records
-    MergeSort(records, 0, page->numRecs - 1, sortorder);
+    MergeSort(records, 0, numRecs - 1, sortorder);
 
     // copy the records back into the page
-    for (int i = 0; i < page->numRecs; i++) {
+    for (int i = 0; i < numRecs; i++) {
         page->Append(&records[i]);
     }
 

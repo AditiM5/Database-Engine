@@ -7,14 +7,7 @@
 #include "BigQ.h"
 #include <pthread.h>
 
-
 using namespace std;
-
-extern "C" {
-int yyparse(void);   // defined in y.tab.c
-}
-
-extern struct AndList *final;
 
 void *producer(void *arg) {
     Pipe *pipe = (Pipe *) arg;
@@ -51,21 +44,10 @@ int main() {
     Pipe input(100);
     Pipe output(100);
 
-//    FILE *tableFile = fopen("data/test.tbl", "r");
     Schema myschema("catalog", "lineitem");
     Record temp;
-    Record literal;
 
-    // cout << "\n specify sort ordering (when done press ctrl-D):\n\t ";
-    // if (yyparse() != 0) {
-    //     cout << "Can't parse your sort CNF.\n";
-    //     exit (1);
-    // }
-
-    // CNF sort_pred;
-    // sort_pred.GrowFromParseTree (final, &myschema, literal);
     OrderMaker sortorder(&myschema);
-    // sort_pred.GetSortOrders (sortorder, dummy);
 
     pthread_t thread1;
     pthread_t thread2;
@@ -74,21 +56,14 @@ int main() {
     pthread_create(&thread1, NULL, producer, (void *) &input);
 
     BigQ bq(input, output, sortorder, 1);
+
     int i = 0;
-
-//    while(temp.SuckNextRecord(&myschema, tableFile) == 1) {
-//        input.Insert(&temp);
-//        cout << "Inserting record: " << ++i << endl;
-//    }
-
-    // cout << "Removing records..." << endl;
-//    input.ShutDown();
-//    output.ShutDown();
 
     pthread_join(thread1, NULL);
     pthread_join(thread2, NULL);
-    cout << "ThreadID : " << bq.threadID << endl;
     pthread_join(bq.threadID, NULL);
+
+    // cout << "ThreadID : " << bq.threadID << endl;
 
     return 0;
 }
