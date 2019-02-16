@@ -7,7 +7,13 @@
 
 
 Record :: Record () {
+	schema  = new Schema("catalog", "lineitem");
 	bits = NULL;
+}
+
+Record :: Record (Schema *schema) {
+	bits = NULL;
+	schema = schema;
 }
 
 Record :: ~Record () {
@@ -360,6 +366,10 @@ void Record :: Print (Schema *mySchema) {
 	}
 
 	cout << "\n";
+}
+
+void Record :: Print () {
+	Print(schema);
 }
 
 void Record :: ClearRecord() {

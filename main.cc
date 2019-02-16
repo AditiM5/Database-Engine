@@ -6,6 +6,7 @@
 #include "Pipe.h"
 #include "BigQ.h"
 #include <pthread.h>
+#include <unistd.h>
 
 using namespace std;
 
@@ -58,6 +59,8 @@ int main() {
     BigQ bq(input, output, sortorder, 1);
 
     int i = 0;
+
+    // usleep(2000000);
 
     pthread_join(thread1, NULL);
     pthread_join(thread2, NULL);

@@ -37,8 +37,12 @@ private:
 
     void CopyBits(char *bits, int b_len);
 
+    Schema *schema;
+
 public:
     Record();
+
+    Record(Schema *schema);
 
     ~Record();
 
@@ -70,6 +74,8 @@ public:
     // prints the contents of the record; this requires
     // that the schema also be given so that the record can be interpreted
     void Print(Schema *mySchema);
+
+    void Print();
 
     void ClearRecord();
 

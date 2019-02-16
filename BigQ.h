@@ -14,13 +14,15 @@ class BigQ {
 
 private:
 
+    Record *records;
+
     void WritePageToDisk(File *file, Page *page);
 
     void SortRecords(Page *page, OrderMaker *sortorder);
 
-    void MergeSort(Record records[], int start, int end, OrderMaker *sortorder);
+    void MergeSort(Record *records, int start, int end, OrderMaker *sortorder);
 
-    void Merge(Record records[], int start, int mid, int end, OrderMaker *sortorder);
+    void Merge(Record *records, int start, int mid, int end, OrderMaker *sortorder);
 
 
 public:
