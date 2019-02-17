@@ -8,18 +8,18 @@ ifdef linux
 tag = -n
 endif
 
-test.out: Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFile.o Pipe.o y.tab.o lex.yy.o test.o
+test.out: Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFile.o Pipe.o PriorityQueue.o y.tab.o lex.yy.o test.o
 ifeq ($(UNAME_S),Darwin)
-	$(CC) -o test.out Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFile.o Pipe.o y.tab.o lex.yy.o test.o -ll -lpthread
+	$(CC) -o test.out Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFile.o Pipe.o PriorityQueue.o y.tab.o lex.yy.o test.o -ll -lpthread
 else
-	$(CC) -o test.out Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFile.o Pipe.o y.tab.o lex.yy.o test.o -lfl -lpthread
+	$(CC) -o test.out Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFile.o Pipe.o PriorityQueue.o y.tab.o lex.yy.o test.o -lfl -lpthread
 endif
 	
-main: Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFile.o Pipe.o y.tab.o lex.yy.o main.o
+main: Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFile.o Pipe.o PriorityQueue.o y.tab.o lex.yy.o main.o
 ifeq ($(UNAME_S),Darwin)
-	$(CC) -o main Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFile.o Pipe.o y.tab.o lex.yy.o main.o -ll -lpthread
+	$(CC) -o main Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFile.o Pipe.o PriorityQueue.o y.tab.o lex.yy.o main.o -ll -lpthread
 else
-	$(CC) -o main Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFile.o Pipe.o y.tab.o lex.yy.o main.o -lfl -lpthread
+	$(CC) -o main Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFile.o Pipe.o PriorityQueue.o y.tab.o lex.yy.o main.o -lfl -lpthread
 endif
 	
 test.o: test.cc
@@ -51,6 +51,9 @@ Record.o: Record.cc
 
 Schema.o: Schema.cc
 	$(CC) -g -c Schema.cc
+
+PriorityQueue.o: PriorityQueue.cc
+	$(CC) -g -c PriorityQueue.cc
 	
 y.tab.o: Parser.y
 	yacc -d Parser.y
