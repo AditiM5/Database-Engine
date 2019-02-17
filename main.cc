@@ -10,9 +10,15 @@
 
 using namespace std;
 
+extern "C" {
+int yyparse(void);   // defined in y.tab.c
+}
+
+extern struct AndList *final;
+
 void *producer(void *arg) {
     Pipe *pipe = (Pipe *) arg;
-    FILE *tableFile = fopen("data/test2.tbl", "r");
+    FILE *tableFile = fopen("data/lineitem.tbl", "r");
     Record temp;
     Schema myschema("catalog", "lineitem");
     int i = 0;
@@ -48,8 +54,20 @@ int main() {
 
     Schema myschema("catalog", "lineitem");
     Record temp;
+    OrderMaker sortorder;
 
-    OrderMaker sortorder(&myschema);
+    cout << "\n specify sort ordering (when done press ctrl-D):\n\t ";
+    if (yyparse() != 0) {
+        cout << "Can't parse your sort CNF.\n";
+        exit(1);
+    }
+
+    cout << " \n";
+    Record literal;
+    CNF sort_pred;
+    sort_pred.GrowFromParseTree(final, &myschema, literal); // constructs CNF predicate
+    OrderMaker dummy;
+    sort_pred.GetSortOrders(sortorder, dummy);
 
     pthread_t thread1;
     pthread_t thread2;
