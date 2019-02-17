@@ -8,18 +8,18 @@ ifdef linux
 tag = -n
 endif
 
-test.out: Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFile.o Pipe.o PriorityQueue.o y.tab.o lex.yy.o test.o
+test.out: Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFile.o Pipe.o RecordPageNum.o PriorityQueue.o y.tab.o lex.yy.o test.o
 ifeq ($(UNAME_S),Darwin)
-	$(CC) -o test.out Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFile.o Pipe.o PriorityQueue.o y.tab.o lex.yy.o test.o -ll -lpthread
+	$(CC) -o test.out Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFile.o Pipe.o RecordPageNum.o PriorityQueue.o y.tab.o lex.yy.o test.o -ll -lpthread
 else
-	$(CC) -o test.out Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFile.o Pipe.o PriorityQueue.o y.tab.o lex.yy.o test.o -lfl -lpthread
+	$(CC) -o test.out Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFile.o Pipe.o RecordPageNum.o PriorityQueue.o y.tab.o lex.yy.o test.o -lfl -lpthread
 endif
 	
-main: Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFile.o Pipe.o PriorityQueue.o y.tab.o lex.yy.o main.o
+main: Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFile.o Pipe.o RecordPageNum.o PriorityQueue.o y.tab.o lex.yy.o main.o
 ifeq ($(UNAME_S),Darwin)
-	$(CC) -o main Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFile.o Pipe.o PriorityQueue.o y.tab.o lex.yy.o main.o -ll -lpthread
+	$(CC) -o main Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFile.o Pipe.o RecordPageNum.o PriorityQueue.o y.tab.o lex.yy.o main.o -ll -lpthread
 else
-	$(CC) -o main Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFile.o Pipe.o PriorityQueue.o y.tab.o lex.yy.o main.o -lfl -lpthread
+	$(CC) -o main Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFile.o Pipe.o RecordPageNum.o PriorityQueue.o y.tab.o lex.yy.o main.o -lfl -lpthread
 endif
 	
 test.o: test.cc
@@ -54,7 +54,10 @@ Schema.o: Schema.cc
 
 PriorityQueue.o: PriorityQueue.cc
 	$(CC) -g -c PriorityQueue.cc
-	
+
+RecordPageNum.o: RecordPageNum.cc
+	$(CC) -g -c RecordPageNum.cc
+
 y.tab.o: Parser.y
 	yacc -d Parser.y
 ifeq ($(UNAME_S), Darwin)
