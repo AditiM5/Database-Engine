@@ -80,8 +80,14 @@ void* BigQ::Worker(void *args) {
 
     cout << "File len after internal sorting: " << file->GetLength() << endl;
 
-    // Get the first page
-    file->GetPage(currentPage, 0);
+    Page *pages = new Page[runlen];
+
+    // get sorted pages
+    for(int i = 0; i < runlen; i++) {
+        file->GetPage(pages + i, i);
+    }
+
+
 
     while(currentPage->GetFirst(tempRec)){
         out->Insert(tempRec);
@@ -120,7 +126,7 @@ void BigQ::SortRecords(Page *page, OrderMaker *sortorder) {
         page->GetFirst(records + i);
     }
 
-    cout << "<<<<<<<<<<<Records before sorting>>>>>>>>>>>>>" << endl;
+    // cout << "<<<<<<<<<<<Records before sorting>>>>>>>>>>>>>" << endl;
 
     // for (int i = 0; i < numRecs; i++) {
     //     records[i].Print();
@@ -140,7 +146,7 @@ void BigQ::SortRecords(Page *page, OrderMaker *sortorder) {
 }
 
 void BigQ::MergeSort(Record *records, int start, int end, OrderMaker *sortorder) {
-    cout << "Merge Sort: start: " << start << " end: " << end << endl;
+    // cout << "Merge Sort: start: " << start << " end: " << end << endl;
     if (start < end) {
         int mid = (start + end) / 2;
 
@@ -152,7 +158,7 @@ void BigQ::MergeSort(Record *records, int start, int end, OrderMaker *sortorder)
 
 void BigQ::Merge(Record *records, int start, int mid, int end, OrderMaker *sortorder) {
 
-    cout << "Merge: start: " << start << " mid: " << mid << " end: " << end << endl;
+    // cout << "Merge: start: " << start << " mid: " << mid << " end: " << end << endl;
     
     ComparisonEngine ceng;
 
@@ -169,13 +175,13 @@ void BigQ::Merge(Record *records, int start, int mid, int end, OrderMaker *sorto
         // cout << "Record j: " << j << endl;
         // records[j].Print();
         if (ceng.Compare(records + i, records + j, sortorder) <= 0) {
-            cout << "i is lesser" << endl;
+            // cout << "i is lesser" << endl;
             (temp + k)->Consume(records + i);
             k++;
             i++;
         } else {
             (temp + k)->Consume(records + j);
-            cout << "j is lesser" << endl;
+            // cout << "j is lesser" << endl;
             k++;
             j++;
         }
@@ -200,13 +206,17 @@ void BigQ::Merge(Record *records, int start, int mid, int end, OrderMaker *sorto
         (records + i)->Consume(temp + i - start);
     }
 
-    for (i = start; i <= end; i++)
-    {
-        (records + i)->Print();
-    }
-    cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
-    cout << endl;
+    // for (i = start; i <= end; i++)
+    // {
+    //     (records + i)->Print();
+    // }
+    // cout << "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << endl;
+    // cout << endl;
     delete[] temp;
+}
+
+void BigQ::KWayMerge(Page *pages, Pipe *out) {
+    
 }
 
 BigQ::~BigQ() {
