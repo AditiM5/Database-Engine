@@ -3,6 +3,10 @@
 
 using namespace std;
 
+RecordPageNum::RecordPageNum() {
+    rec = new Record;
+}
+
 void RecordPageNum::setPageNumber(int pageNum) {
     pageNumber = pageNum;
 }
@@ -30,6 +34,7 @@ RecordPageNum::~RecordPageNum() {
 void RecordPageNum::Consume(RecordPageNum *tempRec) {
     cout << "Consuming in RECORDPAGENUM" << endl;
     Record *temp = tempRec->getRecord();
+    pageNumber = tempRec->pageNumber;
     setRecord(temp);
 }
 
@@ -38,5 +43,6 @@ void RecordPageNum::Copy(RecordPageNum *tempRec) {
     if(rec == NULL){
         rec = new Record();
     }
+    pageNumber = tempRec->pageNumber;
     rec->Copy(temp);
 }

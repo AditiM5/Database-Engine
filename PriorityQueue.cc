@@ -84,6 +84,7 @@ bool PriorityQueue::empty() {
 
 // insert key into the heap
 void PriorityQueue::push(RecordPageNum *key) {
+	cout << "size: " << size << endl;
     // insert the new element to the end of the vector
     (A + size++)->Consume(key);
     // A.push_back(key);
@@ -102,7 +103,7 @@ void PriorityQueue::pop() {
     }
     // replace the root of the heap with the last element
     // of the vector
-    A->Consume((A + size--));
+    A->Consume(A + --size);
     // A[0] = A.back();
     // A.pop_back();
 

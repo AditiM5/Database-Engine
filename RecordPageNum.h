@@ -27,6 +27,8 @@ public:
     void Copy(RecordPageNum *tempRec);
 
     ~RecordPageNum();
+
+    RecordPageNum();
 };
 
 

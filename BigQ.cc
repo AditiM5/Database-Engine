@@ -228,9 +228,10 @@ void BigQ::KWayMerge(Page *pages, Pipe *out, int runLen, OrderMaker *sortorder) 
 
     while (!pq.empty()) {
         pq.top(tempRec);
+        pq.pop();
         int pageNum = tempRec->getPageNumber();
         out->Insert(tempRec->getRecord());
-        if (!((pages + pageNum)->GetFirst(temp))) {
+        if (!(pages + pageNum)->GetFirst(temp)) {
             continue;
         } else {
             tempRec->setRecord(temp);
