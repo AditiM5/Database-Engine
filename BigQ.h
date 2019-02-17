@@ -25,7 +25,7 @@ private:
 
     void Merge(Record *records, int start, int mid, int end, OrderMaker *sortorder);
 
-    void KWayMerge(Page *pages, Pipe *out);
+    void KWayMerge(Page *pages, Pipe *out, int runLen, OrderMaker *sortorder);
 
 public:
 

@@ -1,6 +1,7 @@
 #include "BigQ.h"
 #include <pthread.h>
 #include <unistd.h>
+#include "PriorityQueue.h"
 
 struct BigQParams {
     Pipe *in;
@@ -11,11 +12,11 @@ struct BigQParams {
     BigQ *ref;
 };
 
-void* proxyFunction(void *args){
+void *proxyFunction(void *args) {
     BigQParams *params;
     params = (BigQParams *) args;
     void *fooPtr = params->ref;
-    static_cast<BigQ*>(fooPtr)->Worker(args);
+    static_cast<BigQ *>(fooPtr)->Worker(args);
 }
 
 BigQ::BigQ(Pipe &in, Pipe &out, OrderMaker &sortorder, int runlen) {
@@ -32,7 +33,8 @@ BigQ::BigQ(Pipe &in, Pipe &out, OrderMaker &sortorder, int runlen) {
 
 }
 
-void* BigQ::Worker(void *args) {
+void *BigQ::Worker(void *args) {
+    long numRecs = 0;
     BigQParams *params;
     params = (BigQParams *) args;
 
@@ -50,7 +52,6 @@ void* BigQ::Worker(void *args) {
     Page *currentPage;
     currentPage = params->currentPage;
 
-
     while (in->Remove(tempRec) && currPageNum < runlen) {
         if (!currentPage->Append(tempRec)) {
             // sort records before writing to disk
@@ -61,10 +62,11 @@ void* BigQ::Worker(void *args) {
             currPageNum++;
             // empty the page out
             delete currentPage;
-            currentPage = new (std::nothrow) Page();
+            currentPage = new(std::nothrow) Page();
             // append record to empty page
             currentPage->Append(tempRec);
         }
+        numRecs++;
     }
 
     // deal with the remaining records
@@ -83,19 +85,15 @@ void* BigQ::Worker(void *args) {
     Page *pages = new Page[runlen];
 
     // get sorted pages
-    for(int i = 0; i < runlen; i++) {
+    for (int i = 0; i < runlen; i++) {
         file->GetPage(pages + i, i);
     }
 
-
-
-    while(currentPage->GetFirst(tempRec)){
-        out->Insert(tempRec);
-    }
+    KWayMerge(pages, out, runlen, sortorder);
 
     // finally shut down the out pipe
     out->ShutDown();
-	pthread_exit(NULL);
+    pthread_exit(NULL);
     // return 0;
 }
 
@@ -112,11 +110,11 @@ void BigQ::WritePageToDisk(File *file, Page *page) {
 }
 
 void BigQ::SortRecords(Page *page, OrderMaker *sortorder) {
-	cout << "Sorting records" << endl;
+    cout << "Sorting records" << endl;
     int numRecs = page->numRecs;
     records = new Record[numRecs];
 
-    if(records == NULL) {
+    if (records == NULL) {
         cout << "Error allocating memory for records" << endl;
         exit(1);
     }
@@ -159,7 +157,7 @@ void BigQ::MergeSort(Record *records, int start, int end, OrderMaker *sortorder)
 void BigQ::Merge(Record *records, int start, int mid, int end, OrderMaker *sortorder) {
 
     // cout << "Merge: start: " << start << " mid: " << mid << " end: " << end << endl;
-    
+
     ComparisonEngine ceng;
 
     // create a temp array
@@ -215,8 +213,31 @@ void BigQ::Merge(Record *records, int start, int mid, int end, OrderMaker *sorto
     delete[] temp;
 }
 
-void BigQ::KWayMerge(Page *pages, Pipe *out) {
-    
+void BigQ::KWayMerge(Page *pages, Pipe *out, int runLen, OrderMaker *sortorder) {
+    PriorityQueue pq(sortorder, runLen);
+    RecordPageNum *tempRec = new RecordPageNum;
+    Record *temp = new Record;
+
+    for (int i = 0; i < runLen; i++) {
+        (pages + i)->GetFirst(temp);
+        temp->Print();
+        tempRec->setRecord(temp);
+        tempRec->setPageNumber(i);
+        pq.push(tempRec);
+    }
+
+    while (!pq.empty()) {
+        pq.top(tempRec);
+        int pageNum = tempRec->getPageNumber();
+        out->Insert(tempRec->getRecord());
+        if (!((pages + pageNum)->GetFirst(temp))) {
+            continue;
+        } else {
+            tempRec->setRecord(temp);
+            tempRec->setPageNumber(pageNum);
+            pq.push(tempRec);
+        }
+    }
 }
 
 BigQ::~BigQ() {

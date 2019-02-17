@@ -28,6 +28,8 @@ class Record {
 
     friend class Page;
 
+    friend  class BigQ;
+
 private:
     char *bits;
 

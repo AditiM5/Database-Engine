@@ -3,7 +3,7 @@
 
 #include <iostream>
 #include <unistd.h>
-#include "Record.h"
+#include "RecordPageNum.h"
 #include "Comparison.h"
 #include "ComparisonEngine.h"
 
@@ -14,7 +14,7 @@ class PriorityQueue
 {
 private:
 	// vector to store heap elements
-	Record *A;
+	RecordPageNum *A;
     OrderMaker *sortorder;
     ComparisonEngine ceng;
 	int size = 0;
@@ -29,7 +29,7 @@ private:
 	// return right child of A[i]	
 	int RIGHT(int i);
 
-	void swap(Record *rec1, Record *rec2);
+	void swap(RecordPageNum *rec1, RecordPageNum *rec2);
 
 	// Recursive Heapify-down algorithm
 	// the node at index i and its two direct children
@@ -49,13 +49,13 @@ public:
 	bool empty();
 	
 	// insert key into the heap
-	void push(Record *key);
+	void push(RecordPageNum *key);
 
 	// function to remove element with lowest priority (present at root)
 	void pop();
 
 	// function to return element with lowest priority (present at root)
-	void top(Record *tempRec);
+	void top(RecordPageNum *tempRec);
 };
 
 #endif

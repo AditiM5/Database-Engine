@@ -12,7 +12,7 @@ using namespace std;
 
 void *producer(void *arg) {
     Pipe *pipe = (Pipe *) arg;
-    FILE *tableFile = fopen("data/test.tbl", "r");
+    FILE *tableFile = fopen("data/test2.tbl", "r");
     Record temp;
     Schema myschema("catalog", "lineitem");
     int i = 0;
@@ -33,6 +33,7 @@ void *consumer(void *arg) {
     int count = 0;
 
     while (pipe->Remove(&temp)) {
+        cout << "Blah" << endl;
         temp.Print(&myschema);
         count++;
     }
@@ -56,11 +57,10 @@ int main() {
     pthread_create(&thread1, NULL, consumer, (void *) &output);
     pthread_create(&thread1, NULL, producer, (void *) &input);
 
-    BigQ bq(input, output, sortorder, 1);
+    BigQ bq(input, output, sortorder, 2);
 
-    int i = 0;
 
-    // usleep(2000000);
+    usleep(20000000);
 
     pthread_join(thread1, NULL);
     pthread_join(thread2, NULL);
