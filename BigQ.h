@@ -6,6 +6,7 @@
 #include "Pipe.h"
 #include "File.h"
 #include "Record.h"
+#include <stdlib.h>
 
 using namespace std;
 
