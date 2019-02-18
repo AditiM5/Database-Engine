@@ -6,6 +6,7 @@
 #include "RecordPageNum.h"
 #include "Comparison.h"
 #include "ComparisonEngine.h"
+#include "stdlib.h"
 
 using namespace std;
 

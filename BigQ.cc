@@ -42,7 +42,6 @@ void *BigQ::Worker(void *args) {
     Pipe *out = params->out;
     OrderMaker *sortorder = params->sortorder;
     int runlen = params->runlen;
-    cout << "Runlength is " << runlen << endl;
     int currPageNum = 0;
 
     Record *tempRec = new(std::nothrow) Record();
@@ -79,8 +78,6 @@ void *BigQ::Worker(void *args) {
         // currentPage->EmptyItOut();
         currentPage = new(std::nothrow) Page();
     }
-
-    cout << "File len after internal sorting: " << file->GetLength() << endl;
 
     Page *pages = new Page[runlen];
 
