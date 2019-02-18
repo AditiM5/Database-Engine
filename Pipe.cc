@@ -69,7 +69,7 @@ void Pipe :: Insert (Record *insertMe) {
 
 int Pipe :: Remove (Record *removeMe) {
 
-	cout << "Removing Record from pipe" << endl;
+	// cout << "Removing Record from pipe" << endl;
 	 
 	// first, get a mutex on the pipeline
 	pthread_mutex_lock (&pipeMutex);
@@ -78,7 +78,7 @@ int Pipe :: Remove (Record *removeMe) {
 	// there is, then do the removal
 	if (lastSlot != firstSlot) {
 
-		cout << "Pipe not empty" << endl;
+		// cout << "Pipe not empty" << endl;
 		
 		removeMe->Consume (&buffered [firstSlot % totSpace]);
 
@@ -86,12 +86,12 @@ int Pipe :: Remove (Record *removeMe) {
 	// puts some data into the pipeline
 	} else {
 
-		cout << "Pipe empty not done" << endl;
+		// cout << "Pipe empty not done" << endl;
 
 		// the pipeline is empty so we first see if this
 		// is because it was turned off
 		if (done) {
-			cout << "Pipe empty and done 1" << endl;
+			// cout << "Pipe empty and done 1" << endl;
 			pthread_mutex_unlock (&pipeMutex);
 			return 0;
 		}

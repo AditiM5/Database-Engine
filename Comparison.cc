@@ -124,7 +124,7 @@ int CNF :: GetSortOrders (OrderMaker &left, OrderMaker &right) {
 	// initialize the size of the OrderMakers
 	left.numAtts = 0;
 	right.numAtts = 0;
-
+	
 	// loop through all of the disjunctions in the CNF and find those
 	// that are acceptable for use in a sort ordering
 	for (int i = 0; i < numAnds; i++) {

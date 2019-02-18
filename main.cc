@@ -18,14 +18,14 @@ extern struct AndList *final;
 
 void *producer(void *arg) {
     Pipe *pipe = (Pipe *) arg;
-    FILE *tableFile = fopen("data/lineitem.tbl", "r");
+    FILE *tableFile = fopen("data/test.tbl", "r");
     Record temp;
     Schema myschema("catalog", "lineitem");
     int i = 0;
 
     while (temp.SuckNextRecord(&myschema, tableFile) == 1) {
         pipe->Insert(&temp);
-        cout << "Inserting record: " << i++ << endl;
+        // cout << "Inserting record: " << i++ << endl;
     }
 
     pipe->ShutDown();
@@ -38,13 +38,29 @@ void *consumer(void *arg) {
     Schema myschema("catalog", "lineitem");
     int count = 0;
 
+    DBFile dbFile;
+    dbFile.Create("data/lineitemtest.bin", heap, NULL);
+
     while (pipe->Remove(&temp)) {
-        cout << "Blah" << endl;
         temp.Print(&myschema);
-        count++;
+        dbFile.Add(&temp);
     }
 
-    cout << "Removed count: " << count << endl;
+    cout << "Close file: " << dbFile.Close() << endl;
+
+    DBFile newFile;
+    newFile.Open("data/lineitemtest.bin");
+    newFile.MoveFirst();
+
+    cout << "DBFile recs" << endl;
+
+    while(newFile.GetNext(temp)){
+        temp.Print(&myschema);
+    }
+
+    newFile.Close();
+    
+    // cout << "Removed count: " << count << endl;
     pthread_exit(NULL);
 }
 
@@ -54,35 +70,39 @@ int main() {
 
     Schema myschema("catalog", "lineitem");
     Record temp;
-    OrderMaker sortorder;
+    OrderMaker sortorder(&myschema);
 
-    cout << "\n specify sort ordering (when done press ctrl-D):\n\t ";
-    if (yyparse() != 0) {
-        cout << "Can't parse your sort CNF.\n";
-        exit(1);
-    }
+    // cout << "\n specify sort ordering (when done press ctrl-D):\n\t ";
+    // if (yyparse() != 0) {
+    //     cout << "Can't parse your sort CNF.\n";
+    //     exit(1);
+    // }
 
-    cout << " \n";
-    Record literal;
-    CNF sort_pred;
-    sort_pred.GrowFromParseTree(final, &myschema, literal); // constructs CNF predicate
-    OrderMaker dummy;
-    sort_pred.GetSortOrders(sortorder, dummy);
+    // cout << " \n";
+    // Record literal;
+    // CNF sort_pred;
+    // sort_pred.GrowFromParseTree(final, &myschema, literal); // constructs CNF predicate
+    // OrderMaker dummy;
+    // sort_pred.GetSortOrders(sortorder, dummy);
 
     pthread_t thread1;
     pthread_t thread2;
 
-    pthread_create(&thread1, NULL, consumer, (void *) &output);
     pthread_create(&thread1, NULL, producer, (void *) &input);
+    pthread_create(&thread2, NULL, consumer, (void *) &output);
 
-    BigQ bq(input, output, sortorder, 2);
+    BigQ bq(input, output, sortorder, 1);
 
 
-    usleep(20000000);
-
-    pthread_join(thread1, NULL);
+    // usleep(2000000);
     pthread_join(thread2, NULL);
+    cout << "Consumer done" << endl;
+    pthread_join(thread1, NULL);
+    cout << "Producer done" << endl;
+ 
     pthread_join(bq.threadID, NULL);
+
+    // exit(0);
 
     // cout << "ThreadID : " << bq.threadID << endl;
 

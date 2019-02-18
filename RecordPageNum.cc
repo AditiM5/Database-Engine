@@ -32,7 +32,6 @@ RecordPageNum::~RecordPageNum() {
 }
 
 void RecordPageNum::Consume(RecordPageNum *tempRec) {
-    cout << "Consuming in RECORDPAGENUM" << endl;
     Record *temp = tempRec->getRecord();
     pageNumber = tempRec->pageNumber;
     setRecord(temp);

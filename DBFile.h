@@ -29,10 +29,12 @@ public:
 
     int Create(const char *fpath, fType file_type, void *startup);
 
+    // Opens bin files
     int Open(const char *fpath);
 
     int Close();
 
+    // Loads a tbl file
     void Load(Schema &myschema, const char *loadpath);
 
     void MoveFirst();
