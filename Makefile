@@ -2,6 +2,28 @@ CC = g++ -O2 -Wno-deprecated -Wno-unused-result -Wno-write-strings -Wno-format-o
 MAKE = make
 UNAME_S := $(shell uname -s)
 
+# Google test setup
+
+GTEST_DIR = /usr/src/gtest/
+USER_DIR = .
+
+GTEST_HEADERS = /usr/include/gtest/*.h \
+                /usr/include/gtest/internal/*.h
+
+# Flags passed to the preprocessor.
+CPPFLAGS += -isystem $(GTEST_DIR)/include
+
+# Flags passed to the C++ compiler.
+CXXFLAGS += -g -Wall -Wextra -pthread
+
+# All tests produced by this Makefile.  Remember to add new tests you
+# created to the list.
+TESTS = sample1_unittest
+
+GTEST_SRCS_ = $(GTEST_DIR)/src/*.cc $(GTEST_DIR)/src/*.h $(GTEST_HEADERS)
+
+# Google test setup ends
+
 tag = -i
 
 ifdef linux
@@ -71,12 +93,49 @@ lex.yy.o: Lexer.l
 	lex  Lexer.l
 	gcc  -c lex.yy.c
 
+# Google test targets
+
+gtest : $(TESTS)
+
+gtest-all.o : $(GTEST_SRCS_)
+	$(CXX) $(CPPFLAGS) -I$(GTEST_DIR) $(CXXFLAGS) -c \
+            $(GTEST_DIR)/src/gtest-all.cc
+
+gtest_main.o : $(GTEST_SRCS_)
+	$(CXX) $(CPPFLAGS) -I$(GTEST_DIR) $(CXXFLAGS) -c \
+            $(GTEST_DIR)/src/gtest_main.cc
+
+gtest.a : gtest-all.o
+	$(AR) $(ARFLAGS) $@ $^
+
+gtest_main.a : gtest-all.o gtest_main.o
+	$(AR) $(ARFLAGS) $@ $^
+
+# Builds a sample test.  A test should link with either gtest.a or
+# gtest_main.a, depending on whether it defines its own main()
+# function.
+
+sample1.o : $(USER_DIR)/sample1.cc $(USER_DIR)/sample1.h $(GTEST_HEADERS)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(USER_DIR)/sample1.cc
+
+sample1_unittest.o : $(USER_DIR)/sample1_unittest.cc \
+                     $(USER_DIR)/sample1.h $(GTEST_HEADERS)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(USER_DIR)/sample1_unittest.cc
+
+sample1_unittest : sample1.o sample1_unittest.o gtest_main.a
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@
+
+# end Google test targets
+
 clean: 
 	rm -f *.o
 	rm -f *.out
 	rm -f y.tab.c
 	rm -f lex.yy.c
 	rm -f y.tab.h
+
+clean_gtest:
+	rm -f $(TESTS) gtest.a gtest_main.a *.o
 
 rebuild_and_run:
 	$(MAKE) main
