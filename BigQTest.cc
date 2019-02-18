@@ -53,6 +53,14 @@ TEST_F(BigQTest, SortOrderTest) {
         counter++;
         EXPECT_EQ(0, ceng.Compare(&temp, &sortedRec, sortorder1));
     }
+
+    fclose(tableFile);
+    sortedFile->Close();
+    delete sortedFile;
+    delete sortorder1;
+    delete input;
+    delete output;
+    delete myschema1;
 }
 
 TEST_F(BigQTest, SortSingleAttTest){
@@ -93,6 +101,15 @@ TEST_F(BigQTest, SortSingleAttTest){
         counter++;
         EXPECT_EQ(0, ceng.Compare(&temp, &sortedRec, sortorder1));
     }
+    fclose(tableFile);
+    sortedFile->Close();
+    delete sortedFile;
+    delete sortorder1;
+    delete sortorder2;
+    delete input;
+    delete output;
+    delete myschema1;
+    delete myschema2;
 }
 
 void *producer(void *arg) {
@@ -148,5 +165,15 @@ TEST_F(BigQTest, SortMergeTest) {
 
     pthread_join(thread1, NULL);
     pthread_join(bq->threadID, NULL);
+
+    fclose(tableFile);
+    sortedFile->Close();
+    delete sortedFile;
+    delete sortorder1;
+    delete sortorder2;
+    delete input;
+    delete output;
+    delete myschema1;
+    delete myschema2;
 }
 
