@@ -1,10 +1,10 @@
-CC = g++ -O2 -Wno-deprecated -Wno-unused-result -Wno-write-strings -Wno-format-overflow
+CC = g++ -O2 -Wno-deprecated -Wno-unused-variable -Wno-unused-parameter -Wno-unused-result -Wno-write-strings -Wno-format-overflow -isystem $(GTEST_DIR)/include -Wall -Wextra -pthread
 MAKE = make
 UNAME_S := $(shell uname -s)
 
 # Google test setup
 
-GTEST_DIR = /usr/src/gtest/
+GTEST_DIR = /usr/src/gtest
 USER_DIR = .
 
 GTEST_HEADERS = /usr/include/gtest/*.h \
@@ -15,10 +15,6 @@ CPPFLAGS += -isystem $(GTEST_DIR)/include
 
 # Flags passed to the C++ compiler.
 CXXFLAGS += -g -Wall -Wextra -pthread
-
-# All tests produced by this Makefile.  Remember to add new tests you
-# created to the list.
-TESTS = sample1_unittest
 
 GTEST_SRCS_ = $(GTEST_DIR)/src/*.cc $(GTEST_DIR)/src/*.h $(GTEST_HEADERS)
 
@@ -95,6 +91,10 @@ lex.yy.o: Lexer.l
 
 # Google test targets
 
+# All tests produced by this Makefile.  Remember to add new tests you
+# created to the list.
+TESTS = BigQTest
+
 gtest : $(TESTS)
 
 gtest-all.o : $(GTEST_SRCS_)
@@ -115,7 +115,7 @@ gtest_main.a : gtest-all.o gtest_main.o
 # gtest_main.a, depending on whether it defines its own main()
 # function.
 
-sample1.o : $(USER_DIR)/sample1.cc $(USER_DIR)/sample1.h $(GTEST_HEADERS)
+sample1.o : $(USER_DIR)/sample1.cc $(USER_DIR)/sample1.h
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(USER_DIR)/sample1.cc
 
 sample1_unittest.o : $(USER_DIR)/sample1_unittest.cc \
@@ -123,7 +123,13 @@ sample1_unittest.o : $(USER_DIR)/sample1_unittest.cc \
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(USER_DIR)/sample1_unittest.cc
 
 sample1_unittest : sample1.o sample1_unittest.o gtest_main.a
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@ 
+
+BigQTest.o : $(USER_DIR)/BigQTest.cc $(GTEST_HEADERS)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(USER_DIR)/BigQTest.cc
+
+BigQTest : Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFile.o Pipe.o RecordPageNum.o PriorityQueue.o y.tab.o lex.yy.o BigQTest.o gtest_main.a
+	$(CC) $^ -lfl -lpthread -o $@
 
 # end Google test targets
 
