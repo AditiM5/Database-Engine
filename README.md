@@ -38,7 +38,8 @@ and then follow the on-screen instructions.
 ```./docker.sh gtest```
 
 
-#### Authors
+
+### Authors
 
 * **Aditi Malladi UFID: 9828-6321**
 * **Suraj Kumar Reddy Thanugundla UFID: 3100-9916**
