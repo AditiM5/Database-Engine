@@ -86,50 +86,13 @@ void *consumer(void *arg) {
 }
 
 int main() {
-    Pipe input(100);
-    Pipe output(100);
-    globalReadOffset = 0;
 
-    Schema myschema("catalog", "lineitem");
-    Schema myschema2("catalog", "partsupp");
-    Record temp;
-    OrderMaker sortorder1, sortorder2;
+    Schema myschema("catalog", "partsupp");
 
-    // cout << "\n specify sort ordering (when done press ctrl-D):\n\t ";
-    // yy_scan_buffer("l_partkey = ps_partkey");
-    
-    if (yyparse() != 0) {
-        cout << "Can't parse your sort CNF.\n";
-        exit(1);
-    }
-
-    cout << " \n";
-    Record literal;
-    CNF sort_pred;
-    sort_pred.GrowFromParseTree(final, &myschema, &myschema2, literal); // constructs CNF predicate
-    sort_pred.GetSortOrders(sortorder1, sortorder2);
-
-    pthread_t thread1;
-    pthread_t thread2;
-
-    pthread_create(&thread1, NULL, producer, (void *) &input);
-    pthread_create(&thread2, NULL, consumer, (void *) &output);
-
-    BigQ bq(input, output, sortorder1, 3);
-
-
-    // // usleep(2000000);
-    pthread_join(thread2, NULL);
-    cout << "Consumer done" << endl;
-    pthread_join(thread1, NULL);
-    cout << "Producer done" << endl;
- 
-    pthread_join(bq.threadID, NULL);
-
-    // exit(0);
-
-    cout << "Hello" << endl;
-
+    DBFile newFile;
+    newFile.Create("data/partsupp.bin", heap, NULL);
+    newFile.Load(myschema, "data/partsupp.tbl");
+    newFile.Close();
     return 0;
 }
 

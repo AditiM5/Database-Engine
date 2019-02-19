@@ -124,7 +124,7 @@ int CNF :: GetSortOrders (OrderMaker &left, OrderMaker &right) {
 	// initialize the size of the OrderMakers
 	left.numAtts = 0;
 	right.numAtts = 0;
-	
+
 	// loop through all of the disjunctions in the CNF and find those
 	// that are acceptable for use in a sort ordering
 	for (int i = 0; i < numAnds; i++) {
@@ -143,9 +143,8 @@ int CNF :: GetSortOrders (OrderMaker &left, OrderMaker &right) {
 		// now verify that it operates over atts from both tables
 		if (!((orList[i][0].operand1 == Left && orList[i][0].operand2 == Right) ||
 		      (orList[i][0].operand2 == Left && orList[i][0].operand1 == Right))) {
-			continue;
+			continue;		
 		}
-
 
 		// since we are here, we have found a join attribute!!!
 		// so all we need to do is add the new comparison info into the
@@ -414,7 +413,9 @@ void CNF :: GrowFromParseTree (struct AndList *parseTree, Schema *leftSchema,
 	outRecFile = fopen ("sdafdsfFFDSDA", "r");
 
 	// read in the record's schema
-	Schema mySchema("hkljdfgkSDFSDF", "tempSchema");
+	char *a = "hkljdfgkSDFSDF";
+	char *b = "tempSchema";
+	Schema mySchema(a, b);
 
 	// and get the record
 	literal.SuckNextRecord (&mySchema, outRecFile);
@@ -604,7 +605,9 @@ void CNF :: GrowFromParseTree (struct AndList *parseTree, Schema *mySchema,
 	outRecFile = fopen ("sdafdsfFFDSDA", "r");
 
 	// read in the record's schema
-	Schema outSchema("hkljdfgkSDFSDF", "tempSchema");
+	char *a = "hkljdfgkSDFSDF";
+	char *b = "tempSchema";
+	Schema outSchema(a, b);
 
 	// and get the record
 	literal.SuckNextRecord (&outSchema, outRecFile);

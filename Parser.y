@@ -10,9 +10,9 @@
 	extern "C" int yylex();
 	extern "C" int yyparse();
 	extern "C" void yyerror(char *s);
+  
 	// this is the final parse tree that is returned	
-	struct AndList *final;
-
+	struct AndList *final;	
 
 %}
 
@@ -101,7 +101,14 @@ Condition: Literal Op Literal
 	$$->left = $1;
 	$$->right = $3;
 }
-;
+
+| Literal
+{
+	$$ = (struct ComparisonOp *) malloc (sizeof (struct ComparisonOp));
+	$$->code = EQUALS;
+	$$->left = $1;
+	$$->right = $1;
+};
 
 Op: '<' 
 {
@@ -159,4 +166,3 @@ Literal : String
 ;
 
 %%
-

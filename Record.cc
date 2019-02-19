@@ -7,7 +7,6 @@
 
 
 Record::Record() {
-    schema = new Schema("catalog", "lineitem");
     bits = NULL;
 }
 
@@ -358,10 +357,6 @@ void Record::Print(Schema *mySchema) {
     }
 
     cout << "\n";
-}
-
-void Record::Print() {
-    Print(schema);
 }
 
 void Record::ClearRecord() {

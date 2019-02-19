@@ -14,166 +14,157 @@ extern "C" {
     int yyparse(void);   // defined in y.tab.c
 }
 
+struct params {
+    Pipe* pipe;
+    char *filename;
+    char *schema;
+};
+
 extern struct AndList *final;
+
+void *producer(void *args) {
+    struct params *params = (struct params *)args;
+    Pipe *pipe = params->pipe;
+    FILE *tableFile = fopen(params->filename, "r");
+    Record temp;
+    Schema myschema("catalog", params->schema);
+    int i = 0;
+
+    while (temp.SuckNextRecord(&myschema, tableFile) == 1) {
+        pipe->Insert(&temp);
+        // cout << ++i << endl;
+    }
+
+    pipe->ShutDown();
+    pthread_exit(NULL);
+    return 0;
+}
 
 class BigQTest : public ::testing::Test {
 protected:
+
     FILE *tableFile;
     DBFile *sortedFile;
     Record temp, sortedRec;
-    Schema *myschema1, *myschema2;
-    OrderMaker *sortorder1, *sortorder2;
+    Schema *myschema;
+    OrderMaker *sortorder;
     Pipe *input, *output;
     ComparisonEngine ceng;
 };
 
 TEST_F(BigQTest, SortOrderTest) {
     tableFile = fopen("data/test.tbl", "r");
-    myschema1 = new Schema("catalog", "lineitem");
+    myschema = new Schema("catalog", "lineitem");
     sortedFile = new DBFile();
     sortedFile->Open("data/lineitemtest.bin");
     sortedFile->MoveFirst();
-    sortorder1 = new OrderMaker(myschema1);
+    sortorder = new OrderMaker(myschema);
     input = new Pipe(100);
     output = new Pipe(100);
 
     int counter = 0;
-    while (temp.SuckNextRecord(myschema1, tableFile) == 1) {
+    while (temp.SuckNextRecord(myschema, tableFile) == 1) {
         input->Insert(&temp);
         counter++;
     }
 
     input->ShutDown();
 
-    BigQ *bq = new BigQ(*input, *output, *sortorder1, 1);
+    BigQ *bq = new BigQ(*input, *output, *sortorder, 1);
 
     counter = 0;
 
     while (output->Remove(&temp) && sortedFile->GetNext(sortedRec)) {
         counter++;
-        EXPECT_EQ(0, ceng.Compare(&temp, &sortedRec, sortorder1));
+        EXPECT_EQ(0, ceng.Compare(&temp, &sortedRec, sortorder));
     }
-
-    fclose(tableFile);
-    sortedFile->Close();
-    delete sortedFile;
-    delete sortorder1;
-    delete input;
-    delete output;
-    delete myschema1;
 }
 
+// File is larger than runlen
 TEST_F(BigQTest, SortSingleAttTest){
-    tableFile = fopen("data/test.tbl", "r");
-    myschema1 = new Schema("catalog", "lineitem");
-    myschema2 = new Schema("catalog", "partsupp");
-    sortorder1 = new OrderMaker;
-    sortorder2 = new OrderMaker;
+    myschema = new Schema("catalog", "lineitem");
+    sortorder = new OrderMaker;
     input = new Pipe(100);
     output = new Pipe(100);
 
     sortedFile = new DBFile();
-    sortedFile->Open("data/partkeytest.bin");
+    sortedFile->Open("data/lineitem.bin.bigq");
     sortedFile->MoveFirst();
 
-    cout << "Enter CNF (Press Ctrl+D when done)" << endl;
+    cout << "Enter CNF (l_shipdate) AND (l_extendedprice) AND  (l_quantity) (Press Ctrl+D when done)" << endl;
     if (yyparse() != 0) {
         cout << "Can't parse your sort CNF.\n";
         exit(1);
     }
 
-    Record literal;
-    CNF sort_pred;
-    sort_pred.GrowFromParseTree(final, myschema1, myschema2, literal); // constructs CNF predicate
-    sort_pred.GetSortOrders(*sortorder1, *sortorder2);
-
-    int counter = 0;
-    while (temp.SuckNextRecord(myschema1, tableFile) == 1) {
-        input->Insert(&temp);
-        counter++;
-    }
-    input->ShutDown();
-    BigQ *bq = new BigQ(*input, *output, *sortorder1, 1);
-
-    counter = 0;
-
-    while (output->Remove(&temp)&& sortedFile->GetNext(sortedRec)) {
-        counter++;
-        EXPECT_EQ(0, ceng.Compare(&temp, &sortedRec, sortorder1));
-    }
-    fclose(tableFile);
-    sortedFile->Close();
-    delete sortedFile;
-    delete sortorder1;
-    delete sortorder2;
-    delete input;
-    delete output;
-    delete myschema1;
-    delete myschema2;
-}
-
-void *producer(void *arg) {
-    Pipe *pipe = (Pipe *) arg;
-    FILE *tableFile = fopen("data/mergetest.tbl", "r");
-    Record temp;
-    Schema myschema("catalog", "lineitem");
-    int i = 0;
-
-    while (temp.SuckNextRecord(&myschema, tableFile) == 1) {
-        pipe->Insert(&temp);
-    }
-
-    pipe->ShutDown();
-    pthread_exit(NULL);
-}
-
-TEST_F(BigQTest, SortMergeTest) {
-    myschema1 = new Schema("catalog", "lineitem");
-    myschema2 = new Schema("catalog", "partsupp");
-    sortorder1 = new OrderMaker;
-    sortorder2 = new OrderMaker;
-    input = new Pipe(100);
-    output = new Pipe(100);
-
-    sortedFile = new DBFile();
-    sortedFile->Open("data/partkeymergetest.bin");
-    sortedFile->MoveFirst();
-
-    cout << "Enter CNF (Press Ctrl+D when done)" << endl;
-    if (yyparse() != 0) {
-        cout << "Can't parse your sort CNF.\n";
-        exit(1);
-    }
+    struct params *params = new struct params;
+    params->pipe = input;
+    params->filename = "data/lineitem.tbl";
+    params->schema = "lineitem";
 
     Record literal;
+    OrderMaker dummy;
     CNF sort_pred;
-    sort_pred.GrowFromParseTree(final, myschema1, myschema2, literal);
-    sort_pred.GetSortOrders(*sortorder1, *sortorder2);
+    sort_pred.GrowFromParseTree(final, myschema, literal); // constructs CNF predicate
+    sort_pred.GetSortOrders(*sortorder, dummy);
 
     pthread_t thread1;
 
-    pthread_create(&thread1, NULL, producer, (void *)input);
+    pthread_create(&thread1, NULL, producer, (void *)params);
 
-    BigQ *bq = new BigQ(*input, *output, *sortorder1, 3);
+    BigQ *bq = new BigQ(*input, *output, *sortorder, 2);
 
     int counter = 0;
 
     while (output->Remove(&temp)&& sortedFile->GetNext(sortedRec)) {
-        counter++;
-        EXPECT_EQ(0, ceng.Compare(&temp, &sortedRec, sortorder1));
+        // cout << counter++ << endl; 
+        EXPECT_EQ(0, ceng.Compare(&temp, &sortedRec, sortorder));
+    }
+
+    pthread_join(bq->threadID, NULL);
+}
+
+// more runs than filelen
+TEST_F(BigQTest, SortMergeTest) {
+    myschema = new Schema("catalog", "region");
+    sortorder = new OrderMaker;
+    input = new Pipe(100);
+    output = new Pipe(100);
+
+    sortedFile = new DBFile();
+    sortedFile->Open("data/region.bin.bigq");
+    sortedFile->MoveFirst();
+
+    cout << "Enter CNF (r_name) (Press Ctrl+D when done)" << endl;
+    if (yyparse() != 0) {
+        cout << "Can't parse your sort CNF.\n";
+        exit(1);
+    }
+
+    struct params *params = new struct params;
+    params->pipe = input;
+    params->filename = "data/region.tbl";
+    params->schema = "region";
+
+    Record literal;
+    CNF sort_pred;
+    OrderMaker dummy;
+    sort_pred.GrowFromParseTree(final, myschema, literal);
+    sort_pred.GetSortOrders(*sortorder, dummy);
+
+    pthread_t thread1;
+
+    pthread_create(&thread1, NULL, producer, (void *)params);
+
+    BigQ *bq = new BigQ(*input, *output, *sortorder, 5);
+
+    int counter = 0;
+
+    while (output->Remove(&temp)&& sortedFile->GetNext(sortedRec)) {
+        EXPECT_EQ(0, ceng.Compare(&temp, &sortedRec, sortorder));
     }
 
     pthread_join(thread1, NULL);
     pthread_join(bq->threadID, NULL);
-
-    fclose(tableFile);
-    sortedFile->Close();
-    delete sortedFile;
-    delete sortorder1;
-    delete sortorder2;
-    delete input;
-    delete output;
-    delete myschema1;
-    delete myschema2;
 }
 

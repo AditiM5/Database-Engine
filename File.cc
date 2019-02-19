@@ -7,6 +7,7 @@
 #include <string.h>
 #include <iostream>
 #include <stdlib.h>
+#include <signal.h>
 
 
 Page::Page() {
@@ -185,6 +186,7 @@ void File::GetPage(Page *putItHere, off_t whichPage) {
         cerr << "curLength of the file is : " << curLength << endl;
         cerr << "whichPage " << whichPage << " length " << curLength << endl;
         cerr << "BAD: you tried to read past the end of the file\n";
+        raise(SIGSEGV);
         exit(1);
     }
 

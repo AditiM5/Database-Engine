@@ -15,6 +15,7 @@
 
 int lineno = 1;
 void yyerror(char*s);
+
 %}
 
 
@@ -85,5 +86,3 @@ void yyerror(char *s) {
 int yywrap(void){
   return 1;
 }
-
-

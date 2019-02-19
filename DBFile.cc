@@ -41,10 +41,8 @@ void DBFile::Load(Schema &f_schema, const char *loadpath) {
     }
 
     Record temp;
-    cout << "Load BEFORE WHILE" << endl;
 
     while (temp.SuckNextRecord(&f_schema, tableFile) == 1) {
-        cout << "Load" << endl;
         // check for page overflow
         if (!currentPage->Append(&temp)) {
             WriteCurrentPageToDisk();

@@ -34,7 +34,7 @@ public:
 
     int Close();
 
-    // Loads a tbl file
+    // Loads a tbl file. Call Create() before this
     void Load(Schema &myschema, const char *loadpath);
 
     void MoveFirst();

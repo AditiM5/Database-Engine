@@ -73,6 +73,8 @@ void *BigQ::Worker(void *args) {
         // sort and write records to disk
         SortRecords(currentPage, sortorder);
         WritePageToDisk(file, currentPage);
+        // increment page number
+        currPageNum++;
         // empty the page out
         delete currentPage;
         // currentPage->EmptyItOut();
@@ -82,11 +84,11 @@ void *BigQ::Worker(void *args) {
     Page *pages = new Page[runlen];
 
     // get sorted pages
-    for (int i = 0; i < runlen; i++) {
+    for (int i = 0; i < currPageNum; i++) {
         file->GetPage(pages + i, i);
     }
 
-    KWayMerge(pages, out, runlen, sortorder);
+    KWayMerge(pages, out, currPageNum, sortorder);
 
     delete[] pages;
 
