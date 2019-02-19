@@ -11,6 +11,10 @@ To run the driver, type
 and then follow the on-screen instructions.
 
 ### Running gtest :
+Test cases being handled:
+* When the default ordermaker
+* When the file tested has more pages than run length passed
+* When the file tested has lesser pages than the run length passed
 
 ```make gtest```
 
