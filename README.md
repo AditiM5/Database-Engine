@@ -1,6 +1,7 @@
 # README
 
 ### Test driver for Assignment 1 heap DBFile (spring 2019 dbi) :
+### Added Gtest
 
 This test driver gives a menu-based interface to three options that allows you to test your code:
 
@@ -9,7 +10,6 @@ This test driver gives a menu-based interface to three options that allows you t
 2. scan (read records from an existing heap DBFile)
 
 3. scan & filter (read records and filter using a CNF predicate)
-
 
 5.  add records to file (new test case added)
 6. add records and scan (new test added)
@@ -26,6 +26,19 @@ To run the driver, type
 
 and then follow the on-screen instructions.
 
+### To run gtest using docker:
+
+``` make clean```
+
+``` ./docker.sh gtest```
+
+### To run gtest:
+
+``` make clean```
+
+``` make gtest```
+
+``` ./DBFileTest```
 ### Using the driver:
 
 1. SETTINGS: The following variables control the various file locations and they are declared in test.cc (just after the #include header declarations):
@@ -134,3 +147,9 @@ The expected output for these CNF's can be found in the file "output.log"
 (l_linestatus = 'F') AND
 (l_tax &lt; 0.07)
 ```
+
+
+## Authors
+
+* **Aditi Malladi UFID: 9828-6321**
+* **Suraj Kumar Reddy Thanugundla UFID: 3100-9916**

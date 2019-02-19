@@ -2,7 +2,6 @@
 #include <iostream>
 #include "Record.h"
 #include <stdlib.h>
-#include "DBFile.h"
 
 using namespace std;
 
@@ -13,58 +12,49 @@ int yyparse(void);   // defined in y.tab.c
 extern struct AndList *final;
 
 int main() {
-//    cout << "Enter in your CNF: ";
-//    if (yyparse() != 0) {
-//        cout << "Can't parse your CNF.\n";
-//        exit (1);
-//    }
-// suck up the schema from the file
-    Schema lineitem ("catalog", "lineitem");
+
+    // try to parse the CNF
+    cout << "Enter in your CNF: ";
+    if (yyparse() != 0) {
+        cout << "Can't parse your CNF.\n";
+        exit(1);
+    }
+
+    // suck up the schema from the file
+    Schema lineitem("catalog", "lineitem");
 
     // grow the CNF expression from the parse tree
-//    CNF myComparison;
-//    Record literal;
-//    myComparison.GrowFromParseTree (final, &lineitem, literal);
+    CNF myComparison;
+    Record literal;
+    myComparison.GrowFromParseTree(final, &lineitem, literal);
 
     // print out the comparison to the screen
-//    myComparison.Print ();
+    myComparison.Print();
 
-    DBFile dbFile;
-//    Schema lineitem("catalog", "lineitem");
-    char fileName[] = "data/lineitem.tbl";
-//    dbFile.Close();
+    // now open up the text file and start procesing it
+    FILE *tableFile = fopen("/cise/tmp/dbi_sp11/DATA/10M/lineitem.tbl", "r");
+    
+    Record temp;
+    Schema mySchema("catalog", "lineitem");
 
-    char tempMain[] = "tempMain";
-    dbFile.Create(tempMain, heap, NULL);
-//    dbFile.Load(lineitem, fileName);
-    FILE *tableFile = fopen(fileName, "r");
+    //char *bits = literal.GetBits ();
+    //cout << " numbytes in rec " << ((int *) bits)[0] << endl;
+    //literal.Print (&supplier);
 
-    int count = 0;
-    Record tempRec;
-//
-    while (tempRec.SuckNextRecord(&lineitem, tableFile) == 1) {
-//        tempRec.Print(&lineitem);
-        dbFile.Add(&tempRec);
-        count++;
-//        cout << "Writ?ng rec: " << count << end l;
-    }
-    cout << "Recs written: " << count << endl;
-//    dbFile.Close();
+    // read in all of the records from the text file and see if they match
+    // the CNF expression that was typed in
+    int counter = 0;
+    ComparisonEngine comp;
+    while (temp.SuckNextRecord(&mySchema, tableFile) == 1) {
+        counter++;
+        if (counter % 10000 == 0) {
+            cerr << counter << "\n";
+        }
 
-//    dbFile.Load(lineitem, "tempMain");
-    dbFile.MoveFirst();
-
-    count = 0;
-    while (dbFile.GetNext(tempRec)) {
-//        tempRec.Print(&lineitem);
-        count++;
+        if (comp.Compare(&temp, &literal, &myComparison))
+            temp.Print(&mySchema);
     }
 
-    cout << "GetNext count: " << count << endl;
-
-    return 0;
 }
-
-
 
 
