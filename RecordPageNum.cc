@@ -15,6 +15,14 @@ int RecordPageNum::getPageNumber() {
     return pageNumber;
 }
 
+void RecordPageNum::setRunNumber(int runNum) {
+    runNumber = runNum;
+}
+
+int RecordPageNum::getRunNumber() {
+    return runNumber;
+}
+
 
 Record *RecordPageNum::getRecord() {
     return rec;
@@ -34,6 +42,7 @@ RecordPageNum::~RecordPageNum() {
 void RecordPageNum::Consume(RecordPageNum *tempRec) {
     Record *temp = tempRec->getRecord();
     pageNumber = tempRec->pageNumber;
+    runNumber = tempRec->runNumber;
     setRecord(temp);
 }
 
@@ -43,5 +52,6 @@ void RecordPageNum::Copy(RecordPageNum *tempRec) {
         rec = new Record();
     }
     pageNumber = tempRec->pageNumber;
+    runNumber = tempRec->runNumber;
     rec->Copy(temp);
 }

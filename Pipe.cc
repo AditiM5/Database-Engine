@@ -138,3 +138,8 @@ void Pipe :: ShutDown () {
 	pthread_mutex_unlock (&pipeMutex);
 	
 }
+
+// returns true if pipe is done
+bool Pipe :: isDone(){
+	return done == 1;
+}

@@ -58,7 +58,7 @@ void *consumer(void *arg) {
     int count = 0;
 
     DBFile dbFile;
-    dbFile.Create("data/partkeymergetest.bin", heap, NULL);
+    dbFile.Create("data-1GB/lineitem.bin", heap, NULL);
 
     while (pipe->Remove(&temp)) {
         temp.Print(&myschema);
@@ -87,11 +87,11 @@ void *consumer(void *arg) {
 
 int main() {
 
-    Schema myschema("catalog", "partsupp");
+    Schema myschema("catalog", "lineitem");
 
     DBFile newFile;
-    newFile.Create("data/partsupp.bin", heap, NULL);
-    newFile.Load(myschema, "data/partsupp.tbl");
+    newFile.Create("data-1GB/lineitem.bin", heap, NULL);
+    newFile.Load(myschema, "data-1GB/lineitem.tbl");
     newFile.Close();
     return 0;
 }

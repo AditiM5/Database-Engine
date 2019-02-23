@@ -11,12 +11,18 @@ private:
 
     int pageNumber;
 
+    int runNumber;
+
     Record *rec;
 public:
 
     void setPageNumber(int pageNum);
 
     int getPageNumber();
+
+    void setRunNumber(int runNum);
+
+    int getRunNumber();
 
     Record* getRecord();
 

@@ -2,6 +2,11 @@
 #include <pthread.h>
 #include <unistd.h>
 #include "PriorityQueue.h"
+#include "File.h"
+#include <iostream>
+
+
+using namespace std;
 
 struct BigQParams {
     Pipe *in;
@@ -37,11 +42,18 @@ void *BigQ::Worker(void *args) {
     long numRecs = 0;
     BigQParams *params;
     params = (BigQParams *) args;
+    // number of runs
+    int runNum = 0;
 
     Pipe *in = params->in;
     Pipe *out = params->out;
     OrderMaker *sortorder = params->sortorder;
+
+    // number of records on each run to be sorted
     int runlen = params->runlen;
+    int runOffsets[runlen];
+
+    // number of records on each page!
     int currPageNum = 0;
 
     Record *tempRec = new(std::nothrow) Record();
@@ -50,27 +62,56 @@ void *BigQ::Worker(void *args) {
     // Page *currentPage = new(std::nothrow) Page();
     Page *currentPage;
     currentPage = params->currentPage;
+    int count = 0;
+    // currPageNum = 0;
 
-    while (in->Remove(tempRec) && currPageNum < runlen) {
-        if (!currentPage->Append(tempRec)) {
-            // sort records before writing to disk
-            SortRecords(currentPage, sortorder);
-            // write current page to disk
-            WritePageToDisk(file, currentPage);
-            // increment page number
-            currPageNum++;
-            // empty the page out
-            delete currentPage;
-            currentPage = new(std::nothrow) Page();
-            // append record to empty page
-            currentPage->Append(tempRec);
+
+    while(true) {
+        runNum++;
+        // currPageNum = 0;
+        // usleep(1000000);
+        // int inputEmpty = 0;
+        // there is a next record in the file continue with runs
+        while (in->Remove(tempRec) && currPageNum < runlen) {
+            count++;
+            if (!currentPage->Append(tempRec)) {
+                // sort records before writing to disk
+                SortRecords(currentPage, sortorder);
+                // write current page to disk
+                WritePageToDisk(file, currentPage);
+                // increment page number
+                currPageNum++;
+                // empty the page out
+                delete currentPage;
+                currentPage = new(std::nothrow) Page();
+                // append record to empty page
+                currentPage->Append(tempRec);
+            }
+            numRecs++;
         }
-        numRecs++;
+
+        if(in->isDone()){
+            break;
+        }
+
+        if(!tempRec->IsRecordEmpty()){
+            currPageNum = 0;
+            currentPage->Append(tempRec);
+            count++;
+        }
     }
 
+    cout << "Number of times removed from pipe: " << count << endl;
+
     // deal with the remaining records
-    if (currPageNum < runlen) {
+    if (currentPage->numRecs != 0) {
         // sort and write records to disk
+        cout<<"CurrentPage Number: "<< currPageNum <<endl;
+        if(!(currPageNum < runlen)){
+            runNum++;
+            cout << "INcrementing runNum"<< endl;
+            currPageNum = 0;
+        }
         SortRecords(currentPage, sortorder);
         WritePageToDisk(file, currentPage);
         // increment page number
@@ -81,14 +122,16 @@ void *BigQ::Worker(void *args) {
         currentPage = new(std::nothrow) Page();
     }
 
-    Page *pages = new Page[runlen];
+    Page *pages = new Page[runNum];
 
+    cout << "The runNum: "<< runNum << endl;
     // get sorted pages
-    for (int i = 0; i < currPageNum; i++) {
-        file->GetPage(pages + i, i);
+    for (int i = 0; i < runNum; i++) {
+        cout << "i: " << i << endl;
+        file->GetPage((pages + i), i*runlen);
     }
 
-    KWayMerge(pages, out, currPageNum, sortorder);
+    KWayMerge(pages, out, runNum, runlen, sortorder, file);
 
     delete[] pages;
 
@@ -191,31 +234,49 @@ void BigQ::Merge(Record *records, int start, int mid, int end, OrderMaker *sorto
     delete[] temp;
 }
 
-void BigQ::KWayMerge(Page *pages, Pipe *out, int runLen, OrderMaker *sortorder) {
-    PriorityQueue pq(sortorder, runLen);
+void BigQ::KWayMerge(Page *pages, Pipe *out, int runNum, int runLen, OrderMaker *sortorder, File *file) {
+    PriorityQueue pq(sortorder, runNum);
     RecordPageNum *tempRec = new RecordPageNum;
     Record *temp = new Record;
 
-    for (int i = 0; i < runLen; i++) {
+    for (int i = 0; i < runNum; i++) {
         (pages + i)->GetFirst(temp);
         tempRec->setRecord(temp);
-        tempRec->setPageNumber(i);
+        tempRec->setPageNumber(0);
+        tempRec->setRunNumber(i);
         pq.push(tempRec);
     }
+    int count = 0;
 
     while (!pq.empty()) {
+        count++;
         pq.top(tempRec);
         pq.pop();
-        int pageNum = tempRec->getPageNumber();
+        int runNumber = tempRec->getRunNumber();
+        int pageNumber = tempRec->getPageNumber();
         out->Insert(tempRec->getRecord());
-        if (!(pages + pageNum)->GetFirst(temp)) {
-            continue;
+
+        // (pageNumber+1 < file->GetLength() - 1)
+        if (!((pages + runNumber)->GetFirst(temp))) {
+            // see if we have any pages left in the run
+            if((pageNumber+1) % runLen != 0 && ((runNumber*runLen + pageNumber + 1) < file->GetLength() - 1)) {
+                file->GetPage((pages + runNumber), (runNumber*runLen + pageNumber + 1));
+                (pages + runNumber)->GetFirst(temp);
+
+                tempRec->setRecord(temp);
+                tempRec->setRunNumber(runNumber);
+                tempRec->setPageNumber(pageNumber+1);
+                pq.push(tempRec);
+            } else continue;
         } else {
             tempRec->setRecord(temp);
-            tempRec->setPageNumber(pageNum);
+            tempRec->setPageNumber(pageNumber);
+            tempRec->setRunNumber(runNumber);
             pq.push(tempRec);
         }
     }
+
+    cout << "K way merge loop ran : "<< count << " times" << endl;
 }
 
 BigQ::~BigQ() {
