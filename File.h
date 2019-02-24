@@ -13,7 +13,9 @@ using namespace std;
 
 class Page {
 
-	friend class DBFile;
+	friend class GenericDBFile;
+	friend class HeapFile;
+	friend class SortedFile;
 	friend class BigQ;
 
 private:
@@ -59,7 +61,9 @@ public:
 
 class File {
 
-	friend class DBFile;
+	friend class GenericDBFile;
+	friend class HeapFile;
+	friend class SortedFile;
 	friend class BigQ;
 
 private:

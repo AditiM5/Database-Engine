@@ -87,11 +87,11 @@ void *consumer(void *arg) {
 
 int main() {
 
-    Schema myschema("catalog", "lineitem");
+    Schema myschema("catalog", "nation");
 
     DBFile newFile;
-    newFile.Create("data-1GB/lineitem.bin", heap, NULL);
-    newFile.Load(myschema, "data-1GB/lineitem.tbl");
+    newFile.Create("data/nation.bin", heap, NULL);
+    newFile.Load(myschema, "data/nation.tbl");
     newFile.Close();
     return 0;
 }

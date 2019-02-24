@@ -26,18 +26,18 @@ ifdef linux
 tag = -n
 endif
 
-test.out: Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFile.o Pipe.o RecordPageNum.o PriorityQueue.o y.tab.o lex.yy.o test.o
+test.out: Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o GenericDBFile.o HeapFile.o SortedFile.o DBFile.o Pipe.o RecordPageNum.o PriorityQueue.o y.tab.o lex.yy.o test.o
 ifeq ($(UNAME_S),Darwin)
-	$(CC) -o test.out Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFile.o Pipe.o RecordPageNum.o PriorityQueue.o y.tab.o lex.yy.o test.o -ll -lpthread
+	$(CC) -o test.out Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o GenericDBFile.o HeapFile.o SortedFile.o DBFile.o Pipe.o RecordPageNum.o PriorityQueue.o y.tab.o lex.yy.o test.o -ll -lpthread
 else
-	$(CC) -o test.out Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFile.o Pipe.o RecordPageNum.o PriorityQueue.o y.tab.o lex.yy.o test.o -lfl -lpthread
+	$(CC) -o test.out Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o GenericDBFile.o HeapFile.o SortedFile.o DBFile.o Pipe.o RecordPageNum.o PriorityQueue.o y.tab.o lex.yy.o test.o -lfl -lpthread
 endif
 	
-main: Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFile.o Pipe.o RecordPageNum.o PriorityQueue.o y.tab.o lex.yy.o main.o
+main: Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o GenericDBFile.o HeapFile.o SortedFile.o DBFile.o Pipe.o RecordPageNum.o PriorityQueue.o y.tab.o lex.yy.o main.o
 ifeq ($(UNAME_S),Darwin)
-	$(CC) -o main Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFile.o Pipe.o RecordPageNum.o PriorityQueue.o y.tab.o lex.yy.o main.o -ll -lpthread
+	$(CC) -o main Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o GenericDBFile.o HeapFile.o SortedFile.o DBFile.o Pipe.o RecordPageNum.o PriorityQueue.o y.tab.o lex.yy.o main.o -ll -lpthread
 else
-	$(CC) -o main Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFile.o Pipe.o RecordPageNum.o PriorityQueue.o y.tab.o lex.yy.o main.o -lfl -lpthread
+	$(CC) -o main Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o GenericDBFile.o HeapFile.o SortedFile.o DBFile.o Pipe.o RecordPageNum.o PriorityQueue.o y.tab.o lex.yy.o main.o -lfl -lpthread
 endif
 	
 test.o: test.cc
@@ -75,6 +75,15 @@ PriorityQueue.o: PriorityQueue.cc
 
 RecordPageNum.o: RecordPageNum.cc
 	$(CC) -g -c RecordPageNum.cc
+
+Heap.o: Heap.cc
+	$(CC) -g -c Heap.cc
+
+SortedFile.o: SortedFile.cc
+	$(CC) -g -c SortedFile.cc
+
+GenericDBFile.o: GenericDBFile.cc
+	$(CC) -g -c GenericDBFile.cc
 
 y.tab.o: Parser.y
 	yacc -d Parser.y

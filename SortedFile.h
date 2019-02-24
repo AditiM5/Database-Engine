@@ -1,5 +1,5 @@
-#ifndef DBFILE_H
-#define DBFILE_H
+#ifndef SORTEDFILE_H
+#define SORTEDFILE_H
 
 #include "TwoWayList.h"
 #include "Record.h"
@@ -9,25 +9,19 @@
 #include "ComparisonEngine.h"
 #include "GenericDBFile.h"
 
-class DBFile {
-
-    GenericDBFile *genericDBFile;
+class SortedFile : public GenericDBFile{
 
 public:
 
-    DBFile();
+    SortedFile();
 
-    int Create(const char *fpath, fType file_type, void *startup);
+    int Create(const char *fpath, void *startup);
 
     // Opens bin files
     int Open(const char *fpath);
 
-    int Close();
-
     // Loads a tbl file. Call Create() before this
     void Load(Schema &myschema, const char *loadpath);
-
-    void MoveFirst();
 
     void Add(Record *addme);
 
