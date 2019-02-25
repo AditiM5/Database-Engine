@@ -1,20 +1,21 @@
 
-#include <iostream>
-#include "Record.h"
-#include <stdlib.h>
-#include "DBFile.h"
-#include "Pipe.h"
-#include "BigQ.h"
 #include <pthread.h>
-#include <unistd.h>
-#include "FlexLexer.h"
+#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <iostream>
+#include "BigQ.h"
+#include "DBFile.h"
+#include "FlexLexer.h"
+#include "Pipe.h"
+#include "Record.h"
+#include "SortedFile.h"
 
 using namespace std;
 
 extern "C" {
-int yyparse(void);   // defined in y.tab.c
-int readInputForLexer( char *buffer, int *numBytesRead, int maxBytesToRead );
+int yyparse(void);  // defined in y.tab.c
+int readInputForLexer(char *buffer, int *numBytesRead, int maxBytesToRead);
 }
 
 static int globalReadOffset;
@@ -22,13 +23,15 @@ static char *globalInputText = "(l_partkey = ps_partkey)";
 
 extern struct AndList *final;
 
-int readInputForLexer( char *buffer, int *numBytesRead, int maxBytesToRead ) {
+int readInputForLexer(char *buffer, int *numBytesRead, int maxBytesToRead) {
     int numBytesToRead = maxBytesToRead;
-    int bytesRemaining = strlen(globalInputText)-globalReadOffset;
+    int bytesRemaining = strlen(globalInputText) - globalReadOffset;
     int i;
-    if ( numBytesToRead > bytesRemaining ) { numBytesToRead = bytesRemaining; }
-    for ( i = 0; i < numBytesToRead; i++ ) {
-        buffer[i] = globalInputText[globalReadOffset+i];
+    if (numBytesToRead > bytesRemaining) {
+        numBytesToRead = bytesRemaining;
+    }
+    for (i = 0; i < numBytesToRead; i++) {
+        buffer[i] = globalInputText[globalReadOffset + i];
     }
     *numBytesRead = numBytesToRead;
     globalReadOffset += numBytesToRead;
@@ -36,7 +39,7 @@ int readInputForLexer( char *buffer, int *numBytesRead, int maxBytesToRead ) {
 }
 
 void *producer(void *arg) {
-    Pipe *pipe = (Pipe *) arg;
+    Pipe *pipe = (Pipe *)arg;
     FILE *tableFile = fopen("data/mergetest.tbl", "r");
     Record temp;
     Schema myschema("catalog", "lineitem");
@@ -52,7 +55,7 @@ void *producer(void *arg) {
 }
 
 void *consumer(void *arg) {
-    Pipe *pipe = (Pipe *) arg;
+    Pipe *pipe = (Pipe *)arg;
     Record temp;
     Schema myschema("catalog", "lineitem");
     int count = 0;
@@ -80,22 +83,30 @@ void *consumer(void *arg) {
     // }
 
     // newFile.Close();
-    
+
     // cout << "Removed count: " << count << endl;
     pthread_exit(NULL);
 }
 
 int main() {
+    Schema myschema("catalog", "lineitem");
 
-    Schema myschema("catalog", "nation");
+    cout << "Enter your CNF: (l_partkey)" << endl;
+    yyparse();
+
+    Record literal;
+    CNF sort_pred;
+    sort_pred.GrowFromParseTree(final, &myschema, literal);  // constructs CNF predicate
+    OrderMaker dummy, sortorder;
+    sort_pred.GetSortOrders(sortorder, dummy);
 
     DBFile newFile;
-    newFile.Create("data/nation.bin", heap, NULL);
-    newFile.Load(myschema, "data/nation.tbl");
+    struct SortInfo *sortinfo = new SortInfo;
+    sortinfo->myOrder = &sortorder;
+    sortinfo->runLength = 10;
+
+    newFile.Create("data/lineitem.bin", sorted, (void *)sortinfo);
+    newFile.Load(myschema, "data/lineitem.tbl");
     newFile.Close();
     return 0;
 }
-
-
-
-

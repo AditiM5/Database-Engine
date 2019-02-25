@@ -1,28 +1,37 @@
 #ifndef GENERIC_DBFILE_H
 #define GENERIC_DBFILE_H
 
-#include "TwoWayList.h"
-#include "Record.h"
-#include "Schema.h"
-#include "File.h"
 #include "Comparison.h"
 #include "ComparisonEngine.h"
+#include "File.h"
+#include "Record.h"
+#include "Schema.h"
+#include "TwoWayList.h"
+#include "Pipe.h"
+#include "BigQ.h"
+
 
 typedef enum {
-    heap, sorted, tree
+    heap,
+    sorted,
+    tree
 } fType;
 
 class GenericDBFile {
-
 protected:
-
     File *file;
     Page *currentPage;
     int currPageNum;
     void WriteCurrentPageToDisk();
 
-public:
+    // BigQ *bigq;
+    // bool readMode;
+    // Pipe *input;
+    // Pipe *output;
+    // int runLength;
+    // OrderMaker *sortOrder;
 
+public:
     GenericDBFile();
 
     virtual int Create(const char *fpath, void *startup) = 0;
@@ -43,6 +52,9 @@ public:
 
     void MoveFirst();
 
+    void WriteOrderMaker(OrderMaker *sortOrder, FILE *file);
+
+    void ReadOrderMaker(OrderMaker *sortOrder, FILE *file);
 };
 
 #endif
