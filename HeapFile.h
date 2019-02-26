@@ -29,6 +29,10 @@ public:
 
     int GetNext(Record &fetchme, CNF &cnf, Record &literal);
 
+    void MoveFirst();
+
+    int Close();
+
 };
 
 #endif

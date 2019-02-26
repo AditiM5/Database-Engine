@@ -281,5 +281,5 @@ void BigQ::KWayMerge(Page *pages, Pipe *out, int runNum, int runLen, OrderMaker 
     cout << "K way merge loop ran : " << count << " times" << endl;
 }
 
-BigQ::~BigQ() {
+BigQ::~BigQ() {    
 }

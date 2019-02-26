@@ -11,6 +11,8 @@
 #include "BigQ.h"
 
 
+struct SortInfo { OrderMaker *myOrder; int runLength = 0;};
+
 typedef enum {
     heap,
     sorted,
@@ -24,15 +26,17 @@ protected:
     int currPageNum;
     void WriteCurrentPageToDisk();
 
-    // BigQ *bigq;
-    // bool readMode;
-    // Pipe *input;
-    // Pipe *output;
-    // int runLength;
-    // OrderMaker *sortOrder;
+    BigQ *bigq;
+    bool readMode;
+    Pipe *input;
+    Pipe *output;
+    int runLength;
+    OrderMaker *sortOrder;
+
+    struct SortInfo *sortdata;
 
 public:
-    GenericDBFile();
+    GenericDBFile(){};
 
     virtual int Create(const char *fpath, void *startup) = 0;
 
@@ -48,13 +52,15 @@ public:
     // Loads a tbl file. Call Create() before this
     virtual void Load(Schema &myschema, const char *loadpath) = 0;
 
-    int Close();
+    virtual int Close() = 0;
 
-    void MoveFirst();
+    virtual void MoveFirst() = 0;
 
     void WriteOrderMaker(OrderMaker *sortOrder, FILE *file);
 
     void ReadOrderMaker(OrderMaker *sortOrder, FILE *file);
+
+    int GetNextRecord(Record *tempRec);
 };
 
 #endif

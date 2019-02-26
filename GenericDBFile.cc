@@ -5,37 +5,20 @@
 // #include "Comparison.h"
 // #include "ComparisonEngine.h"
 #include "GenericDBFile.h"
-// #include "Defs.h"
+#include "Defs.h"
 
 #include <stdlib.h>
 #include <unistd.h>
 #include <iostream>
-
+#include <string>
+#include <string.h>
 
 using namespace std;
+// using namespace string;
 
-GenericDBFile::GenericDBFile() {
-    // currentPage = new(std::nothrow) Page();
-
-}
-
-void GenericDBFile::MoveFirst() {
-    WriteCurrentPageToDisk();
-
-    file->GetPage(currentPage, 0);
-    currPageNum = 0;
-}
-
-int GenericDBFile::Close() {
-    WriteCurrentPageToDisk();
-    fsync(file->myFilDes);
-    // returns 1 on success
-    if (!file->Close()) {
-        return 1;
-    } else {
-        return 0;
-    }
-}
+// GenericDBFile::GenericDBFile() {
+//     // currentPage = new(std::nothrow) Page();
+// }
 
 void GenericDBFile::WriteCurrentPageToDisk() {
     if (!currentPage->pageToDisk) {
@@ -48,28 +31,27 @@ void GenericDBFile::WriteCurrentPageToDisk() {
     }
 }
 
-
 void GenericDBFile::WriteOrderMaker(OrderMaker *sortOrder, FILE *file) {
     int numAtts = sortOrder->numAtts;
-    fprintf(file, "%d", numAtts);
+    fprintf(file, "%d\n", numAtts);
     int *whichAtts = sortOrder->whichAtts;
     Type *whichTypes = sortOrder->whichTypes;
     string temp;
     for (int i = 0; i < numAtts; i++) {
-        temp = to_string(whichAtts[i]);
+        temp = std::to_string(whichAtts[i]);
         switch (whichTypes[i]) {
-            case Type::Int:
+            case Int:
                 temp = temp + " " + "Int";
                 break;
-            case Type::String:
+            case String:
                 temp = temp + " " + "String";
                 break;
-            case Type::Double:
+            case Double:
                 temp = temp + " " + "Double";
                 break;
         }
         const char *data = temp.c_str();
-        fprintf(file, "%s", data);
+        fprintf(file, "%s\n", data);
     }
 }
 
@@ -79,7 +61,7 @@ void GenericDBFile::ReadOrderMaker(OrderMaker *sortOrder, FILE *file) {
     char space[100];
     // num Atts read
     fscanf(file, "%s", space);
-    sortOrder->numAtts = stoi(space);
+    sortOrder->numAtts = std::stoi(space);
 
     for (int i = 0; i < sortOrder->numAtts; i++) {
         fscanf(file, "%s", space);
@@ -98,4 +80,18 @@ void GenericDBFile::ReadOrderMaker(OrderMaker *sortOrder, FILE *file) {
             exit(1);
         }
     }
+}
+
+int GenericDBFile::GetNextRecord(Record *tempRec) {
+    if (!currentPage->GetFirst(tempRec)) {
+        // assuming the page is empty here so we move to the next page
+        if (file->GetLength() > currPageNum + 2) {
+            file->GetPage(currentPage, ++currPageNum);
+            currentPage->GetFirst(tempRec);
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+    return 1;
 }

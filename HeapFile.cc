@@ -27,7 +27,6 @@ int HeapFile::Create(const char *f_path, void *startup) {
 
 void HeapFile::Load(Schema &f_schema, const char *loadpath) {
     FILE *tableFile = fopen(loadpath, "r");
-
     if (!tableFile) {
         cout << "ERROR : Cannot open file. EXIT !!!\n";
         exit(1);
@@ -39,7 +38,7 @@ void HeapFile::Load(Schema &f_schema, const char *loadpath) {
         // check for page overflow
         if (!currentPage->Append(&temp)) {
             WriteCurrentPageToDisk();
-            // empty the page out
+            // empty the page out 
             delete currentPage;
             currentPage = new(std::nothrow) Page();
             // append record to empty page
@@ -107,5 +106,23 @@ int HeapFile::GetNext(Record &fetchme, CNF &cnf, Record &literal) {
         } else {
             return 0;
         }
+    }
+}
+
+void HeapFile::MoveFirst() {
+    WriteCurrentPageToDisk();
+    file->GetPage(currentPage, 0);
+    currPageNum = 0;
+}
+
+int HeapFile::Close() {
+    cout << "\n Closing HeapFile";
+    WriteCurrentPageToDisk();
+    fsync(file->myFilDes);
+    // returns 1 on success
+    if (!file->Close()) {
+        return 1;
+    } else {
+        return 0;
     }
 }

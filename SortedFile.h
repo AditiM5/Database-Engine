@@ -5,22 +5,28 @@
 #include "BigQ.h"
 #include "Pipe.h"
 
-struct SortInfo { OrderMaker *myOrder; int runLength = 0;};
+// struct SortInfo { OrderMaker *myOrder; int runLength = 0;};
 
 class SortedFile : public GenericDBFile{
 
-    BigQ *bigq;
-    bool readMode;
-    Pipe *input;
-    Pipe *output;
-    int runLength;
-    OrderMaker *sortOrder;
+    // BigQ *bigq;
+    // bool readMode;
+    // Pipe *input;
+    // Pipe *output;
+    // int runLength;
+    // OrderMaker *sortOrder;
 
-    struct SortInfo *sortdata;
+    // struct SortInfo *sortdata;
 
     // void WriteOrderMaker(OrderMaker *sortOrder, FILE *file);
 
     // void ReadOrderMaker(OrderMaker *sortOrder, FILE *file);
+
+    Record *tempRec;
+
+    void SwitchFromReadToWrite();
+
+
 public:
 
     SortedFile();
@@ -38,6 +44,10 @@ public:
     int GetNext(Record &fetchme);
 
     int GetNext(Record &fetchme, CNF &cnf, Record &literal);
+
+    void MoveFirst();
+
+    int Close();
 
 };
 

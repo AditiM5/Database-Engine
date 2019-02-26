@@ -174,6 +174,10 @@ int Page::numRecords(){
     return numRecs;
 }
 
+void Page::MoveToStartPage(){
+    myRecs->MoveToStart();
+}
+
 File::File() {
 }
 
@@ -183,7 +187,6 @@ File::~File() {
 
 
 void File::GetPage(Page *putItHere, off_t whichPage) {
-
     // this is because the first page has no data
     whichPage++;
 

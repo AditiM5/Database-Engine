@@ -105,10 +105,33 @@ int main() {
     sortinfo->myOrder = &sortorder;
     cout << "In main: "<< endl;
     sortorder.Print();
-    sortinfo->runLength = 3;
+    sortinfo->runLength = 10;
+
+    FILE *tableFile = fopen("data/test.tbl", "r");
+    Record tempRec;
 
     newFile.Create("data/lineitem.bin", sorted, (void *)sortinfo);
-    newFile.Load(myschema, "data/lineitem.tbl");
-    // newFile.Close();
+    cout << "After create: "<< endl;
+    // newFile.Load(myschema, "data/lineitem.tbl");
+
+    int count = 0;
+
+    while(tempRec.SuckNextRecord(&myschema, tableFile) == 1){
+        // tempRec.Print(&myschema);
+        newFile.Add(&tempRec);
+        count++;
+    }
+    cout << "Number Of Records read : Count: " << count << endl;
+
+    count = 0;
+    newFile.MoveFirst();
+    while(newFile.GetNext(tempRec) == 1){
+        count++;
+        tempRec.Print(&myschema);
+    }
+
+    cout << "Sorted Count: " << count << endl;
+    // cout << "\n Closing...";
+    newFile.Close();
     return 0;
 }

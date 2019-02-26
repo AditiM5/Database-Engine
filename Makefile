@@ -1,4 +1,4 @@
-CC = g++ -O2 -Wno-deprecated -Wno-unused-variable -Wno-unused-parameter -Wno-unused-result -Wno-write-strings -Wno-format-overflow -isystem $(GTEST_DIR)/include -Wall -Wextra -pthread
+CC = g++ -O2 -Wno-deprecated -Wno-unused-variable -Wno-unused-parameter -Wno-unused-result -Wno-write-strings -Wno-format-overflow -isystem $(GTEST_DIR)/include -Wall -Wextra -pthread -std=c++11
 MAKE = make
 UNAME_S := $(shell uname -s)
 
@@ -35,7 +35,7 @@ endif
 	
 main: Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o GenericDBFile.o HeapFile.o SortedFile.o DBFile.o Pipe.o RecordPageNum.o PriorityQueue.o y.tab.o lex.yy.o main.o
 ifeq ($(UNAME_S),Darwin)
-	$(CC) -o main Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o GenericDBFile.o HeapFile.o SortedFile.o DBFile.o Pipe.o RecordPageNum.o PriorityQueue.o y.tab.o lex.yy.o main.o -ll -lpthread
+	$(CC) -o main Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o GenericDBFile.o HeapFile.o SortedFile.o DBFile.o Pipe.o RecordPageNum.o PriorityQueue.o y.tab.o lex.yy.o main.o -ll -lpthread -v
 else
 	$(CC) -o main Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o GenericDBFile.o HeapFile.o SortedFile.o DBFile.o Pipe.o RecordPageNum.o PriorityQueue.o y.tab.o lex.yy.o main.o -lfl -lpthread
 endif

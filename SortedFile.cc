@@ -8,6 +8,7 @@ using namespace std;
 
 SortedFile::SortedFile() {
     currentPage = new (std::nothrow) Page();
+    tempRec = new Record();
 }
 
 // create  a metadata file
@@ -16,17 +17,17 @@ int SortedFile::Create(const char *f_path, void *startup) {
     sortdata = (SortInfo *)startup;
     const char *m_path = *f_path + "QQQQQ.data";
     FILE *metadata = fopen("blah.data", "w");
-    fprintf(metadata, "%s", "sorted");
+    fprintf(metadata, "%s\n", "sorted");
     WriteOrderMaker(sortdata->myOrder, metadata);
     fclose(metadata);
 
     sortOrder = sortdata->myOrder;
     runLength = sortdata->runLength;
 
-    cout << "Runlen from CREATE: " << runLength;
-    cout <<"\n";
-    cout << "SortOrder from CREATE: " << endl;
-    sortOrder->Print();
+    // cout << "Runlen from CREATE: " << runLength;
+    // cout << "\n";
+    // cout << "SortOrder from CREATE: " << endl;
+    // sortOrder->Print();
 
     file = new File();
     file->Open(0, f_path);
@@ -34,33 +35,26 @@ int SortedFile::Create(const char *f_path, void *startup) {
 }
 
 void SortedFile::Load(Schema &f_schema, const char *loadpath) {
-    cout << "Runlen from LOAD: " << sortdata->runLength;
-    cout << "\n";
-    cout << "SortOrder from LOAD: " << endl;
-    (sortdata->myOrder)->Print();
-
+    // cout << "Runlen from LOAD: " << sortdata->runLength;
+    // cout << "\n";
+    // cout << "SortOrder from LOAD: " << endl;
+    // (sortdata->myOrder)->Print();
     if (bigq == NULL) {
         input = new Pipe(100);
         output = new Pipe(100);
         bigq = new BigQ(*input, *output, *sortOrder, runLength);
     }
-
     readMode = false;
-
     FILE *tableFile = fopen(loadpath, "r");
-
     if (!tableFile) {
         cout << "ERROR : Cannot open file. EXIT !!!\n";
         exit(1);
     }
-
     Record temp;
-
     while (temp.SuckNextRecord(&f_schema, tableFile) == 1) {
         input->Insert(&temp);
     }
-
-    cout << "Runlen from Load: " << runLength;
+    // cout << "Runlen from Load: " << runLength;
     input->ShutDown();
     while (output->Remove(&temp)) {
         if (!currentPage->Append(&temp)) {
@@ -92,62 +86,81 @@ void SortedFile::Add(Record *rec) {
 }
 
 int SortedFile::GetNext(Record &fetchme) {
-    return 1;
+    SwitchFromReadToWrite();
+    return GetNextRecord(&fetchme);
 }
 
 int SortedFile::GetNext(Record &fetchme, CNF &cnf, Record &literal) {
     return 1;
 }
 
-// write OrderMaker to MetaData file
-// numatts etc etc made public
-// void SortedFile::WriteOrderMaker(OrderMaker *sortOrder, FILE *file) {
-//     int numAtts = sortOrder->numAtts;
-//     fprintf(file, "%d", numAtts);
-//     int *whichAtts = sortOrder->whichAtts;
-//     Type *whichTypes = sortOrder->whichTypes;
-//     string temp;
-//     for (int i = 0; i < numAtts; i++) {
-//         temp = to_string(whichAtts[i]);
-//         switch (whichTypes[i]) {
-//             case Type::Int:
-//                 temp = temp + " " + "Int";
-//                 break;
-//             case Type::String:
-//                 temp = temp + " " + "String";
-//                 break;
-//             case Type::Double:
-//                 temp = temp + " " + "Double";
-//                 break;
-//         }
-//         const char *data = temp.c_str();
-//         fprintf(file, "%s", data);
-//     }
-// }
+void SortedFile::SwitchFromReadToWrite() {
+    if (!readMode) {
+        input->ShutDown();
+        output->Remove(tempRec);
+        MoveFirst();
+        ComparisonEngine ceng;
+        Record *fromFile = new Record;
+        while (GetNextRecord(fromFile) == 1) {
+            if (ceng.Compare(tempRec, fromFile, sortOrder) > 0)
+                break;
+        }
 
-// // first sentence of "sorted" already read
-// // here the next one, i.e, numAtts onwards will be read
-// void SortedFile::ReadOrderMaker(OrderMaker *sortOrder, FILE *file) {
-//     char space[100];
-//     // num Atts read
-//     fscanf(file, "%s", space);
-//     sortOrder->numAtts = stoi(space);
+        int tempCurrPageNum = currPageNum;
+        Pipe *tempInput, *tempOutput;
+        tempInput = new Pipe(100);
+        tempOutput = new Pipe(100);
+        BigQ *tempQ = new BigQ(*tempInput, *tempOutput, *sortOrder, 10);
+        // move to the first record of the
+        file->GetPage(currentPage, tempCurrPageNum);
+        // currentPage->MoveToStartPage();
+        currentPage->EmptyItOut();
+        currPageNum = tempCurrPageNum;
 
-//     for (int i = 0; i < sortOrder->numAtts; i++) {
-//         fscanf(file, "%s", space);
-//         sortOrder->whichAtts[i] = stoi(space);
+        while (GetNextRecord(fromFile) == 1) {
+            tempInput->Insert(fromFile);
+        }
 
-//         fscanf(file, "%s", space);
-//         if (!strcmp(space, "Int")) {
-//             sortOrder->whichTypes[i] = Int;
-//         } else if (!strcmp(space, "Double")) {
-//             sortOrder->whichTypes[i] = Double;
-//         } else if (!strcmp(space, "String")) {
-//             sortOrder->whichTypes[i] = String;
-//         } else {
-//             cout << "Bad attribute type for "
-//                  << "\n";
-//             exit(1);
-//         }
-//     }
-// }
+        while (output->Remove(tempRec)) {
+            tempInput->Insert(tempRec);
+        }
+
+        tempInput->ShutDown();
+
+        while (tempOutput->Remove(tempRec)) {
+            if (!currentPage->Append(tempRec)) {
+                WriteCurrentPageToDisk();
+                currPageNum++;
+                // empty the page out
+                delete currentPage;
+                currentPage = new (std::nothrow) Page();
+                // append record to empty page
+                currentPage->Append(tempRec);
+            }
+        }
+        // now switch to read mode / switch out of write mode
+        readMode = true;
+    }
+}
+
+void SortedFile::MoveFirst() {
+    cout << "Move First in SortedFile" << endl;
+    SwitchFromReadToWrite();
+    WriteCurrentPageToDisk();
+    file->GetPage(currentPage, 0);
+    currPageNum = 0;
+}
+
+int SortedFile::Close() {
+    cout << "\n Close First in SortedFile";
+    SwitchFromReadToWrite();
+    WriteCurrentPageToDisk();
+
+    fsync(file->myFilDes);
+    // returns 1 on success
+    if (!file->Close()) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
