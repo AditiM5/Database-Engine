@@ -1,17 +1,11 @@
 #ifndef SORTEDFILE_H
 #define SORTEDFILE_H
 
-// #include "TwoWayList.h"
-// #include "Record.h"
-// #include "Schema.h"
-// #include "File.h"
-// #include "Comparison.h"
-// #include "ComparisonEngine.h"
 #include "GenericDBFile.h"
-// #include "BigQ.h"
-// #include "Pipe.h"
+#include "BigQ.h"
+#include "Pipe.h"
 
-struct SortInfo { OrderMaker *myOrder; int runLength;};
+struct SortInfo { OrderMaker *myOrder; int runLength = 0;};
 
 class SortedFile : public GenericDBFile{
 
@@ -21,6 +15,8 @@ class SortedFile : public GenericDBFile{
     Pipe *output;
     int runLength;
     OrderMaker *sortOrder;
+
+    struct SortInfo *sortdata;
 
     // void WriteOrderMaker(OrderMaker *sortOrder, FILE *file);
 

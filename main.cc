@@ -103,10 +103,12 @@ int main() {
     DBFile newFile;
     struct SortInfo *sortinfo = new SortInfo;
     sortinfo->myOrder = &sortorder;
-    sortinfo->runLength = 10;
+    cout << "In main: "<< endl;
+    sortorder.Print();
+    sortinfo->runLength = 3;
 
     newFile.Create("data/lineitem.bin", sorted, (void *)sortinfo);
     newFile.Load(myschema, "data/lineitem.tbl");
-    newFile.Close();
+    // newFile.Close();
     return 0;
 }

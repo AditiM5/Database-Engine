@@ -1,15 +1,8 @@
 #include "SortedFile.h"
-#include "Comparison.h"
-#include "ComparisonEngine.h"
-#include "Defs.h"
-#include "File.h"
-#include "Record.h"
-#include "Schema.h"
-#include "TwoWayList.h"
-
 #include <stdlib.h>
 #include <unistd.h>
 #include <iostream>
+#include "GenericDBFile.h"
 
 using namespace std;
 
@@ -19,15 +12,21 @@ SortedFile::SortedFile() {
 
 // create  a metadata file
 int SortedFile::Create(const char *f_path, void *startup) {
-    struct SortInfo *sortinfo = (struct SortInfo *)startup;
-    const char *m_path = *f_path + ".data";
-    FILE *metadata = fopen(m_path, "w");
+    // SortInfo *sortinfo;
+    sortdata = (SortInfo *)startup;
+    const char *m_path = *f_path + "QQQQQ.data";
+    FILE *metadata = fopen("blah.data", "w");
     fprintf(metadata, "%s", "sorted");
-    WriteOrderMaker(sortinfo->myOrder, metadata);
+    WriteOrderMaker(sortdata->myOrder, metadata);
     fclose(metadata);
 
-    sortOrder = sortinfo->myOrder;
-    runLength = sortinfo->runLength;
+    sortOrder = sortdata->myOrder;
+    runLength = sortdata->runLength;
+
+    cout << "Runlen from CREATE: " << runLength;
+    cout <<"\n";
+    cout << "SortOrder from CREATE: " << endl;
+    sortOrder->Print();
 
     file = new File();
     file->Open(0, f_path);
@@ -35,6 +34,11 @@ int SortedFile::Create(const char *f_path, void *startup) {
 }
 
 void SortedFile::Load(Schema &f_schema, const char *loadpath) {
+    cout << "Runlen from LOAD: " << sortdata->runLength;
+    cout << "\n";
+    cout << "SortOrder from LOAD: " << endl;
+    (sortdata->myOrder)->Print();
+
     if (bigq == NULL) {
         input = new Pipe(100);
         output = new Pipe(100);
@@ -56,6 +60,7 @@ void SortedFile::Load(Schema &f_schema, const char *loadpath) {
         input->Insert(&temp);
     }
 
+    cout << "Runlen from Load: " << runLength;
     input->ShutDown();
     while (output->Remove(&temp)) {
         if (!currentPage->Append(&temp)) {
