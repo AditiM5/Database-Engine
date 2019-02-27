@@ -15,8 +15,9 @@ SortedFile::SortedFile() {
 int SortedFile::Create(const char *f_path, void *startup) {
     // SortInfo *sortinfo;
     sortdata = (SortInfo *)startup;
-    const char *m_path = *f_path + "QQQQQ.data";
-    FILE *metadata = fopen("blah.data", "w");
+    string metadataFileName(f_path);
+    metadataFileName += ".data";
+    FILE *metadata = fopen(metadataFileName.c_str(), "w");
     fprintf(metadata, "%s\n", "sorted");
     WriteOrderMaker(sortdata->myOrder, metadata);
     fclose(metadata);
@@ -24,9 +25,9 @@ int SortedFile::Create(const char *f_path, void *startup) {
     sortOrder = sortdata->myOrder;
     runLength = sortdata->runLength;
 
-    cout << "Runlen from CREATE: " << runLength;
-    cout << "\n";
-    cout << "SortOrder from CREATE: " << endl;
+    // cout << "Runlen from CREATE: " << runLength;
+    // cout << "\n";
+    // cout << "SortOrder from CREATE: " << endl;
     sortOrder->Print();
 
     file = new File();
@@ -35,9 +36,9 @@ int SortedFile::Create(const char *f_path, void *startup) {
 }
 
 void SortedFile::Load(Schema &f_schema, const char *loadpath) {
-    cout << "Runlen from LOAD: " << sortdata->runLength;
-    cout << "\n";
-    cout << "SortOrder from LOAD: " << endl;
+    // cout << "Runlen from LOAD: " << sortdata->runLength;
+    // cout << "\n";
+    // cout << "SortOrder from LOAD: " << endl;
     (sortdata->myOrder)->Print();
     if (bigq == NULL) {
         input = new Pipe(100);
@@ -78,23 +79,13 @@ void SortedFile::initQ() {
         input = new Pipe(100);
         output = new Pipe(100);
         bigq = new BigQ(*input, *output, *sortOrder, runLength);
-        cout << "BigQ init" << endl;
+        // cout << "BigQ init" << endl;
     }
 }
 
 void SortedFile::Add(Record *rec) {
     initQ();
-
-    // if (input->isFull()) {
-    //     SwitchFromReadToWrite();
-    //     // delete input;
-    //     // delete output;
-    //     // delete bigq;
-    //     bigq = NULL;
-    //     initQ();
-    // } else {
     input->Insert(rec);
-    // }
 
     // change mode to writing
     readMode = false;
@@ -111,7 +102,7 @@ int SortedFile::GetNext(Record &fetchme, CNF &cnf, Record &literal) {
 
 void SortedFile::SwitchFromReadToWrite() {
     if (!readMode) {
-        cout << "Stage 1: Entered!" << endl;
+        // cout << "Stage 1: Entered!" << endl;
 
         input->ShutDown();
         if (file->GetLength() == 0) {
@@ -124,12 +115,11 @@ void SortedFile::SwitchFromReadToWrite() {
             ComparisonEngine ceng;
             Record *fromFile = new Record;
             while (GetNextRecord(fromFile) == 1) {
-                cout << "hello";
                 if (ceng.Compare(tempRec, fromFile, sortOrder) > 0)
                     break;
             }
 
-            cout << "Stage 2:" << endl;
+            // cout << "Stage 2:" << endl;
 
             int tempCurrPageNum = currPageNum;
             Pipe *tempInput, *tempOutput;
@@ -138,11 +128,10 @@ void SortedFile::SwitchFromReadToWrite() {
             BigQ *tempQ = new BigQ(*tempInput, *tempOutput, *sortOrder, 10);
             // move to the first record of the
             file->GetPage(currentPage, tempCurrPageNum);
-            // currentPage->MoveToStartPage();
             currentPage->EmptyItOut();
             currPageNum = tempCurrPageNum;
 
-            cout << "Stage 3:" << endl;
+            // cout << "Stage 3:" << endl;
 
             while (GetNextRecord(fromFile) == 1) {
                 tempInput->Insert(fromFile);
@@ -151,7 +140,7 @@ void SortedFile::SwitchFromReadToWrite() {
             // add the first removed record also into the pipe
             tempInput->Insert(tempRec);
 
-            cout << "Stage 4:" << endl;
+            // cout << "Stage 4:" << endl;
 
             while (output->Remove(tempRec)) {
                 tempInput->Insert(tempRec);
@@ -159,13 +148,20 @@ void SortedFile::SwitchFromReadToWrite() {
 
             tempInput->ShutDown();
 
-            cout << "Stage 5:" << endl;
+            // cout << "Stage 5:" << endl;
             WritePipeToDisk(tempOutput);
-            cout << "Stage 6:" << endl;
+            tempOutput->ShutDown();
+            // cout << "Stage 6:" << endl;
             // now switch to read mode / switch out of write mode
-            // readMode = true;
+            delete tempInput;
+            delete tempOutput;
+            delete tempQ;
         }
         readMode = true;
+        delete input;
+        delete output;
+        delete bigq;
+        bigq = NULL;
     }
 }
 

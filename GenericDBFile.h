@@ -27,7 +27,7 @@ protected:
     void WriteCurrentPageToDisk();
 
     BigQ *bigq = NULL;
-    bool readMode;
+    bool readMode = true;
     Pipe *input;
     Pipe *output;
     int runLength;

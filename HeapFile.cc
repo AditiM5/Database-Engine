@@ -19,6 +19,12 @@ HeapFile::HeapFile() {
 }
 
 int HeapFile::Create(const char *f_path, void *startup) {
+    string metadataFileName(f_path);
+    metadataFileName += ".data";
+    FILE *metadata = fopen(metadataFileName.c_str(), "w");
+    fprintf(metadata, "%s\n", "sorted");
+    fclose(metadata);
+
     file = new File();
     file->Open(0, f_path);
     currPageNum = 0;

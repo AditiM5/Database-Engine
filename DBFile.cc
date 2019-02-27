@@ -39,21 +39,13 @@ int DBFile::Create(const char *f_path, fType f_type, void *startup) {
 }
 
 void DBFile::Load(Schema &f_schema, const char *loadpath) {
-    // const char *m_path = *loadpath + ".data";
-    // FILE *metadata = fopen(m_path, "r");
-    // char arr[10];
-    // fscanf(metadata, "%s", arr);
-    // if(!strcmp(arr, "heap")){
-    //     genericDBFile = new HeapFile();
-    // } else {
-    //     genericDBFile = new SortedFile();
-    // }
     genericDBFile->Load(f_schema, loadpath);
 }
 
 int DBFile::Open(const char *f_path) {
-    const char *m_path = *f_path + ".data";
-    FILE *metadata = fopen(m_path, "r");
+    string metadataFileName(f_path);
+    metadataFileName += ".data";
+    FILE *metadata = fopen(metadataFileName.c_str(), "r");
     char arr[10];
     fscanf(metadata, "%s", arr);
     if(!strcmp(arr, "heap")){
