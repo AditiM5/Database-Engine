@@ -29,7 +29,7 @@ private:
 
     void Merge(Record *records, int start, int mid, int end, OrderMaker *sortorder);
 
-    void KWayMerge(Page *pages, Pipe *out, int runNum, int runLen, OrderMaker *sortorder, File *file);
+    void KWayMerge(File *file, Pipe *out, int runNum, int runLen, OrderMaker *sortorder);
 
 public:
 
