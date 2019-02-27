@@ -24,10 +24,10 @@ int SortedFile::Create(const char *f_path, void *startup) {
     sortOrder = sortdata->myOrder;
     runLength = sortdata->runLength;
 
-    // cout << "Runlen from CREATE: " << runLength;
-    // cout << "\n";
-    // cout << "SortOrder from CREATE: " << endl;
-    // sortOrder->Print();
+    cout << "Runlen from CREATE: " << runLength;
+    cout << "\n";
+    cout << "SortOrder from CREATE: " << endl;
+    sortOrder->Print();
 
     file = new File();
     file->Open(0, f_path);
@@ -35,10 +35,10 @@ int SortedFile::Create(const char *f_path, void *startup) {
 }
 
 void SortedFile::Load(Schema &f_schema, const char *loadpath) {
-    // cout << "Runlen from LOAD: " << sortdata->runLength;
-    // cout << "\n";
-    // cout << "SortOrder from LOAD: " << endl;
-    // (sortdata->myOrder)->Print();
+    cout << "Runlen from LOAD: " << sortdata->runLength;
+    cout << "\n";
+    cout << "SortOrder from LOAD: " << endl;
+    (sortdata->myOrder)->Print();
     if (bigq == NULL) {
         input = new Pipe(100);
         output = new Pipe(100);
@@ -73,16 +73,31 @@ int SortedFile::Open(const char *f_path) {
     return 1;
 }
 
-void SortedFile::Add(Record *rec) {
+void SortedFile::initQ() {
     if (bigq == NULL) {
         input = new Pipe(100);
         output = new Pipe(100);
         bigq = new BigQ(*input, *output, *sortOrder, runLength);
+        cout << "BigQ init" << endl;
     }
+}
+
+void SortedFile::Add(Record *rec) {
+    initQ();
+
+    // if (input->isFull()) {
+    //     SwitchFromReadToWrite();
+    //     // delete input;
+    //     // delete output;
+    //     // delete bigq;
+    //     bigq = NULL;
+    //     initQ();
+    // } else {
+    input->Insert(rec);
+    // }
 
     // change mode to writing
     readMode = false;
-    input->Insert(rec);
 }
 
 int SortedFile::GetNext(Record &fetchme) {
@@ -96,49 +111,60 @@ int SortedFile::GetNext(Record &fetchme, CNF &cnf, Record &literal) {
 
 void SortedFile::SwitchFromReadToWrite() {
     if (!readMode) {
+        cout << "Stage 1: Entered!" << endl;
+
         input->ShutDown();
-        output->Remove(tempRec);
-        MoveFirst();
-        ComparisonEngine ceng;
-        Record *fromFile = new Record;
-        while (GetNextRecord(fromFile) == 1) {
-            if (ceng.Compare(tempRec, fromFile, sortOrder) > 0)
-                break;
-        }
+        if (file->GetLength() == 0) {
+            WritePipeToDisk(output);
+        } else {
+            output->Remove(tempRec);
+            file->GetPage(currentPage, 0);
 
-        int tempCurrPageNum = currPageNum;
-        Pipe *tempInput, *tempOutput;
-        tempInput = new Pipe(100);
-        tempOutput = new Pipe(100);
-        BigQ *tempQ = new BigQ(*tempInput, *tempOutput, *sortOrder, 10);
-        // move to the first record of the
-        file->GetPage(currentPage, tempCurrPageNum);
-        // currentPage->MoveToStartPage();
-        currentPage->EmptyItOut();
-        currPageNum = tempCurrPageNum;
-
-        while (GetNextRecord(fromFile) == 1) {
-            tempInput->Insert(fromFile);
-        }
-
-        while (output->Remove(tempRec)) {
-            tempInput->Insert(tempRec);
-        }
-
-        tempInput->ShutDown();
-
-        while (tempOutput->Remove(tempRec)) {
-            if (!currentPage->Append(tempRec)) {
-                WriteCurrentPageToDisk();
-                currPageNum++;
-                // empty the page out
-                delete currentPage;
-                currentPage = new (std::nothrow) Page();
-                // append record to empty page
-                currentPage->Append(tempRec);
+            currPageNum = 0;
+            ComparisonEngine ceng;
+            Record *fromFile = new Record;
+            while (GetNextRecord(fromFile) == 1) {
+                cout << "hello";
+                if (ceng.Compare(tempRec, fromFile, sortOrder) > 0)
+                    break;
             }
+
+            cout << "Stage 2:" << endl;
+
+            int tempCurrPageNum = currPageNum;
+            Pipe *tempInput, *tempOutput;
+            tempInput = new Pipe(100);
+            tempOutput = new Pipe(100);
+            BigQ *tempQ = new BigQ(*tempInput, *tempOutput, *sortOrder, 10);
+            // move to the first record of the
+            file->GetPage(currentPage, tempCurrPageNum);
+            // currentPage->MoveToStartPage();
+            currentPage->EmptyItOut();
+            currPageNum = tempCurrPageNum;
+
+            cout << "Stage 3:" << endl;
+
+            while (GetNextRecord(fromFile) == 1) {
+                tempInput->Insert(fromFile);
+            }
+
+            // add the first removed record also into the pipe
+            tempInput->Insert(tempRec);
+
+            cout << "Stage 4:" << endl;
+
+            while (output->Remove(tempRec)) {
+                tempInput->Insert(tempRec);
+            }
+
+            tempInput->ShutDown();
+
+            cout << "Stage 5:" << endl;
+            WritePipeToDisk(tempOutput);
+            cout << "Stage 6:" << endl;
+            // now switch to read mode / switch out of write mode
+            // readMode = true;
         }
-        // now switch to read mode / switch out of write mode
         readMode = true;
     }
 }
@@ -162,5 +188,19 @@ int SortedFile::Close() {
         return 1;
     } else {
         return 0;
+    }
+}
+
+void SortedFile::WritePipeToDisk(Pipe *output) {
+    while (output->Remove(tempRec)) {
+        if (!currentPage->Append(tempRec)) {
+            WriteCurrentPageToDisk();
+            currPageNum++;
+            // empty the page out
+            delete currentPage;
+            currentPage = new (std::nothrow) Page();
+            // append record to empty page
+            currentPage->Append(tempRec);
+        }
     }
 }

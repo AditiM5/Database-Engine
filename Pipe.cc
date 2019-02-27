@@ -143,3 +143,9 @@ void Pipe :: ShutDown () {
 bool Pipe :: isDone(){
 	return done == 1;
 }
+
+bool Pipe:: isFull(){
+	cout << "The total occupied: " << (lastSlot - firstSlot) << endl;
+	return (lastSlot - firstSlot >= totSpace);
+}
+

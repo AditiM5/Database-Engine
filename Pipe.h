@@ -51,6 +51,8 @@ public:
 
 	bool isDone();
 
+	bool isFull();
+
 };
 
 #endif

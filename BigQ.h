@@ -7,6 +7,8 @@
 #include "File.h"
 #include "Record.h"
 #include <stdlib.h>
+#include <string.h>
+#include <string>
 
 using namespace std;
 
@@ -15,11 +17,13 @@ class BigQ {
 
 private:
 
+    const char *tempFileName;
+
     Record *records;
 
     void WritePageToDisk(File *file, Page *page);
 
-    void SortRecords(Page *page, OrderMaker *sortorder);
+    void SortRecords(Page *page, OrderMaker *sortorder, int numPages);
 
     void MergeSort(Record *records, int start, int end, OrderMaker *sortorder);
 

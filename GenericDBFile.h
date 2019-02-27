@@ -26,7 +26,7 @@ protected:
     int currPageNum;
     void WriteCurrentPageToDisk();
 
-    BigQ *bigq;
+    BigQ *bigq = NULL;
     bool readMode;
     Pipe *input;
     Pipe *output;

@@ -104,8 +104,8 @@ int main() {
     struct SortInfo *sortinfo = new SortInfo;
     sortinfo->myOrder = &sortorder;
     cout << "In main: "<< endl;
-    sortorder.Print();
-    sortinfo->runLength = 10;
+    // sortorder.Print();
+    sortinfo->runLength = 3;
 
     FILE *tableFile = fopen("data/test.tbl", "r");
     Record tempRec;
@@ -127,7 +127,7 @@ int main() {
     newFile.MoveFirst();
     while(newFile.GetNext(tempRec) == 1){
         count++;
-        tempRec.Print(&myschema);
+        // tempRec.Print(&myschema);
     }
 
     cout << "Sorted Count: " << count << endl;
