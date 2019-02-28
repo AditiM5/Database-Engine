@@ -59,29 +59,19 @@ void SortedFile::Load(Schema &f_schema, const char *loadpath) {
 }
 
 int SortedFile::Open(const char *f_path) {
-    cout << "\n We are in sorted file Open";
     string metadataFileName(f_path);
-    cout << "\n 1" ;
     metadataFileName += ".data";
-    cout << "\n metadataFileName: " << metadataFileName;
     FILE *metadata = fopen(metadataFileName.c_str(), "r");
-    if(metadata == NULL){
-        cout << "\n THIS SUCKS";
-    }
+    
     char arr[10];
     fscanf(metadata, "%s", arr);
-    printf("\n%s", arr);
-    cout << "\n Not dead";
     fscanf(metadata, "%s", arr);
-    cout << "\n Dead here - 1";
-    printf("\n%s", arr);
-    // runLength = atoi(arr);
-    // cout << "\n Runlength: "<< runLength;
-    cout << "\n This works";
-    sortdata->runLength = runLength;
+    runLength = atoi(arr);
+    sortOrder = new OrderMaker;
     ReadOrderMaker(sortOrder, metadata);
 
-    sortOrder->Print();
+    file = new File();
+    file->Open(1, f_path);
     return 1;
 }
 
@@ -90,7 +80,6 @@ void SortedFile::initQ() {
         input = new Pipe(100);
         output = new Pipe(100);
         bigq = new BigQ(*input, *output, *sortOrder, runLength);
-        // cout << "BigQ init" << endl;
     }
 }
 
@@ -180,6 +169,7 @@ void SortedFile::MoveFirst() {
     cout << "Move First in SortedFile" << endl;
     SwitchFromReadToWrite();
     WriteCurrentPageToDisk();
+    cout << "File len: " << file->GetLength() << endl;
     file->GetPage(currentPage, 0);
     currPageNum = 0;
 }
