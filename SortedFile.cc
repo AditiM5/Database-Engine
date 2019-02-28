@@ -13,22 +13,17 @@ SortedFile::SortedFile() {
 
 // create  a metadata file
 int SortedFile::Create(const char *f_path, void *startup) {
-    // SortInfo *sortinfo;
     sortdata = (SortInfo *)startup;
     string metadataFileName(f_path);
     metadataFileName += ".data";
     FILE *metadata = fopen(metadataFileName.c_str(), "w");
     fprintf(metadata, "%s\n", "sorted");
+    fprintf(metadata, "%d\n", sortdata->runLength);
     WriteOrderMaker(sortdata->myOrder, metadata);
     fclose(metadata);
 
     sortOrder = sortdata->myOrder;
     runLength = sortdata->runLength;
-
-    // cout << "Runlen from CREATE: " << runLength;
-    // cout << "\n";
-    // cout << "SortOrder from CREATE: " << endl;
-    sortOrder->Print();
 
     file = new File();
     file->Open(0, f_path);
@@ -36,41 +31,57 @@ int SortedFile::Create(const char *f_path, void *startup) {
 }
 
 void SortedFile::Load(Schema &f_schema, const char *loadpath) {
-    // cout << "Runlen from LOAD: " << sortdata->runLength;
-    // cout << "\n";
-    // cout << "SortOrder from LOAD: " << endl;
-    (sortdata->myOrder)->Print();
-    if (bigq == NULL) {
-        input = new Pipe(100);
-        output = new Pipe(100);
-        bigq = new BigQ(*input, *output, *sortOrder, runLength);
-    }
+    initQ();
     readMode = false;
     FILE *tableFile = fopen(loadpath, "r");
     if (!tableFile) {
         cout << "ERROR : Cannot open file. EXIT !!!\n";
         exit(1);
     }
+
+    int count = 0;
     Record temp;
     while (temp.SuckNextRecord(&f_schema, tableFile) == 1) {
         input->Insert(&temp);
+        count++;
     }
-    // cout << "Runlen from Load: " << runLength;
     input->ShutDown();
-    while (output->Remove(&temp)) {
-        if (!currentPage->Append(&temp)) {
-            WriteCurrentPageToDisk();
-            // empty the page out
-            delete currentPage;
-            currentPage = new (std::nothrow) Page();
-            // append record to empty page
-            currentPage->Append(&temp);
-        }
-    }
-    WriteCurrentPageToDisk();
+    WritePipeToDisk(output);
+
+    // set it to read Mode
+    readMode = true;
+
+    delete input;
+    delete output;
+    delete bigq;
+    bigq = NULL;
+
 }
 
 int SortedFile::Open(const char *f_path) {
+    cout << "\n We are in sorted file Open";
+    string metadataFileName(f_path);
+    cout << "\n 1" ;
+    metadataFileName += ".data";
+    cout << "\n metadataFileName: " << metadataFileName;
+    FILE *metadata = fopen(metadataFileName.c_str(), "r");
+    if(metadata == NULL){
+        cout << "\n THIS SUCKS";
+    }
+    char arr[10];
+    fscanf(metadata, "%s", arr);
+    printf("\n%s", arr);
+    cout << "\n Not dead";
+    fscanf(metadata, "%s", arr);
+    cout << "\n Dead here - 1";
+    printf("\n%s", arr);
+    // runLength = atoi(arr);
+    // cout << "\n Runlength: "<< runLength;
+    cout << "\n This works";
+    sortdata->runLength = runLength;
+    ReadOrderMaker(sortOrder, metadata);
+
+    sortOrder->Print();
     return 1;
 }
 
@@ -199,4 +210,5 @@ void SortedFile::WritePipeToDisk(Pipe *output) {
             currentPage->Append(tempRec);
         }
     }
+    WriteCurrentPageToDisk();
 }
