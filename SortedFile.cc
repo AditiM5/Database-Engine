@@ -27,6 +27,8 @@ int SortedFile::Create(const char *f_path, void *startup) {
 
     file = new File();
     file->Open(0, f_path);
+
+    prevGetNext = false;
     return 1;
 }
 
@@ -56,22 +58,29 @@ void SortedFile::Load(Schema &f_schema, const char *loadpath) {
     delete bigq;
     bigq = NULL;
 
+    prevGetNext = false;
 }
 
 int SortedFile::Open(const char *f_path) {
+    readMode = true;
     string metadataFileName(f_path);
     metadataFileName += ".data";
     FILE *metadata = fopen(metadataFileName.c_str(), "r");
-    
+
     char arr[10];
     fscanf(metadata, "%s", arr);
     fscanf(metadata, "%s", arr);
+
     runLength = atoi(arr);
     sortOrder = new OrderMaker;
+
     ReadOrderMaker(sortOrder, metadata);
 
     file = new File();
     file->Open(1, f_path);
+
+    prevGetNext = false;
+
     return 1;
 }
 
@@ -89,15 +98,91 @@ void SortedFile::Add(Record *rec) {
 
     // change mode to writing
     readMode = false;
+    prevGetNext = false;
 }
 
 int SortedFile::GetNext(Record &fetchme) {
     SwitchFromReadToWrite();
+    prevGetNext = false;
     return GetNextRecord(&fetchme);
 }
 
+// GetNext returns zero if not found
 int SortedFile::GetNext(Record &fetchme, CNF &cnf, Record &literal) {
-    return 1;
+    OrderMaker *newOrderMaker = new OrderMaker();
+    if (!prevGetNext) {
+        cnf.CreateQueryOrderMaker(sortOrder, newOrderMaker);
+    }
+    cout << "Printing query ordermaker!!!";
+    newOrderMaker->Print();
+
+    ComparisonEngine ceng;
+
+    int result = -1;
+    if (newOrderMaker->numAtts != 0) {
+        if (!prevGetNext) {
+            while (true) {
+                int numRecords = currentPage->numRecs;
+                Record *recs = new Record[numRecords];
+                for (int i = 0; i < numRecords; i++) {
+                    currentPage->GetFirst(recs + i);
+                }
+                result = BinarySearch(recs, 0, numRecords - 1, &literal, newOrderMaker);
+                cout << "The result of bin search: " << result << endl;
+                if (result != -1) {
+                    cout << "Found and breaking from loop...." << endl;
+                    break;
+                }
+
+                if (currPageNum + 1 < file->GetLength() - 1) {
+                    currPageNum++;
+                    file->GetPage(currentPage, currPageNum);
+                } else {
+                    break;
+                }
+            }
+
+            cout << "Out of the first while true loop" << endl;
+            if (result == -1) {
+                return 0;
+                cout << "Record not found!!!!!" << endl;
+            }
+            prevGetNext = true;
+
+            // get the page where the record has been found
+            file->GetPage(currentPage, currPageNum);
+            currentPage->GetRecord(&fetchme, result - 1);
+        }
+
+        while (true) {
+            while (currentPage->GetFirst(&fetchme)) {
+                if (ceng.Compare(&fetchme, &literal, sortOrder) == 0 && (ceng.Compare(&fetchme, &literal, &cnf) == 1)) {
+                    return 0;
+                }
+            }
+            if (currPageNum + 1 < file->GetLength() - 1) {
+                currPageNum++;
+                file->GetPage(currentPage, currPageNum);
+            } else {
+                break;
+            }
+        }
+    } else {
+        while (true) {
+            while (currentPage->GetFirst(&fetchme)) {
+                if (ceng.Compare(&fetchme, &literal, &cnf) == 1) {
+                    return 0;
+                }
+            }
+            if (currPageNum + 1 < file->GetLength() - 1) {
+                currPageNum++;
+                file->GetPage(currentPage, currPageNum);
+            } else {
+                break;
+            }
+        }
+    }
+    return 0;
 }
 
 void SortedFile::SwitchFromReadToWrite() {
@@ -172,12 +257,14 @@ void SortedFile::MoveFirst() {
     cout << "File len: " << file->GetLength() << endl;
     file->GetPage(currentPage, 0);
     currPageNum = 0;
+    prevGetNext = false;
 }
 
 int SortedFile::Close() {
     cout << "\n Close First in SortedFile";
     SwitchFromReadToWrite();
     WriteCurrentPageToDisk();
+    prevGetNext = false;
 
     fsync(file->myFilDes);
     // returns 1 on success
@@ -201,4 +288,40 @@ void SortedFile::WritePipeToDisk(Pipe *output) {
         }
     }
     WriteCurrentPageToDisk();
+}
+
+int SortedFile::BinarySearch(Record *recs, int start, int end, Record *key, OrderMaker *sortOrder) {
+    if (start <= end) {
+        int mid = start + (end - start) / 2;
+        ComparisonEngine ceng;
+        if (ceng.Compare((recs + mid), key, sortOrder) == 0) {
+            return mid;
+        } else if (ceng.Compare((recs + mid), key, sortOrder) > 0) {
+            // if left is greater than right
+            // end = mid - 1;
+            return BinarySearch(recs, start, mid - 1, key, sortOrder);
+        } else if (ceng.Compare((recs + mid), key, sortOrder) < 0) {
+            // if left is less than right
+            // start = mid + 1;
+            return BinarySearch(recs, mid + 1, end, key, sortOrder);
+        }
+    }
+    return -1;
+}
+
+// compare with Order Maker
+// then compare with CNF
+// return the AND of the two
+bool SortedFile::CompareOrderMakerCNF(Record *record, Record *literal, OrderMaker *sortOrder, CNF *cnf) {
+    ComparisonEngine ceng;
+
+    if (ceng.Compare(record, literal, sortOrder) != 0) {
+        return false;
+    }
+
+    if (ceng.Compare(record, literal, cnf) == 1) {
+        return true;
+    }
+
+    return false;
 }

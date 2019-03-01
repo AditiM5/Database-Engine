@@ -8,6 +8,8 @@
 #include "Comparison.h"
 #include "ComparisonEngine.h"
 #include "GenericDBFile.h"
+#include "HeapFile.h"
+#include "SortedFile.h"
 
 class DBFile {
 

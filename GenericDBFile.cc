@@ -61,7 +61,7 @@ void GenericDBFile::ReadOrderMaker(OrderMaker *sortOrder, FILE *file) {
     char space[100];
     // num Atts read
     fscanf(file, "%s", space);
-    sortOrder->numAtts = atoi(space);
+    sortOrder->numAtts = std::atoi(space);
 
     for (int i = 0; i < sortOrder->numAtts; i++) {
         fscanf(file, "%s", space);

@@ -88,6 +88,25 @@ void *consumer(void *arg) {
     pthread_exit(NULL);
 }
 
+int BinarySearch(Record *recs, int start, int end, Record *key, OrderMaker *sortOrder) {
+    if (start <= end) {
+        int mid = start + (end - start) / 2;
+        ComparisonEngine ceng;
+        if (ceng.Compare((recs + mid), key, sortOrder) == 0) {
+            return mid;
+        } else if (ceng.Compare((recs + mid), key, sortOrder) > 0) {
+            // if left is greater than right
+            // end = mid - 1;
+            return BinarySearch(recs, start, mid - 1, key, sortOrder);
+        } else if (ceng.Compare((recs + mid), key, sortOrder) < 0) {
+            // if left is less than right
+            // start = mid + 1;
+            return BinarySearch(recs, mid + 1, end, key, sortOrder);
+        }
+    }
+    return -1;
+}
+
 int main() {
     Schema myschema("catalog", "lineitem");
 
@@ -101,38 +120,32 @@ int main() {
     sort_pred.GetSortOrders(sortorder, dummy);
 
     DBFile newFile;
-    struct SortInfo *sortinfo = new SortInfo;
-    sortinfo->myOrder = &sortorder;
-    cout << "In main: "<< endl;
+    // struct SortInfo *sortinfo = new SortInfo;
+    // sortinfo->myOrder = &sortorder;
+    // cout << "In main: "<< endl;
     // sortorder.Print();
-    sortinfo->runLength = 3;
+    // sortinfo->runLength = 3;
 
-    FILE *tableFile = fopen("data/test.tbl", "r");
+    FILE *tableFile = fopen("data/lineitem.tbl", "r");
     Record tempRec;
 
-    // newFile.Create("data/lineitem.bin", sorted, (void *)sortinfo);
-    newFile.Open("data/lineitem.bin");
-    cout << "After create: "<< endl;
-    // newFile.Load(myschema, "data/lineitem.tbl");
+    Record *myRecs = new Record[100];
 
     int count = 0;
-
-    // while(tempRec.SuckNextRecord(&myschema, tableFile) == 1){
-    //     // tempRec.Print(&myschema);
-    //     newFile.Add(&tempRec);
-    //     count++;
-    // }
-    // cout << "Number Of Records read : Count: " << count << endl;
-
-    count = 0;
+    newFile.Open("data/lineitem.bin");
     newFile.MoveFirst();
-    while(newFile.GetNext(tempRec) == 1){
+    int i = 0;
+    while (newFile.GetNext(tempRec) == 1 && i < 100) {
+        // tempRec.Print(&myschema);
+        (myRecs + i)->Consume(&tempRec);
         count++;
-        tempRec.Print(&myschema);
+        i++;
     }
 
-    cout << "Sorted Count: " << count << endl;
-    cout << "\n Closing...";
+    int index = BinarySearch(myRecs, 0, 99, &literal, &sortorder);
+
+    cout << "The bin search result: " << index << endl;
+
     newFile.Close();
     return 0;
 }

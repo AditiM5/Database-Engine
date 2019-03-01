@@ -67,8 +67,12 @@ int Page::GetRecord(Record *firstOne, off_t offset) {
     myRecs->MoveToStart();
 
     // make sure there is data
-    if (!myRecs->RightLength()) {
+    if (!myRecs->RightLength() || offset > myRecs->RightLength()) {
         return 0;
+    }
+
+    for(int i = 0; i <= offset; i++){
+        myRecs->Remove(firstOne);
     }
 
     return 1;

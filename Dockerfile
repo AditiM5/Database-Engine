@@ -10,6 +10,8 @@ RUN apt-get -y --fix-missing install flex bison
 
 RUN apt-get -y install libgtest-dev
 
+RUN apt-get -y install gdb
+
 WORKDIR /usr/src/gtest
 
 RUN cmake CMakeLists.txt && make && cp *.a /usr/lib
@@ -24,7 +26,7 @@ WORKDIR /opt/build
 
 ARG make_target=main
 
-RUN if [ "${make_target}" = "main" ] ; then make main ; else make gtest ; fi
+RUN if [ "${make_target}" = "main" ] ; then make main ; else make test.out ; fi
 
 # RUN if [ "${make_target}" = "test.out" ] ; the make test.out ; fi
 

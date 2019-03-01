@@ -1,14 +1,13 @@
 #ifndef SORTEDFILE_H
 #define SORTEDFILE_H
 
-#include "GenericDBFile.h"
 #include "BigQ.h"
+#include "GenericDBFile.h"
 #include "Pipe.h"
 
 // struct SortInfo { OrderMaker *myOrder; int runLength = 0;};
 
-class SortedFile : public GenericDBFile{
-
+class SortedFile : public GenericDBFile {
     // BigQ *bigq;
     // bool readMode;
     // Pipe *input;
@@ -24,14 +23,19 @@ class SortedFile : public GenericDBFile{
 
     Record *tempRec;
 
+    bool prevGetNext = false;
+
     void SwitchFromReadToWrite();
 
     void WritePipeToDisk(Pipe *output);
 
     void initQ();
 
-public:
+    int BinarySearch(Record *recs, int start, int end, Record *key, OrderMaker *sortOrder);
 
+    bool CompareOrderMakerCNF(Record *record, Record *literal, OrderMaker *sortOrder, CNF *cnf);
+
+   public:
     SortedFile();
 
     int Create(const char *fpath, void *startup);
@@ -51,7 +55,6 @@ public:
     void MoveFirst();
 
     int Close();
-
 };
 
 #endif
