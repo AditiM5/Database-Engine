@@ -41,9 +41,6 @@ void DBFile::Load(Schema &f_schema, const char *loadpath) {
 }
 
 int DBFile::Open(const char *f_path) {
-
-    cout << "\n Hello there, I'm open";
-
     string metadataFileName(f_path);
     metadataFileName += ".data";
     FILE *metadata = fopen(metadataFileName.c_str(), "r");
@@ -54,10 +51,8 @@ int DBFile::Open(const char *f_path) {
     if(!strcmp(arr, "heap")){
         genericDBFile = new HeapFile();
     } else {
-        cout << "\n I'm sorted file";
         genericDBFile = new SortedFile();
     }
-    cout<< "\n I'm going to open....";
     genericDBFile->Open(f_path);
 }
 

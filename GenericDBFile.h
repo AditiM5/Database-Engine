@@ -25,6 +25,7 @@ protected:
     Page *currentPage;
     int currPageNum;
     void WriteCurrentPageToDisk();
+    void PageToDiskOverWrite();
 
     BigQ *bigq = NULL;
     bool readMode = true;
@@ -61,6 +62,7 @@ public:
     void ReadOrderMaker(OrderMaker *sortOrder, FILE *file);
 
     int GetNextRecord(Record *tempRec);
+
 };
 
 #endif

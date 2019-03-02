@@ -25,7 +25,7 @@ class SortedFile : public GenericDBFile {
 
     bool prevGetNext = false;
 
-    void SwitchFromReadToWrite();
+    void WriteToRead();
 
     void WritePipeToDisk(Pipe *output);
 

@@ -73,8 +73,12 @@ void *BigQ::Worker(void *args) {
             count++;
         }
 
-        while (in->Remove(tempRec) && currPageNum < runlen) {
+        
+        while (currPageNum < runlen && in->Remove(tempRec)) {
             // count++;
+            if(tempRec->IsRecordEmpty()){
+                cout << "TempRec is empty" << endl;
+            }
             if (!((pages + currPageNum)->Append(tempRec))) {
                 if(currPageNum + 1 < runlen) {
                     currPageNum++;

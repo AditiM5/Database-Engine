@@ -31,6 +31,17 @@ void GenericDBFile::WriteCurrentPageToDisk() {
     }
 }
 
+void GenericDBFile::PageToDiskOverWrite() {
+    if (!currentPage->pageToDisk) {
+        if (!file->GetLength()) {
+            file->AddPage(currentPage, file->GetLength());
+        } else {
+            file->AddPage(currentPage, currPageNum);
+        }
+        currentPage->pageToDisk = true;
+    }
+}
+
 void GenericDBFile::WriteOrderMaker(OrderMaker *sortOrder, FILE *file) {
     int numAtts = sortOrder->numAtts;
     fprintf(file, "%d\n", numAtts);

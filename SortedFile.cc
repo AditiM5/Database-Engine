@@ -29,6 +29,7 @@ int SortedFile::Create(const char *f_path, void *startup) {
     file->Open(0, f_path);
 
     prevGetNext = false;
+    readMode = true;
     return 1;
 }
 
@@ -66,21 +67,16 @@ int SortedFile::Open(const char *f_path) {
     string metadataFileName(f_path);
     metadataFileName += ".data";
     FILE *metadata = fopen(metadataFileName.c_str(), "r");
-
     char arr[10];
     fscanf(metadata, "%s", arr);
     fscanf(metadata, "%s", arr);
-
     runLength = atoi(arr);
     sortOrder = new OrderMaker;
-
     ReadOrderMaker(sortOrder, metadata);
 
     file = new File();
     file->Open(1, f_path);
-
     prevGetNext = false;
-
     return 1;
 }
 
@@ -94,15 +90,15 @@ void SortedFile::initQ() {
 
 void SortedFile::Add(Record *rec) {
     initQ();
+    readMode = false;
     input->Insert(rec);
 
     // change mode to writing
-    readMode = false;
     prevGetNext = false;
 }
 
 int SortedFile::GetNext(Record &fetchme) {
-    SwitchFromReadToWrite();
+    WriteToRead();
     prevGetNext = false;
     return GetNextRecord(&fetchme);
 }
@@ -147,6 +143,8 @@ int SortedFile::GetNext(Record &fetchme, CNF &cnf, Record &literal) {
                 return 0;
                 cout << "Record not found!!!!!" << endl;
             }
+
+            cout << "Bin search returned: " << result << endl;
             prevGetNext = true;
 
             // get the page where the record has been found
@@ -157,7 +155,7 @@ int SortedFile::GetNext(Record &fetchme, CNF &cnf, Record &literal) {
         while (true) {
             while (currentPage->GetFirst(&fetchme)) {
                 if (ceng.Compare(&fetchme, &literal, sortOrder) == 0 && (ceng.Compare(&fetchme, &literal, &cnf) == 1)) {
-                    return 0;
+                    return 1;
                 }
             }
             if (currPageNum + 1 < file->GetLength() - 1) {
@@ -171,7 +169,7 @@ int SortedFile::GetNext(Record &fetchme, CNF &cnf, Record &literal) {
         while (true) {
             while (currentPage->GetFirst(&fetchme)) {
                 if (ceng.Compare(&fetchme, &literal, &cnf) == 1) {
-                    return 0;
+                    return 1;
                 }
             }
             if (currPageNum + 1 < file->GetLength() - 1) {
@@ -185,10 +183,10 @@ int SortedFile::GetNext(Record &fetchme, CNF &cnf, Record &literal) {
     return 0;
 }
 
-void SortedFile::SwitchFromReadToWrite() {
+void SortedFile::WriteToRead() {
+    Schema mySchema("catalog", "lineitem");
     if (!readMode) {
         // cout << "Stage 1: Entered!" << endl;
-
         input->ShutDown();
         if (file->GetLength() == 0) {
             WritePipeToDisk(output);
@@ -200,7 +198,8 @@ void SortedFile::SwitchFromReadToWrite() {
             ComparisonEngine ceng;
             Record *fromFile = new Record;
             while (GetNextRecord(fromFile) == 1) {
-                if (ceng.Compare(tempRec, fromFile, sortOrder) > 0)
+                // left is greater than right
+                if (ceng.Compare(fromFile, tempRec, sortOrder) >= 0)
                     break;
             }
 
@@ -213,28 +212,48 @@ void SortedFile::SwitchFromReadToWrite() {
             BigQ *tempQ = new BigQ(*tempInput, *tempOutput, *sortOrder, 10);
             // move to the first record of the
             file->GetPage(currentPage, tempCurrPageNum);
-            currentPage->EmptyItOut();
+            // currentPage->EmptyItOut();
             currPageNum = tempCurrPageNum;
 
             // cout << "Stage 3:" << endl;
 
+            int count = 0;
             while (GetNextRecord(fromFile) == 1) {
                 tempInput->Insert(fromFile);
+                count++;
             }
 
             // add the first removed record also into the pipe
             tempInput->Insert(tempRec);
+            count++;
 
             // cout << "Stage 4:" << endl;
 
             while (output->Remove(tempRec)) {
                 tempInput->Insert(tempRec);
+                count++;
             }
 
+            cout << " Num in tempInput: " << count << endl;
             tempInput->ShutDown();
 
             // cout << "Stage 5:" << endl;
+
+            // empty the page before adding everything back
+            // currentPage->EmptyItOut();
+            delete currentPage;
+            currentPage = new Page();
+            currPageNum = tempCurrPageNum;
+
             WritePipeToDisk(tempOutput);
+            // count = 0;
+            // while (tempOutput->Remove(tempRec)) {
+            //     // tempRec->Print(&mySchema);
+            //     count++;
+            // }
+
+            // cout << "Count from tempOutput: " << count << endl;
+
             tempOutput->ShutDown();
             // cout << "Stage 6:" << endl;
             // now switch to read mode / switch out of write mode
@@ -247,22 +266,20 @@ void SortedFile::SwitchFromReadToWrite() {
         delete output;
         delete bigq;
         bigq = NULL;
+        tempRec->ClearRecord();
     }
 }
 
 void SortedFile::MoveFirst() {
-    cout << "Move First in SortedFile" << endl;
-    SwitchFromReadToWrite();
+    WriteToRead();
     WriteCurrentPageToDisk();
-    cout << "File len: " << file->GetLength() << endl;
     file->GetPage(currentPage, 0);
     currPageNum = 0;
     prevGetNext = false;
 }
 
 int SortedFile::Close() {
-    cout << "\n Close First in SortedFile";
-    SwitchFromReadToWrite();
+    WriteToRead();
     WriteCurrentPageToDisk();
     prevGetNext = false;
 
@@ -278,7 +295,7 @@ int SortedFile::Close() {
 void SortedFile::WritePipeToDisk(Pipe *output) {
     while (output->Remove(tempRec)) {
         if (!currentPage->Append(tempRec)) {
-            WriteCurrentPageToDisk();
+            PageToDiskOverWrite();
             currPageNum++;
             // empty the page out
             delete currentPage;
@@ -287,26 +304,51 @@ void SortedFile::WritePipeToDisk(Pipe *output) {
             currentPage->Append(tempRec);
         }
     }
-    WriteCurrentPageToDisk();
+    PageToDiskOverWrite();
 }
 
+// recursive BinarySearch lookup
+// int SortedFile::BinarySearch(Record *recs, int start, int end, Record *key, OrderMaker *sortOrder) {
+//     if (start <= end) {
+//         int mid = start + (end - start) / 2;
+//         ComparisonEngine ceng;
+
+//         if (ceng.Compare((recs + mid), key, sortOrder) > 0) {
+//             // if left is greater than right
+//             // end = mid - 1;
+//             return BinarySearch(recs, start, mid - 1, key, sortOrder);
+//         } else if (ceng.Compare((recs + mid), key, sortOrder) < 0) {
+//             // if left is less than right
+//             // start = mid + 1;
+//             return BinarySearch(recs, mid + 1, end, key, sortOrder);
+//         } else if (start != mid) {
+//             return BinarySearch(recs, start, mid, key, sortOrder);
+//         } else {
+//             return mid;
+//         }
+//     }
+//     return -1;
+// }
+
+// Iterative BinarySearch lookup - Faster
 int SortedFile::BinarySearch(Record *recs, int start, int end, Record *key, OrderMaker *sortOrder) {
-    if (start <= end) {
+    int index = -1;
+    while (start <= end) {
         int mid = start + (end - start) / 2;
         ComparisonEngine ceng;
+
         if (ceng.Compare((recs + mid), key, sortOrder) == 0) {
-            return mid;
+            index = mid;
+            end = mid - 1;
         } else if (ceng.Compare((recs + mid), key, sortOrder) > 0) {
             // if left is greater than right
-            // end = mid - 1;
-            return BinarySearch(recs, start, mid - 1, key, sortOrder);
+            end = mid - 1;
         } else if (ceng.Compare((recs + mid), key, sortOrder) < 0) {
             // if left is less than right
-            // start = mid + 1;
-            return BinarySearch(recs, mid + 1, end, key, sortOrder);
+            start = mid + 1;
         }
     }
-    return -1;
+    return index;
 }
 
 // compare with Order Maker

@@ -71,7 +71,7 @@ int Page::GetRecord(Record *firstOne, off_t offset) {
         return 0;
     }
 
-    for(int i = 0; i <= offset; i++){
+    for(int i = 0; i < offset; i++){
         myRecs->Remove(firstOne);
     }
 
