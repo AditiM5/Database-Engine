@@ -96,17 +96,17 @@ int BinarySearch(Record *recs, int start, int end, Record *key, OrderMaker *sort
         cout << "Start: " << start << endl;
         cout << "End: " << end << endl;
         cout << "Mid: " << mid << endl;
-    
+
         ComparisonEngine ceng;
 
-        if (ceng.Compare((recs + mid), key, sortOrder) == 0) {
+        if (ceng.CompareLit((recs + mid), key, sortOrder) == 0) {
             cout << "Found record at position: " << mid << endl;
             index = mid;
             end = mid - 1;
-        } else if (ceng.Compare((recs + mid), key, sortOrder) < 0) {
+        } else if (ceng.CompareLit((recs + mid), key, sortOrder) > 0) {
             // if left is greater than right
             end = mid - 1;
-        } else if (ceng.Compare((recs + mid), key, sortOrder) > 0) {
+        } else if (ceng.CompareLit((recs + mid), key, sortOrder) < 0) {
             // if left is less than right
             start = mid + 1;
         }
@@ -120,39 +120,42 @@ int main() {
     cout << "Enter your CNF: (l_partkey)" << endl;
     yyparse();
 
+    DBFile newFile;
     Record literal;
     CNF sort_pred;
     sort_pred.GrowFromParseTree(final, &myschema, literal);  // constructs CNF predicate
     OrderMaker dummy, sortorder;
     sort_pred.GetSortOrders(sortorder, dummy);
 
-    DBFile newFile;
-    // struct SortInfo *sortinfo = new SortInfo;
-    // sortinfo->myOrder = &sortorder;
-    // cout << "In main: " << endl;
-    // sortorder.Print();
-    // sortinfo->runLength = 3;
+    struct SortInfo *sortinfo = new SortInfo;
+    sortinfo->myOrder = &sortorder;
+    cout << "In main: " << endl;
+    sortorder.Print();
+    cout << "Enter the runlength: "<< endl;
+    cin >> sortinfo->runLength;
 
-    // FILE *tableFile = fopen("data/lineitem.tbl", "r");
+    FILE *tableFile = fopen("data/lineitem.tbl", "r");
     Record tempRec;
 
-    Record *myRecs = new Record[10];
+    // Record *myRecs = new Record[800];
 
     int count = 0;
-    // cout << "Create" << endl;
-    // newFile.Create("data/lineitem.bin", sorted, (void *)sortinfo);
+    cout << "Create" << endl;
+    newFile.Create("data/lineitem.bin", sorted, (void *)sortinfo);
     // newFile.Open("data/lineitem.bin");
     // newFile.MoveFirst();
     int i = 0;
     // cout << "First ADD: " << endl;
 
-    // while (tempRec.SuckNextRecord(&myschema, tableFile) == 1 && i < 10) {
-    //     // tempRec.Print(&myschema);
-    //     // (myRecs + i)->Consume(&tempRec);
-    //     newFile.Add(&tempRec);
-    //     count++;
-    //     i++;
-    // }
+    while (tempRec.SuckNextRecord(&myschema, tableFile) == 1) {
+        // tempRec.Print(&myschema);
+        // (myRecs + i)->Consume(&tempRec);
+        newFile.Add(&tempRec);
+        count++;
+        i++;
+    }
+
+    cout << "Number of records added: " << count << endl;
 
     // newFile.Close();
 
@@ -160,23 +163,23 @@ int main() {
     // newFile.Open("data/lineitem.bin");
     // newFile.MoveFirst();
 
-    // newFile.Close();
+    newFile.Close();
 
     // cout << "Open last and scan" << endl;
-    newFile.Open("data/lineitem.bin");
-    newFile.MoveFirst();
+    // newFile.Open("data/lineitem.bin");
+    // newFile.MoveFirst();
 
-    i = 0;
+    // i = 0;
 
-    cout << "What is in the key: " << endl;
-    literal.Print(&myschema);
-    while (newFile.GetNext(tempRec) == 1 && i < 10) {
-        tempRec.Print(&myschema);
-        (myRecs + i)->Consume(&tempRec);
-        // newFile.Add(&tempRec);
-        count++;
-        i++;
-    }
+    // cout << "What is in the key: " << endl;
+    // // literal.Print(&myschema);
+    // while (newFile.GetNext(tempRec) == 1 && i < 800) {
+    //     tempRec.Print(&myschema);
+    //     (myRecs + i)->Consume(&tempRec);
+    //     // newFile.Add(&tempRec);
+    //     count++;
+    //     i++;
+    // }
 
     // i = 0;
     // while (newFile.GetNext(tempRec) == 1) {
@@ -188,9 +191,9 @@ int main() {
     // cout << "Count: " << i << endl;
     // newFile.Close();
 
-    int index = BinarySearch(myRecs, 0, 9, &literal, &sortorder);
+    // int index = BinarySearch(myRecs, 0, 799, &literal, &sortorder);
 
-    cout << "The bin search result: " << index << endl;
+    // cout << "The bin search result: " << index << endl;
 
     // while (newFile.GetNext(tempRec) == 1) {
     //     tempRec.Print(&myschema);

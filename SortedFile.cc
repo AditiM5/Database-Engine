@@ -105,12 +105,11 @@ int SortedFile::GetNext(Record &fetchme) {
 
 // GetNext returns zero if not found
 int SortedFile::GetNext(Record &fetchme, CNF &cnf, Record &literal) {
+    Schema myschema("catalog", "lineitem");
     OrderMaker *newOrderMaker = new OrderMaker();
     if (!prevGetNext) {
         cnf.CreateQueryOrderMaker(sortOrder, newOrderMaker);
     }
-    cout << "Printing query ordermaker!!!";
-    newOrderMaker->Print();
 
     ComparisonEngine ceng;
 
@@ -126,7 +125,6 @@ int SortedFile::GetNext(Record &fetchme, CNF &cnf, Record &literal) {
                 result = BinarySearch(recs, 0, numRecords - 1, &literal, newOrderMaker);
                 cout << "The result of bin search: " << result << endl;
                 if (result != -1) {
-                    cout << "Found and breaking from loop...." << endl;
                     break;
                 }
 
@@ -138,13 +136,10 @@ int SortedFile::GetNext(Record &fetchme, CNF &cnf, Record &literal) {
                 }
             }
 
-            cout << "Out of the first while true loop" << endl;
             if (result == -1) {
                 return 0;
-                cout << "Record not found!!!!!" << endl;
             }
 
-            cout << "Bin search returned: " << result << endl;
             prevGetNext = true;
 
             // get the page where the record has been found
@@ -153,8 +148,9 @@ int SortedFile::GetNext(Record &fetchme, CNF &cnf, Record &literal) {
         }
 
         while (true) {
+            // scan the current loaded page
             while (currentPage->GetFirst(&fetchme)) {
-                if (ceng.Compare(&fetchme, &literal, sortOrder) == 0 && (ceng.Compare(&fetchme, &literal, &cnf) == 1)) {
+                if (ceng.CompareLit(&fetchme, &literal, newOrderMaker) == 0 && (ceng.Compare(&fetchme, &literal, &cnf) == 1)) {
                     return 1;
                 }
             }
@@ -335,15 +331,20 @@ int SortedFile::BinarySearch(Record *recs, int start, int end, Record *key, Orde
     int index = -1;
     while (start <= end) {
         int mid = start + (end - start) / 2;
+        // cout << "Start: " << start << endl;
+        // cout << "End: " << end << endl;
+        // cout << "Mid: " << mid << endl;
+
         ComparisonEngine ceng;
 
-        if (ceng.Compare((recs + mid), key, sortOrder) == 0) {
+        if (ceng.CompareLit((recs + mid), key, sortOrder) == 0) {
+            cout << "Found record at position: " << mid << endl;
             index = mid;
             end = mid - 1;
-        } else if (ceng.Compare((recs + mid), key, sortOrder) > 0) {
+        } else if (ceng.CompareLit((recs + mid), key, sortOrder) > 0) {
             // if left is greater than right
             end = mid - 1;
-        } else if (ceng.Compare((recs + mid), key, sortOrder) < 0) {
+        } else if (ceng.CompareLit((recs + mid), key, sortOrder) < 0) {
             // if left is less than right
             start = mid + 1;
         }

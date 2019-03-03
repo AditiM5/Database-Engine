@@ -102,7 +102,7 @@ lex.yy.o: Lexer.l
 
 # All tests produced by this Makefile.  Remember to add new tests you
 # created to the list.
-TESTS = BigQTest
+TESTS = DBFileTest
 
 gtest : $(TESTS)
 
@@ -124,12 +124,11 @@ gtest_main.a : gtest-all.o gtest_main.o
 # gtest_main.a, depending on whether it defines its own main()
 # function.
 
-BigQTest.o : $(USER_DIR)/BigQTest.cc $(GTEST_HEADERS)
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(USER_DIR)/BigQTest.cc
+DBFileTest.o : $(USER_DIR)/DBFileTest.cc $(GTEST_HEADERS)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(USER_DIR)/DBFileTest.cc
 
-BigQTest : Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o DBFile.o Pipe.o RecordPageNum.o PriorityQueue.o y.tab.o lex.yy.o BigQTest.o gtest_main.a
+DBFileTest : Record.o Comparison.o ComparisonEngine.o Schema.o File.o Pipe.o BigQ.o GenericDBFile.o HeapFile.o SortedFile.o DBFile.o RecordPageNum.o PriorityQueue.o y.tab.o lex.yy.o DBFileTest.o gtest_main.a
 	$(CC) $^ -lfl -lpthread -o $@
-
 # end Google test targets
 
 clean: 

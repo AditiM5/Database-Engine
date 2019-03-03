@@ -97,7 +97,7 @@ void *BigQ::Worker(void *args) {
             WritePageToDisk(file, pages + i);
         }
 
-        delete[] pages;
+        // delete[] pages;
         pages = new Page[runlen];
 
         if (in->isDone()) {
@@ -125,15 +125,12 @@ void *BigQ::Worker(void *args) {
 }
 
 void BigQ::WritePageToDisk(File *file, Page *page) {
-    // cout << "Writing page to disk out" << endl;
     if (!page->pageToDisk) {
-        // cout << "Writing page to disk" << endl;
         if (!file->GetLength()) {
             file->AddPage(page, file->GetLength());
         } else {
             file->AddPage(page, file->GetLength() - 1);
         }
-        // fsync(file->myFilDes);
         page->pageToDisk = true;
     }
 }
