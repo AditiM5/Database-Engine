@@ -138,7 +138,7 @@ void *BigQ::Worker(void *args) {
     // finally shut down the out pipe
     out->ShutDown();
     file->Close();
-    remove(tempFileName);
+    unlink(tempFileName);
     pthread_exit(NULL);
     return 0;
 }

@@ -35,6 +35,8 @@ class SortedFile : public GenericDBFile {
 
     bool CompareOrderMakerCNF(Record *record, Record *literal, OrderMaker *sortOrder, CNF *cnf);
 
+    void WritePipeToDiskOverWrite(Pipe *output);
+
    public:
     SortedFile();
 

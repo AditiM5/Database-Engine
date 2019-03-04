@@ -89,16 +89,17 @@ void SortedFile::initQ() {
 }
 
 void SortedFile::Add(Record *rec) {
-    initQ();
+    // change mode to writing
     readMode = false;
+    initQ();
     input->Insert(rec);
 
-    // change mode to writing
     prevGetNext = false;
 }
 
 int SortedFile::GetNext(Record &fetchme) {
     WriteToRead();
+
     prevGetNext = false;
     return GetNextRecord(&fetchme);
 }
@@ -241,7 +242,7 @@ void SortedFile::WriteToRead() {
             currentPage = new Page();
             currPageNum = tempCurrPageNum;
 
-            WritePipeToDisk(tempOutput);
+            WritePipeToDiskOverWrite(tempOutput);
             // count = 0;
             // while (tempOutput->Remove(tempRec)) {
             //     // tempRec->Print(&mySchema);
@@ -268,7 +269,7 @@ void SortedFile::WriteToRead() {
 
 void SortedFile::MoveFirst() {
     WriteToRead();
-    WriteCurrentPageToDisk();
+    // WriteCurrentPageToDisk();
     file->GetPage(currentPage, 0);
     currPageNum = 0;
     prevGetNext = false;
@@ -276,7 +277,7 @@ void SortedFile::MoveFirst() {
 
 int SortedFile::Close() {
     WriteToRead();
-    WriteCurrentPageToDisk();
+    // WriteCurrentPageToDisk();
     prevGetNext = false;
 
     fsync(file->myFilDes);
@@ -289,6 +290,21 @@ int SortedFile::Close() {
 }
 
 void SortedFile::WritePipeToDisk(Pipe *output) {
+    while (output->Remove(tempRec)) {
+        if (!currentPage->Append(tempRec)) {
+            WriteCurrentPageToDisk();
+            currPageNum++;
+            // empty the page out
+            delete currentPage;
+            currentPage = new (std::nothrow) Page();
+            // append record to empty page
+            currentPage->Append(tempRec);
+        }
+    }
+    WriteCurrentPageToDisk();
+}
+
+void SortedFile::WritePipeToDiskOverWrite(Pipe *output) {
     while (output->Remove(tempRec)) {
         if (!currentPage->Append(tempRec)) {
             PageToDiskOverWrite();
@@ -355,16 +371,16 @@ int SortedFile::BinarySearch(Record *recs, int start, int end, Record *key, Orde
 // compare with Order Maker
 // then compare with CNF
 // return the AND of the two
-bool SortedFile::CompareOrderMakerCNF(Record *record, Record *literal, OrderMaker *sortOrder, CNF *cnf) {
-    ComparisonEngine ceng;
+// bool SortedFile::CompareOrderMakerCNF(Record *record, Record *literal, OrderMaker *sortOrder, CNF *cnf) {
+//     ComparisonEngine ceng;
 
-    if (ceng.Compare(record, literal, sortOrder) != 0) {
-        return false;
-    }
+//     if (ceng.Compare(record, literal, sortOrder) != 0) {
+//         return false;
+//     }
 
-    if (ceng.Compare(record, literal, cnf) == 1) {
-        return true;
-    }
+//     if (ceng.Compare(record, literal, cnf) == 1) {
+//         return true;
+//     }
 
-    return false;
-}
+//     return false;
+// }

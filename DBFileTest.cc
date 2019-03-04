@@ -1,10 +1,10 @@
+#include <unistd.h>
 #include <iostream>
 #include "Comparison.h"
 #include "ComparisonEngine.h"
 #include "DBFile.h"
 #include "Schema.h"
 #include "gtest/gtest.h"
-#include "unistd.h"
 
 extern "C" {
 int yyparse(void);  // defined in y.tab.c
@@ -53,7 +53,6 @@ TEST_F(DBFileTest, DBFileLoad) {
     EXPECT_EQ(1, dbfile->Close());
 }
 
-
 // open and sequencially scan the sorted file
 TEST_F(DBFileTest, DBFileSeqScan) {
     dbfile = new DBFile;
@@ -70,6 +69,7 @@ TEST_F(DBFileTest, DBFileSeqScan) {
     }
     cout << " scanned " << counter << " recs \n";
     dbfile->Close();
+
     EXPECT_EQ(6005, counter);
 }
 
@@ -97,6 +97,8 @@ TEST_F(DBFileTest, DBFileScanFilter) {
     cout << " scanned " << counter << " recs \n";
     dbfile->Close();
     EXPECT_EQ(5, counter);
+
+    delete dbfile;
 }
 
 // // create a new file, writes to it and then scans the records
@@ -119,10 +121,8 @@ TEST_F(DBFileTest, DBFileInterleave) {
     cout << "Written " << counter << " records" << endl;
     EXPECT_EQ(6005, counter);
 
-    // dbfile->Close();
-
-    // dbfile->Open("lineitemwrite2.bin");
-
+    dbfile->Close();
+    dbfile->Open("lineitemwrite2.bin");
     dbfile->MoveFirst();
 
     counter = 0;
@@ -156,6 +156,8 @@ TEST_F(DBFileTest, DBFileInterleave) {
 
     EXPECT_EQ(12010, counter);
     dbfile->Close();
+    delete dbfile;
+    unlink("lineitemwrite2.bin");
 }
 
 // adding records to sorted file
@@ -172,5 +174,7 @@ TEST_F(DBFileTest, DBFileWrite) {
     }
     dbfile->Close();
     cout << "Written " << count << " records" << endl;
+    delete dbfile;
+    unlink("lineitemwrite.bin");
     EXPECT_EQ(6005, count);
 }
