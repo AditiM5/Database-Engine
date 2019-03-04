@@ -1,206 +1,52 @@
 
-#include <pthread.h>
 #include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
 #include <iostream>
-#include "BigQ.h"
-#include "DBFile.h"
-#include "FlexLexer.h"
-#include "Pipe.h"
 #include "Record.h"
-#include "SortedFile.h"
 
 using namespace std;
 
 extern "C" {
 int yyparse(void);  // defined in y.tab.c
-int readInputForLexer(char *buffer, int *numBytesRead, int maxBytesToRead);
 }
-
-static int globalReadOffset;
-static char *globalInputText = "(l_partkey = ps_partkey)";
 
 extern struct AndList *final;
 
-int readInputForLexer(char *buffer, int *numBytesRead, int maxBytesToRead) {
-    int numBytesToRead = maxBytesToRead;
-    int bytesRemaining = strlen(globalInputText) - globalReadOffset;
-    int i;
-    if (numBytesToRead > bytesRemaining) {
-        numBytesToRead = bytesRemaining;
-    }
-    for (i = 0; i < numBytesToRead; i++) {
-        buffer[i] = globalInputText[globalReadOffset + i];
-    }
-    *numBytesRead = numBytesToRead;
-    globalReadOffset += numBytesToRead;
-    return 0;
-}
-
-void *producer(void *arg) {
-    Pipe *pipe = (Pipe *)arg;
-    FILE *tableFile = fopen("data/mergetest.tbl", "r");
-    Record temp;
-    Schema myschema("catalog", "lineitem");
-    int i = 0;
-
-    while (temp.SuckNextRecord(&myschema, tableFile) == 1) {
-        pipe->Insert(&temp);
-        // cout << "Inserting record: " << i++ << endl;
-    }
-
-    pipe->ShutDown();
-    pthread_exit(NULL);
-}
-
-void *consumer(void *arg) {
-    Pipe *pipe = (Pipe *)arg;
-    Record temp;
-    Schema myschema("catalog", "lineitem");
-    int count = 0;
-
-    DBFile dbFile;
-    dbFile.Create("data-1GB/lineitem.bin", heap, NULL);
-
-    while (pipe->Remove(&temp)) {
-        temp.Print(&myschema);
-        dbFile.Add(&temp);
-        count++;
-    }
-
-    cout << "Close file: " << dbFile.Close() << endl;
-    cout << "Removed rec: " << count << endl;
-
-    // DBFile newFile;
-    // newFile.Open("data/partkeymergetest.bin");
-    // newFile.MoveFirst();
-
-    // cout << "DBFile recs" << endl;
-
-    // while(newFile.GetNext(temp)){
-    //     temp.Print(&myschema);
-    // }
-
-    // newFile.Close();
-
-    // cout << "Removed count: " << count << endl;
-    pthread_exit(NULL);
-}
-
-// Iterative BinarySearch lookup - Faster
-int BinarySearch(Record *recs, int start, int end, Record *key, OrderMaker *sortOrder) {
-    int index = -1;
-    while (start <= end) {
-        int mid = start + (end - start) / 2;
-        cout << "Start: " << start << endl;
-        cout << "End: " << end << endl;
-        cout << "Mid: " << mid << endl;
-
-        ComparisonEngine ceng;
-
-        if (ceng.CompareLit((recs + mid), key, sortOrder) == 0) {
-            cout << "Found record at position: " << mid << endl;
-            index = mid;
-            end = mid - 1;
-        } else if (ceng.CompareLit((recs + mid), key, sortOrder) > 0) {
-            // if left is greater than right
-            end = mid - 1;
-        } else if (ceng.CompareLit((recs + mid), key, sortOrder) < 0) {
-            // if left is less than right
-            start = mid + 1;
-        }
-    }
-    return index;
-}
-
 int main() {
-    Schema myschema("catalog", "lineitem");
+    // try to parse the CNF
+    cout << "Enter in your CNF: ";
+    if (yyparse() != 0) {
+        cout << "Can't parse your CNF.\n";
+        exit(1);
+    }
 
-    cout << "Enter your CNF: (l_partkey)" << endl;
-    yyparse();
+    // suck up the schema from the file
+    Schema lineitem("catalog", "lineitem");
 
-    DBFile newFile;
+    // grow the CNF expression from the parse tree
+    CNF myComparison;
     Record literal;
-    CNF sort_pred;
-    sort_pred.GrowFromParseTree(final, &myschema, literal);  // constructs CNF predicate
-    OrderMaker dummy, sortorder;
-    sort_pred.GetSortOrders(sortorder, dummy);
+    myComparison.GrowFromParseTree(final, &lineitem, literal);
 
-    struct SortInfo *sortinfo = new SortInfo;
-    sortinfo->myOrder = &sortorder;
-    cout << "In main: " << endl;
-    sortorder.Print();
-    cout << "Enter the runlength: "<< endl;
-    cin >> sortinfo->runLength;
+    // print out the comparison to the screen
+    myComparison.Print();
 
-    FILE *tableFile = fopen("data/lineitem.tbl", "r");
-    Record tempRec;
+    // now open up the text file and start procesing it
+    FILE *tableFile = fopen("/cise/tmp/dbi_sp11/DATA/10M/lineitem.tbl", "r");
 
-    // Record *myRecs = new Record[800];
+    Record temp;
+    Schema mySchema("catalog", "lineitem");
 
-    int count = 0;
-    cout << "Create" << endl;
-    newFile.Create("data/lineitem.bin", sorted, (void *)sortinfo);
-    // newFile.Open("data/lineitem.bin");
-    // newFile.MoveFirst();
-    int i = 0;
-    // cout << "First ADD: " << endl;
+    // read in all of the records from the text file and see if they match
+    // the CNF expression that was typed in
+    int counter = 0;
+    ComparisonEngine comp;
+    while (temp.SuckNextRecord(&mySchema, tableFile) == 1) {
+        counter++;
+        if (counter % 10000 == 0) {
+            cerr << counter << "\n";
+        }
 
-    while (tempRec.SuckNextRecord(&myschema, tableFile) == 1) {
-        // tempRec.Print(&myschema);
-        // (myRecs + i)->Consume(&tempRec);
-        newFile.Add(&tempRec);
-        count++;
-        i++;
+        if (comp.Compare(&temp, &literal, &myComparison))
+            temp.Print(&mySchema);
     }
-
-    cout << "Number of records added: " << count << endl;
-
-    // newFile.Close();
-
-    // cout << "Opend second: " << endl;
-    // newFile.Open("data/lineitem.bin");
-    // newFile.MoveFirst();
-
-    newFile.Close();
-
-    // cout << "Open last and scan" << endl;
-    newFile.Open("data/lineitem.bin");
-    newFile.MoveFirst();
-
-    // i = 0;
-
-    // cout << "What is in the key: " << endl;
-    // // literal.Print(&myschema);
-    // while (newFile.GetNext(tempRec) == 1 && i < 800) {
-    //     tempRec.Print(&myschema);
-    //     (myRecs + i)->Consume(&tempRec);
-    //     // newFile.Add(&tempRec);
-    //     count++;
-    //     i++;
-    // }
-
-    i = 0;
-    while (newFile.GetNext(tempRec) == 1) {
-        // cout << "In the loop humans...." << endl;
-        i++;
-    }
-
-    cout << "Count: " << i << endl;
-    newFile.Close();
-
-    // int index = BinarySearch(myRecs, 0, 799, &literal, &sortorder);
-
-    // cout << "The bin search result: " << index << endl;
-
-    // while (newFile.GetNext(tempRec) == 1) {
-    //     tempRec.Print(&myschema);
-    // }
-
-    // newFile.GetNext(tempRec, sort_pred, literal);
-    // tempRec.Print(&myschema);
-
-    // newFile.Close();
-    return 0;
 }

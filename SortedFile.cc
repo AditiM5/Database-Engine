@@ -46,16 +46,16 @@ void SortedFile::Load(Schema &f_schema, const char *loadpath) {
     while (temp.SuckNextRecord(&f_schema, tableFile) == 1) {
         input->Insert(&temp);
     }
-    input->ShutDown();
-    WritePipeToDisk(output);
+    // input->ShutDown();
+    // WritePipeToDisk(output);
 
-    // set it to read Mode
-    readMode = true;
+    // // set it to read Mode
+    // readMode = true;
 
-    delete input;
-    delete output;
-    delete bigq;
-    bigq = NULL;
+    // delete input;
+    // delete output;
+    // delete bigq;
+    // bigq = NULL;
 
     prevGetNext = false;
 }

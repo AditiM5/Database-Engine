@@ -91,7 +91,6 @@ int Pipe :: Remove (Record *removeMe) {
 		// the pipeline is empty so we first see if this
 		// is because it was turned off
 		if (done) {
-			// cout << "Pipe empty and done 1" << endl;
 			pthread_mutex_unlock (&pipeMutex);
 			return 0;
 		}
@@ -103,7 +102,6 @@ int Pipe :: Remove (Record *removeMe) {
 		// the pipe, we need to check if it is still open
 		if (done && lastSlot == firstSlot) {
 			pthread_mutex_unlock (&pipeMutex);
-			cout << "Pipe empty and done 2" << endl;
 			return 0;
 		}
 
@@ -145,7 +143,6 @@ bool Pipe :: isDone(){
 }
 
 bool Pipe:: isFull(){
-	cout << "The total occupied: " << (lastSlot - firstSlot) << endl;
 	return (lastSlot - firstSlot >= totSpace);
 }
 
