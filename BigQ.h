@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <string>
+#include <vector>
 
 using namespace std;
 
@@ -29,7 +30,7 @@ private:
 
     void Merge(Record *records, int start, int mid, int end, OrderMaker *sortorder);
 
-    void KWayMerge(File *file, Pipe *out, int runNum, int runLen, OrderMaker *sortorder);
+    void KWayMerge(File *file, Pipe *out, int runNum, vector<int> runLen, OrderMaker *sortorder);
 
 public:
 
