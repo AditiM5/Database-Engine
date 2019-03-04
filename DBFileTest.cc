@@ -99,6 +99,65 @@ TEST_F(DBFileTest, DBFileScanFilter) {
     EXPECT_EQ(5, counter);
 }
 
+// // create a new file, writes to it and then scans the records
+// // repeats the same again to ensure complete testing of interleaving operations
+TEST_F(DBFileTest, DBFileInterleave) {
+    dbfile = new DBFile;
+    tableFile = fopen(tbl_path, "r");
+    ParseCNF();
+    dbfile->Create("lineitemwrite2.bin", sorted, (void *)sortinfo);
+    int counter = 0;
+    Record tempRec;
+
+    fseek(tableFile, 0, SEEK_SET);
+
+    while (tempRec.SuckNextRecord(myschema, tableFile) == 1) {
+        dbfile->Add(&tempRec);
+        counter++;
+    }
+
+    cout << "Written " << counter << " records" << endl;
+    EXPECT_EQ(6005, counter);
+
+    // dbfile->Close();
+
+    // dbfile->Open("lineitemwrite2.bin");
+
+    dbfile->MoveFirst();
+
+    counter = 0;
+
+    while (dbfile->GetNext(temp) == 1) {
+        counter++;
+    }
+
+    cout << " scanned " << counter << " recs \n";
+    EXPECT_EQ(6005, counter);
+    fseek(tableFile, 0, SEEK_SET);
+
+    // add records again
+    counter = 0;
+
+    while (tempRec.SuckNextRecord(myschema, tableFile) == 1) {
+        dbfile->Add(&tempRec);
+        counter++;
+    }
+
+    cout << "Added " << counter << " records again" << endl;
+    EXPECT_EQ(6005, counter);
+
+    //scanning again
+    dbfile->MoveFirst();
+    counter = 0;
+    while (dbfile->GetNext(tempRec)) {
+        counter++;
+    }
+    cout << "Scanned " << counter << " records" << endl;
+
+    EXPECT_EQ(12010, counter);
+    dbfile->Close();
+}
+
 // adding records to sorted file
 TEST_F(DBFileTest, DBFileWrite) {
     dbfile = new DBFile;
@@ -114,50 +173,4 @@ TEST_F(DBFileTest, DBFileWrite) {
     dbfile->Close();
     cout << "Written " << count << " records" << endl;
     EXPECT_EQ(6005, count);
-}
-
-// // create a new file, writes to it and then scans the records
-// // repeats the same again to ensure complete testing of interleaving operations
-TEST_F(DBFileTest, DBFileInterleave) {
-    dbfile = new DBFile;
-    tableFile = fopen(tbl_path, "r");
-    ParseCNF();
-    dbfile->Create("lineitemwrite.bin", sorted, (void *)sortinfo);
-    int counter = 0;
-    Record tempRec;
-    while (tempRec.SuckNextRecord(myschema, tableFile) == 1) {
-        dbfile->Add(&tempRec);
-        counter++;
-    }
-    cout << "Written " << counter << " records" << endl;
-    EXPECT_EQ(6005, counter);
-
-    dbfile->MoveFirst();
-    counter = 0;
-    while (dbfile->GetNext(temp) == 1) {
-        counter++;
-    }
-    cout << " scanned " << counter << " recs \n";
-    EXPECT_EQ(6005, counter);
-    fseek(tableFile, 0, SEEK_SET);
-
-    // add records again
-    counter = 0;
-    while (tempRec.SuckNextRecord(myschema, tableFile) == 1) {
-        dbfile->Add(&tempRec);
-        counter++;
-    }
-    cout << "Added " << counter << " records again" << endl;
-    EXPECT_EQ(6005, counter);
-
-    //scanning again
-    dbfile->MoveFirst();
-    counter = 0;
-    while (dbfile->GetNext(tempRec)) {
-        counter++;
-    }
-    cout << "Scanned " << counter << " records" << endl;
-
-    EXPECT_EQ(12010, counter);
-    dbfile->Close();
 }
