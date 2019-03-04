@@ -42,11 +42,9 @@ void SortedFile::Load(Schema &f_schema, const char *loadpath) {
         exit(1);
     }
 
-    int count = 0;
     Record temp;
     while (temp.SuckNextRecord(&f_schema, tableFile) == 1) {
         input->Insert(&temp);
-        count++;
     }
     input->ShutDown();
     WritePipeToDisk(output);
@@ -124,7 +122,6 @@ int SortedFile::GetNext(Record &fetchme, CNF &cnf, Record &literal) {
                     currentPage->GetFirst(recs + i);
                 }
                 result = BinarySearch(recs, 0, numRecords - 1, &literal, newOrderMaker);
-                cout << "The result of bin search: " << result << endl;
                 if (result != -1) {
                     break;
                 }
@@ -183,7 +180,6 @@ int SortedFile::GetNext(Record &fetchme, CNF &cnf, Record &literal) {
 void SortedFile::WriteToRead() {
     Schema mySchema("catalog", "lineitem");
     if (!readMode) {
-        // cout << "Stage 1: Entered!" << endl;
         input->ShutDown();
         if (file->GetLength() == 0) {
             WritePipeToDisk(output);
@@ -200,8 +196,6 @@ void SortedFile::WriteToRead() {
                     break;
             }
 
-            // cout << "Stage 2:" << endl;
-
             int tempCurrPageNum = currPageNum;
             Pipe *tempInput, *tempOutput;
             tempInput = new Pipe(100);
@@ -209,32 +203,20 @@ void SortedFile::WriteToRead() {
             BigQ *tempQ = new BigQ(*tempInput, *tempOutput, *sortOrder, 10);
             // move to the first record of the
             file->GetPage(currentPage, tempCurrPageNum);
-            // currentPage->EmptyItOut();
             currPageNum = tempCurrPageNum;
 
-            // cout << "Stage 3:" << endl;
-
-            int count = 0;
             while (GetNextRecord(fromFile) == 1) {
                 tempInput->Insert(fromFile);
-                count++;
             }
 
             // add the first removed record also into the pipe
             tempInput->Insert(tempRec);
-            count++;
-
-            // cout << "Stage 4:" << endl;
 
             while (output->Remove(tempRec)) {
                 tempInput->Insert(tempRec);
-                count++;
             }
 
-            cout << " Num in tempInput: " << count << endl;
             tempInput->ShutDown();
-
-            // cout << "Stage 5:" << endl;
 
             // empty the page before adding everything back
             // currentPage->EmptyItOut();
@@ -243,16 +225,8 @@ void SortedFile::WriteToRead() {
             currPageNum = tempCurrPageNum;
 
             WritePipeToDiskOverWrite(tempOutput);
-            // count = 0;
-            // while (tempOutput->Remove(tempRec)) {
-            //     // tempRec->Print(&mySchema);
-            //     count++;
-            // }
-
-            // cout << "Count from tempOutput: " << count << endl;
 
             tempOutput->ShutDown();
-            // cout << "Stage 6:" << endl;
             // now switch to read mode / switch out of write mode
             delete tempInput;
             delete tempOutput;
@@ -347,14 +321,10 @@ int SortedFile::BinarySearch(Record *recs, int start, int end, Record *key, Orde
     int index = -1;
     while (start <= end) {
         int mid = start + (end - start) / 2;
-        // cout << "Start: " << start << endl;
-        // cout << "End: " << end << endl;
-        // cout << "Mid: " << mid << endl;
 
         ComparisonEngine ceng;
 
         if (ceng.CompareLit((recs + mid), key, sortOrder) == 0) {
-            cout << "Found record at position: " << mid << endl;
             index = mid;
             end = mid - 1;
         } else if (ceng.CompareLit((recs + mid), key, sortOrder) > 0) {
@@ -367,20 +337,3 @@ int SortedFile::BinarySearch(Record *recs, int start, int end, Record *key, Orde
     }
     return index;
 }
-
-// compare with Order Maker
-// then compare with CNF
-// return the AND of the two
-// bool SortedFile::CompareOrderMakerCNF(Record *record, Record *literal, OrderMaker *sortOrder, CNF *cnf) {
-//     ComparisonEngine ceng;
-
-//     if (ceng.Compare(record, literal, sortOrder) != 0) {
-//         return false;
-//     }
-
-//     if (ceng.Compare(record, literal, cnf) == 1) {
-//         return true;
-//     }
-
-//     return false;
-// }
