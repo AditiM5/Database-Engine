@@ -50,64 +50,68 @@ void *BigQ::Worker(void *args) {
 
     // number of records on each run to be sorted
     int runlen = params->runlen;
-    int runOffsets[runlen];
 
     // Pages needed to be sorted
-    Page *pages = new Page[runlen];
+    Page *pages = new Page[runlen + 1];
 
-    int currPageNum = 0;
+    //
+    int currPageInRun = 0;
 
     Record *tempRec = new (std::nothrow) Record();
     File *file = new File();
     milliseconds ms = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
-    string tempFileString = "data/tempSortFile" + to_string(ms.count()) + ".bin";
+    string tempFileString = "tempSortFile" + to_string(ms.count()) + ".bin";
     tempFileName = tempFileString.c_str();
     file->Open(0, tempFileName);
     int count = 0;
 
     while (true) {
         runNum++;
-        currPageNum = 0;
+        currPageInRun = 0;
+
         if (!tempRec->IsRecordEmpty()) {
-            (pages + currPageNum)->Append(tempRec);
+            if(!(pages + currPageInRun)->Append(tempRec)) cout << "Page full here!!!!!" << endl;
             count++;
         }
-
         
-        while (currPageNum < runlen && in->Remove(tempRec)) {
+        while (in->Remove(tempRec)) {
             // count++;
             if(tempRec->IsRecordEmpty()){
                 cout << "TempRec is empty" << endl;
             }
-            if (!((pages + currPageNum)->Append(tempRec))) {
-                if(currPageNum + 1 < runlen) {
-                    currPageNum++;
+
+            if (!((pages + currPageInRun)->Append(tempRec))) {
+                if(currPageInRun + 1 < runlen) {
+                    currPageInRun++;
                     count++;
-                    (pages + currPageNum)->Append(tempRec);
+                    (pages + currPageInRun)->Append(tempRec);
                 } else {
                     break;
                 }
             } else count++;
-            // numRecs++;
         }
 
         // currPageNum is zero based, so add 1!
-        SortRecords(pages, sortorder, currPageNum + 1);
-        for (int i = 0; i < currPageNum + 1; i++) {
+        int filledPages = SortRecords(pages, sortorder, currPageInRun + 1);
+        int numRecs = 0;
+        for (int i = 0; i < filledPages; i++) {
+            numRecs += (pages + i)->numRecords();
             WritePageToDisk(file, pages + i);
         }
 
-        // delete[] pages;
-        pages = new Page[runlen];
+        cout << "Recs written to disk: " << numRecs << endl;
+
+        delete[] pages;
+        pages = new Page[runlen + 1];
 
         if (in->isDone()) {
             break;
         }
     }
 
-    if((pages + currPageNum)->numRecs != 0) {
-        SortRecords(pages, sortorder, currPageNum + 1);
-        for (int i = 0; i < currPageNum + 1; i++) {
+    if((pages + currPageInRun)->numRecs != 0) {
+        int filledPages = SortRecords(pages, sortorder, currPageInRun + 1);
+        for (int i = 0; i < filledPages; i++) {
             WritePageToDisk(file, pages + i);
         }
     }
@@ -135,41 +139,48 @@ void BigQ::WritePageToDisk(File *file, Page *page) {
     }
 }
 
-void BigQ::SortRecords(Page *pages, OrderMaker *sortorder, int numPages) {
+int BigQ::SortRecords(Page *pages, OrderMaker *sortorder, int numPages) {
     int numRecs = 0;
-    for (int i = 0; i < numPages; i++) {
-        numRecs = numRecs + (pages + i)->numRecords();
+
+    for(int i = 0; i < numPages; i++) {
+        numRecs += (pages + i)->numRecords();
     }
+    
+    Record *records = new Record[numRecs];
 
-    records = new (std::nothrow) Record[numRecs];
-
-    if (records == NULL) {
-        cout << "Error allocating memory for records" << endl;
-        exit(1);
-    }
-
+    int i = 0, j = 0;
     Record tempRec;
 
-    for (int i = 0, k = 0; i < numPages && k < numRecs; i++) {
-        int n = (pages + i)->numRecs;
-        for (int j = 0; j < n; j++) {
-            (pages + i)->GetFirst(records + k);
-            k++;
-        }
-    }
-
-    // sort the records
-    MergeSort(records, 0, numRecs - 1, sortorder);
-
-    for (int k = 0, i = 0; k < numRecs && i < numPages; k++) {
-        if (!(pages + i)->Append(records + k)) {
+    while(i < numPages && j < numRecs) {
+        if((pages + i)->GetFirst(&tempRec) == 0) {
             i++;
-            (pages + i)->Append(records + k);
+        } else {
+            (records + j)->Consume(&tempRec);
+            j++;
         }
     }
 
-    // cleanup
+    MergeSort(records, 0, numRecs - 1, sortorder); 
+    
+    i = 0, j = 0;
+    int count  = 0;
+
+    while(j < numRecs) {
+        if((pages + i)->Append(records + j) == 0) {
+            i++;
+            (pages + i)->Append(records + j);
+            count++;
+            j++;
+        } else {
+            count++;
+            j++;
+        }
+    }
+
+    cout << "Count in sort recs: " << count << endl; 
+
     delete[] records;
+    return i + 1;
 }
 
 void BigQ::MergeSort(Record *records, int start, int end, OrderMaker *sortorder) {

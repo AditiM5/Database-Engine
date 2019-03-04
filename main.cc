@@ -166,8 +166,8 @@ int main() {
     newFile.Close();
 
     // cout << "Open last and scan" << endl;
-    // newFile.Open("data/lineitem.bin");
-    // newFile.MoveFirst();
+    newFile.Open("data/lineitem.bin");
+    newFile.MoveFirst();
 
     // i = 0;
 
@@ -181,15 +181,14 @@ int main() {
     //     i++;
     // }
 
-    // i = 0;
-    // while (newFile.GetNext(tempRec) == 1) {
-    //     // cout << "In the loop humans...." << endl;
+    i = 0;
+    while (newFile.GetNext(tempRec) == 1) {
+        // cout << "In the loop humans...." << endl;
+        i++;
+    }
 
-    //     i++;
-    // }
-
-    // cout << "Count: " << i << endl;
-    // newFile.Close();
+    cout << "Count: " << i << endl;
+    newFile.Close();
 
     // int index = BinarySearch(myRecs, 0, 799, &literal, &sortorder);
 

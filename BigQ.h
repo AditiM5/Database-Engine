@@ -23,7 +23,7 @@ private:
 
     void WritePageToDisk(File *file, Page *page);
 
-    void SortRecords(Page *page, OrderMaker *sortorder, int numPages);
+    int SortRecords(Page *page, OrderMaker *sortorder, int numPages);
 
     void MergeSort(Record *records, int start, int end, OrderMaker *sortorder);
 
