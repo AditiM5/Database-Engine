@@ -26,7 +26,10 @@ WORKDIR /opt/build
 
 ARG make_target=main
 
-RUN if [ "${make_target}" = "main" ] ; then make main ; else make gtest ; fi
+# RUN if [ "${make_target}" = "main" ] ; then make main ; else make gtest ; fi
+
+RUN make main
+
 
 # RUN if [ "${make_target}" = "test.out" ] ; the make test.out ; fi
 

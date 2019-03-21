@@ -31,8 +31,6 @@ class Record {
     friend  class BigQ;
 
 private:
-    char *bits;
-
     char *GetBits();
 
     void SetBits(char *bits);
@@ -40,6 +38,8 @@ private:
     void CopyBits(char *bits, int b_len);
 
 public:
+    char *bits;
+
     Record();
 
     Record(Schema *schema);

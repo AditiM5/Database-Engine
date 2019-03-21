@@ -26,18 +26,18 @@ ifdef linux
 tag = -n
 endif
 
-test.out: Record.o Comparison.o ComparisonEngine.o Schema.o File.o  Pipe.o BigQ.o GenericDBFile.o HeapFile.o SortedFile.o DBFile.o RecordPageNum.o PriorityQueue.o y.tab.o lex.yy.o test.o
+test.out: Record.o Comparison.o ComparisonEngine.o Schema.o File.o  Pipe.o BigQ.o RelOp.o GenericDBFile.o HeapFile.o SortedFile.o DBFile.o RecordPageNum.o PriorityQueue.o y.tab.o yyfunc.tab.o lex.yy.o lex.yyfunc.o test.o
 ifeq ($(UNAME_S),Darwin)
-	$(CC) -o test.out Record.o Comparison.o ComparisonEngine.o Schema.o File.o  Pipe.o BigQ.o GenericDBFile.o HeapFile.o SortedFile.o DBFile.o RecordPageNum.o PriorityQueue.o y.tab.o lex.yy.o test.o -ll -lpthread
+	$(CC) -o test.out Record.o Comparison.o ComparisonEngine.o Schema.o File.o  Pipe.o BigQ.o RelOp.o GenericDBFile.o HeapFile.o SortedFile.o DBFile.o RecordPageNum.o PriorityQueue.o Function.o y.tab.o yyfunc.tab.o lex.yy.o lex.yyfunc.o test.o -ll -lpthread
 else
-	$(CC) -o test.out Record.o Comparison.o ComparisonEngine.o Schema.o File.o  Pipe.o BigQ.o GenericDBFile.o HeapFile.o SortedFile.o DBFile.o RecordPageNum.o PriorityQueue.o y.tab.o lex.yy.o test.o -lfl -lpthread
+	$(CC) -o test.out Record.o Comparison.o ComparisonEngine.o Schema.o File.o  Pipe.o BigQ.o RelOp.o GenericDBFile.o HeapFile.o SortedFile.o DBFile.o RecordPageNum.o PriorityQueue.o Function.o y.tab.o yyfunc.tab.o lex.yy.o lex.yyfunc.o test.o -lfl -lpthread
 endif
 	
-main: Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o GenericDBFile.o HeapFile.o SortedFile.o DBFile.o Pipe.o RecordPageNum.o PriorityQueue.o y.tab.o lex.yy.o main.o
+main: Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o RelOp.o GenericDBFile.o HeapFile.o SortedFile.o DBFile.o Pipe.o RecordPageNum.o PriorityQueue.o Function.o y.tab.o yyfunc.tab.o lex.yy.o lex.yyfunc.o main.o
 ifeq ($(UNAME_S),Darwin)
-	$(CC) -o main Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o GenericDBFile.o HeapFile.o SortedFile.o DBFile.o Pipe.o RecordPageNum.o PriorityQueue.o y.tab.o lex.yy.o main.o -ll -lpthread -v
+	$(CC) -o main Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o RelOp.o GenericDBFile.o HeapFile.o SortedFile.o DBFile.o Pipe.o RecordPageNum.o PriorityQueue.o Function.o y.tab.o yyfunc.tab.o lex.yy.o lex.yyfunc.o main.o -ll -lpthread -v
 else
-	$(CC) -o main Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o GenericDBFile.o HeapFile.o SortedFile.o DBFile.o Pipe.o RecordPageNum.o PriorityQueue.o y.tab.o lex.yy.o main.o -lfl -lpthread
+	$(CC) -o main Record.o Comparison.o ComparisonEngine.o Schema.o File.o BigQ.o RelOp.o GenericDBFile.o HeapFile.o SortedFile.o DBFile.o Pipe.o RecordPageNum.o PriorityQueue.o Function.o y.tab.o yyfunc.tab.o lex.yy.o lex.yyfunc.o main.o -lfl -lpthread
 endif
 	
 test.o: test.cc
@@ -57,6 +57,9 @@ Pipe.o: Pipe.cc
 
 BigQ.o: BigQ.cc
 	$(CC) -g -c BigQ.cc
+
+RelOp.o: RelOp.cc
+	$(CC) -g -c RelOp.cc
 	
 DBFile.o: DBFile.cc
 	$(CC) -g -c DBFile.cc
@@ -85,6 +88,9 @@ SortedFile.o: SortedFile.cc
 GenericDBFile.o: GenericDBFile.cc
 	$(CC) -g -c GenericDBFile.cc
 
+Function.o: Function.cc
+	$(CC) -g -c Function.cc
+
 y.tab.o: Parser.y
 	yacc -d Parser.y
 ifeq ($(UNAME_S), Darwin)
@@ -94,9 +100,18 @@ else
 endif
 	g++ -c -Wno-write-strings y.tab.c
 
+yyfunc.tab.o: ParserFunc.y
+	yacc -p "yyfunc" -b "yyfunc" -d ParserFunc.y
+	# sed $(tag) yyfunc.tab.c -e "s/  __attribute__ ((__unused__))$$/# ifndef __cplusplus\n  __attribute__ ((__unused__));\n# endif/" 
+	g++ -c yyfunc.tab.c
+
 lex.yy.o: Lexer.l
 	lex  Lexer.l
 	gcc  -c lex.yy.c
+
+lex.yyfunc.o: LexerFunc.l
+	lex -Pyyfunc LexerFunc.l
+	gcc  -c lex.yyfunc.c
 
 # Google test targets
 
@@ -134,9 +149,10 @@ DBFileTest : Record.o Comparison.o ComparisonEngine.o Schema.o File.o Pipe.o Big
 clean: 
 	rm -f *.o
 	rm -f *.out
-	rm -f y.tab.c
-	rm -f lex.yy.c
-	rm -f y.tab.h
+	rm -f y.tab.*
+	rm -f yyfunc.tab.*
+	rm -f lex.yy.*
+	rm -f lex.yyfunc*
 
 clean_gtest:
 	rm -f $(TESTS) gtest.a gtest_main.a *.o

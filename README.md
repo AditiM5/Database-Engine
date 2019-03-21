@@ -12,15 +12,17 @@ and then follow the on-screen instructions.
 
 ### Running gtest :
 Test cases being handled:
-* When the default ordermaker
-* When the file tested has more pages than run length passed
-* When the file tested has lesser pages than the run length passed
+* Simple create a sorted file and load records
+* Sequential Scan of DBFile (sorted)
+* Scanning the sorted DBFile and filtering out using a CNF
+* Interleave, by first creating a new file, adding records, scanning DBFile, and repeating the same
+* Writing records to a sorted DBFile
 
 ```make gtest```
 
 To run the driver, type
 
-```./BigQTest```
+```./DBFileTest```
 
 and then follow the on-screen instructions.
 
@@ -28,11 +30,6 @@ and then follow the on-screen instructions.
 
 #### To run the main file:
 ```./docker.sh main```
-
-
-#### To run test.out
-```./docker.sh test```
-
 
 #### To run gtest
 ```./docker.sh gtest```
