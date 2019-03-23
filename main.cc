@@ -63,6 +63,7 @@ int main() {
         exit(1);
     }
 
+    cout << "hello in main" << endl;
     // suck up the schema from the file
     Schema myschema1("catalog", "nation");
     Schema myschema2("catalog", "region");
@@ -74,6 +75,8 @@ int main() {
     myComparison.GrowFromParseTree(final, &myschema1, &myschema2, literal);
     Pipe inL(100), inR(100), out_sp(100), out_p(100), out_sf(100), out_j(100);
 
+
+    cout << "hello 2 in main" << endl;
     int numAtts = 9;
     int keepMe[] = {0,1,7};
     int numAttsIn = numAtts;
@@ -86,11 +89,12 @@ int main() {
     pthread_create(&thread1, NULL, producer1, (void *)&inL);
     pthread_create(&thread2, NULL, producer2, (void *)&inR);
 
-    DBFile dbFile;
-    dbFile.Open("data-1GB/part.bin");
-    dbFile.MoveFirst();
-    SelectFile sf;
-    SelectPipe sp;
+// cout << "hello 3 in main" << endl;
+    // DBFile dbFile;
+    // dbFile.Open("data-1GB/part.bin");
+    // dbFile.MoveFirst();
+    // SelectFile sf;
+    // SelectPipe sp;
     Project p;
     Join j;
 
@@ -100,6 +104,7 @@ int main() {
 
     // sf.Run(dbFile, out_sf, myComparison, literal);
     // p.Run(out_sf, out_p, keepMe, numAttsIn, numAttsOut);
+    cout << "Calling Join!!!" << endl;
     j.Use_n_Pages(5); 
     j.Run(inL, inR, out_j, myComparison, literal);
 
@@ -112,6 +117,6 @@ int main() {
     }
 
     cout << "Records fetched: " << count << endl;
-    dbFile.Close();
+    // dbFile.Close();
    
 }
