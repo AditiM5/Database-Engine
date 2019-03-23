@@ -25,6 +25,16 @@ struct ProjectParams {
     int *keepMe;
     int numAttsInput;
     int numAttsOutput;
+    Project *ref;
+};
+
+struct JoinParams {
+    Pipe *inPipeL;
+    Pipe *inPipeR;
+    Pipe *outPipe;
+    CNF *selOp;
+    Record *literal;
+    Join *ref;
 };
 
 #endif

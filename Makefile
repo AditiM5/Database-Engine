@@ -26,7 +26,7 @@ ifdef linux
 tag = -n
 endif
 
-test.out: Record.o Comparison.o ComparisonEngine.o Schema.o File.o  Pipe.o BigQ.o RelOp.o GenericDBFile.o HeapFile.o SortedFile.o DBFile.o RecordPageNum.o PriorityQueue.o y.tab.o yyfunc.tab.o lex.yy.o lex.yyfunc.o test.o
+test.out: Record.o Comparison.o ComparisonEngine.o Schema.o File.o  Pipe.o BigQ.o RelOp.o GenericDBFile.o HeapFile.o SortedFile.o DBFile.o RecordPageNum.o PriorityQueue.o Function.o y.tab.o yyfunc.tab.o lex.yy.o lex.yyfunc.o test.o
 ifeq ($(UNAME_S),Darwin)
 	$(CC) -o test.out Record.o Comparison.o ComparisonEngine.o Schema.o File.o  Pipe.o BigQ.o RelOp.o GenericDBFile.o HeapFile.o SortedFile.o DBFile.o RecordPageNum.o PriorityQueue.o Function.o y.tab.o yyfunc.tab.o lex.yy.o lex.yyfunc.o test.o -ll -lpthread
 else

@@ -359,6 +359,11 @@ void Record::Print(Schema *mySchema) {
     cout << "\n";
 }
 
+int Record::NumberOfAtts(){
+    int num = ((int *) bits)[1] - 1;
+    return num;
+}
+
 void Record::ClearRecord() {
     if (bits != NULL) {
         delete[] bits;

@@ -48,19 +48,27 @@ class Project : public RelationalOp {
 
    private:
     pthread_t thread;
-    Record *tempRec = new Record;
+    // Record *tempRec = new Record;
 
    public:
     void *Worker(void *args);
-    void Run(Pipe &inPipe, Pipe &outPipe, int *keepMe, int numAttsInput, int numAttsOutput) {}
-    void WaitUntilDone() {}
+    void Run(Pipe &inPipe, Pipe &outPipe, int *keepMe, int numAttsInput, int numAttsOutput);
+    void WaitUntilDone();
     void Use_n_Pages(int n) {}
 };
 class Join : public RelationalOp {
+    friend void *JoinProxyFunction(void *foo_ptr, void *args);
+
+   private:
+    pthread_t thread;
+    Record *tempRec = new Record;
+    int num_pages;
+    
    public:
-    void Run(Pipe &inPipeL, Pipe &inPipeR, Pipe &outPipe, CNF &selOp, Record &literal) {}
-    void WaitUntilDone() {}
-    void Use_n_Pages(int n) {}
+    void *Worker(void *args);
+    void Run(Pipe &inPipeL, Pipe &inPipeR, Pipe &outPipe, CNF &selOp, Record &literal);
+    void WaitUntilDone();
+    void Use_n_Pages(int n);
 };
 class DuplicateRemoval : public RelationalOp {
    public:
