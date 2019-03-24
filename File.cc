@@ -272,7 +272,9 @@ void File::Open(int fileLen, const char *fName) {
 
     // see if there was an error
     if (myFilDes < 0) {
-        cerr << "BAD!  Open did not work for " << fName << "\n";
+        string temp(fName);
+        cerr << "BAD!  Open did not work for " << temp << "\n";
+        raise(SIGSEGV);
         exit(1);
     }
 

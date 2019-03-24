@@ -294,7 +294,7 @@ void *Join::Worker(void *args) {
                     while (right_buffer.GetNext(tempR)) {
                         Record mergeRec;
                         mergeRec.MergeRecords(&tempL, &tempR, left_atts, right_atts, total_atts, (left_atts + right_atts),
-                                           left_atts);
+                                              left_atts);
                         outPipe->Insert(&mergeRec);
                     }
                 }
@@ -321,7 +321,77 @@ void *Join::Worker(void *args) {
         tempFileStringR += ".data";
         unlink(tempFileStringR.c_str());
     } else {
-        //TODO: BNL!!!!!
+        // BNL
+        DBFile left_buffer;
+        DBFile right_buffer;
+
+        // temp_left_name = GenTempFileName();
+        const char *temp_left_filename;
+        int randomNumL = rand() % 128;
+        milliseconds msL = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
+        string tempFileStringL = "temp_left" + to_string(msL.count()) + to_string(randomNumL) + ".bin";
+        temp_left_filename = tempFileStringL.c_str();
+        string tempString(temp_left_filename);
+
+        // temp_right_name = GenTempFileName();
+        const char *temp_right_filename;
+        int randomNumR = rand() % 128;
+        milliseconds msR = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
+        string tempFileStringR = "temp_right" + to_string(msR.count()) + to_string(randomNumR) + ".bin";
+        temp_right_filename = tempFileStringR.c_str();
+
+        left_buffer.Create(temp_left_filename, heap, NULL);
+        right_buffer.Create(temp_right_filename, heap, NULL);
+
+        WritePipeToFile(&left_buffer, inLeft);
+        WritePipeToFile(&right_buffer, inRight);
+
+        left_buffer.MoveFirst();
+        right_buffer.MoveFirst();
+        Record tempRec_L, tempRec_R;
+
+        left_buffer.GetNext(tempRec_L);
+        int left_atts = tempRec_L.NumberOfAtts();
+        left_buffer.MoveFirst();
+
+        // get the first rec
+        right_buffer.GetNext(tempRec_R);
+        int right_atts = tempRec_R.NumberOfAtts();
+        right_buffer.MoveFirst();
+
+        int *total_atts = new int[left_atts + right_atts];
+
+        int k = 0;
+        for (int i = 0; i < (left_atts + right_atts); i++) {
+            if (i == left_atts) {
+                // reset k so that array is 0..left_atts and 0..right_atts
+                // start of right therefore will be left_atts
+                k = 0;
+            }
+            *(total_atts + i) = k;
+            k++;
+        }
+        ComparisonEngine ceng;
+
+        while (left_buffer.GetNext(tempRec_L)) {
+            right_buffer.MoveFirst();
+            while (right_buffer.GetNext(tempRec_R)) {
+                if (ceng.Compare(&tempRec_L, &tempRec_R, literal, selOp)) {
+                    Record mergeRec;
+                    mergeRec.MergeRecords(&tempRec_L, &tempRec_R, left_atts, right_atts, total_atts, (left_atts + right_atts),
+                                          left_atts);
+                    outPipe->Insert(&mergeRec);
+                }
+            }
+        }
+        // clean up of tempfiles
+        unlink(temp_left_filename);
+        unlink(temp_right_filename);
+        // cleanup .data files
+        tempFileStringL += ".data";
+        unlink(tempFileStringL.c_str());
+        tempFileStringR += ".data";
+        unlink(tempFileStringR.c_str());
     }
     outPipe->ShutDown();
     pthread_exit(NULL);
@@ -330,3 +400,80 @@ void *Join::Worker(void *args) {
 void Join::WaitUntilDone() {
     pthread_join(thread, NULL);
 }
+
+const char *RelationalOp::GenTempFileName() {
+    const char *temp_filename;
+    int randomNum = rand() % 128;
+    milliseconds ms = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
+    string tempFileString = "temp" + to_string(ms.count()) + to_string(randomNum) + ".bin";
+    temp_filename = tempFileString.c_str();
+    cout << "New file name: " << tempFileString << endl;
+    return temp_filename;
+}
+
+void RelationalOp::WritePipeToFile(DBFile *dbfile, Pipe *pipe) {
+    Record tempRec;
+    while (pipe->Remove(&tempRec)) {
+        dbfile->Add(&tempRec);
+    }
+}
+
+void *DuplicateRemoval::Worker(void *args) {
+    DuplicateRemovalParams *params = (DuplicateRemovalParams *)args;
+    Pipe *inPipe;
+    Pipe *outPipe;
+    Schema *mySchema;
+
+    inPipe = params->inPipe;
+    outPipe = params->outPipe;
+    mySchema = params->mySchema;
+
+    OrderMaker sortOrder(mySchema);
+
+    Pipe *bigq_out = new Pipe(100);
+    BigQ *bigq = new BigQ(*inPipe, *bigq_out, sortOrder, num_pages);
+    Record curr_rec, tempRec;
+
+    bigq_out->Remove(&curr_rec);
+    tempRec.Copy(&curr_rec);
+    outPipe->Insert(&tempRec);
+
+    // bigq_out->Remove(&tempRec);
+
+    ComparisonEngine ceng;
+    while (bigq_out->Remove(&tempRec)) {
+        int result = ceng.Compare(&curr_rec, &tempRec, &sortOrder);
+        if (result == -1) {
+            curr_rec.Copy(&tempRec);
+            outPipe->Insert(&tempRec);
+        }
+    }
+
+    outPipe->ShutDown();
+}
+
+void *DuplicateRemovalProxyFunction(void *args) {
+    DuplicateRemovalParams *params;
+    params = (DuplicateRemovalParams *)args;
+    void *fooPtr = params->ref;
+    static_cast<DuplicateRemoval *>(fooPtr)->Worker(args);
+}
+
+void DuplicateRemoval::Run(Pipe &inPipe, Pipe &outPipe, Schema &mySchema) {
+    DuplicateRemovalParams *params = new DuplicateRemovalParams;
+    params->inPipe = &inPipe;
+    params->outPipe = &outPipe;
+    params->mySchema = &mySchema;
+    params->ref = this;
+
+    pthread_create(&thread, NULL, DuplicateRemovalProxyFunction, (void *)params);
+}
+
+void DuplicateRemoval::Use_n_Pages(int n) {
+    this->num_pages = n;
+}
+
+void DuplicateRemoval::WaitUntilDone(){
+    pthread_join(thread, NULL);
+}
+

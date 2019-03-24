@@ -5,6 +5,7 @@
 #include "Function.h"
 #include "Pipe.h"
 #include "Record.h"
+#include "Schema.h"
 
 class RelationalOp {
    public:
@@ -14,6 +15,10 @@ class RelationalOp {
 
     // tell us how much internal memory the operation can use
     virtual void Use_n_Pages(int n) = 0;
+
+    const char *GenTempFileName();
+
+    void WritePipeToFile(DBFile *dbfile, Pipe *pipe);
 };
 
 class SelectFile : public RelationalOp {
@@ -63,7 +68,7 @@ class Join : public RelationalOp {
     pthread_t thread;
     Record *tempRec = new Record;
     int num_pages;
-    
+
    public:
     void *Worker(void *args);
     void Run(Pipe &inPipeL, Pipe &inPipeR, Pipe &outPipe, CNF &selOp, Record &literal);
@@ -71,10 +76,18 @@ class Join : public RelationalOp {
     void Use_n_Pages(int n);
 };
 class DuplicateRemoval : public RelationalOp {
+    friend void *DuplicateRemovalProxyFunction(void *foo_ptr, void *args);
+
+   private:
+    pthread_t thread;
+    Record *tempRec = new Record;
+    int num_pages;
+
    public:
-    void Run(Pipe &inPipe, Pipe &outPipe, Schema &mySchema) {}
-    void WaitUntilDone() {}
-    void Use_n_Pages(int n) {}
+    void *Worker(void *args);
+    void Run(Pipe &inPipe, Pipe &outPipe, Schema &mySchema);
+    void WaitUntilDone();
+    void Use_n_Pages(int n);
 };
 class Sum : public RelationalOp {
    public:

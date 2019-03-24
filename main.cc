@@ -21,10 +21,10 @@ extern struct AndList *final;
 
 void* producer1(void *args) {
     Pipe *in = (Pipe *)args;
-    FILE *tableFile = fopen("data-1GB/supplier.tbl", "r");
+    FILE *tableFile = fopen("data/test.tbl", "r");
 
     Record temp;
-    Schema mySchema("catalog", "supplier");
+    Schema mySchema("catalog", "lineitem");
 
     // read in all of the records from the text file and see if they match
     // the CNF expression that was typed in
@@ -40,10 +40,10 @@ void* producer1(void *args) {
 
 void* producer2(void *args) {
     Pipe *in = (Pipe *)args;
-    FILE *tableFile = fopen("data-1GB/partsupp.tbl", "r");
+    FILE *tableFile = fopen("data-1GB/region.tbl", "r");
 
     Record temp;
-    Schema mySchema("catalog", "partsupp");
+    Schema mySchema("catalog", "region");
 
     // read in all of the records from the text file and see if they match
     // the CNF expression that was typed in
@@ -59,29 +59,28 @@ void* producer2(void *args) {
 
 int main() {
     //try to parse the CNF
-    cout << "Enter in your CNF: ";
-    if (yyparse() != 0) {
-        cout << "Can't parse your CNF.\n";
-        exit(1);
-    }
+    // cout << "Enter in your CNF: ";
+    // if (yyparse() != 0) {
+    //     cout << "Can't parse your CNF.\n";
+    //     exit(1);
+    // }
 
     cout << "hello in main" << endl;
     // suck up the schema from the file
-    Schema myschema1("catalog", "supplier");
-    Schema myschema2("catalog", "partsupp");
+    Schema myschema1("catalog", "lineitem");
+    Schema myschema2("catalog", "region");
 
     // grow the CNF expression from the parse tree
-    CNF myComparison;
-    Record literal;
-    // myComparison.GrowFromParseTree(final, &myschema1, literal);
-    myComparison.GrowFromParseTree(final, &myschema1, &myschema2, literal);
+    // CNF myComparison;
+    // Record literal;
+    // // myComparison.GrowFromParseTree(final, &myschema1, literal);
+    // myComparison.GrowFromParseTree(final, &myschema1, &myschema2, literal);
     Pipe inL(100), inR(100), out_sp(100), out_p(100), out_sf(100), out_j(100);
 
     // OrderMaker left, right;
     // myComparison.GetSortOrders(left, right);
 
 
-    cout << "hello 2 in main" << endl;
     // int numAtts = 9;
     // int keepMe[] = {0,1,7};
     // int numAttsIn = numAtts;
@@ -92,7 +91,7 @@ int main() {
     pthread_t thread1, thread2;
 
     pthread_create(&thread1, NULL, producer1, (void *)&inL);
-    pthread_create(&thread2, NULL, producer2, (void *)&inR);
+    // pthread_create(&thread2, NULL, producer2, (void *)&inR);
 
 // cout << "hello 3 in main" << endl;
     // DBFile dbFile;
@@ -102,6 +101,7 @@ int main() {
     // SelectPipe sp;
     Project p;
     Join j;
+    DuplicateRemoval dr;
 
     Record tempRec;
 
@@ -112,18 +112,23 @@ int main() {
     // sf.Run(dbFile, out_sf, myComparison, literal);
     // p.Run(out_sf, out_p, keepMe, numAttsIn, numAttsOut);
     // cout << "Calling Join!!!" << endl;
-    j.Use_n_Pages(10);
-    j.Run(inL, inR, out_j, myComparison, literal);
+    // j.Use_n_Pages(10);
+    // j.Run(inL, inR, out_j, myComparison, literal);
     // j.WaitUntilDone();
 
-    int numAtts = 12;
-    int keepMe[] = {0,1,2,3,4,5,6,7,8,9,10,11};
-    int numAttsIn = numAtts;
-	int numAttsOut = 12;
+    dr.Use_n_Pages(1);
 
-    Attribute atts[] = {IA, SA, SA, IA, SA, DA, SA, IA, IA, IA, DA, SA};
+    dr.Run(inL, out_j, myschema1);
 
-    Schema s("blah", 12, atts);
+
+    // int numAtts = 12;
+    // int keepMe[] = {0,1,2,3,4,5,6,7,8,9,10,11};
+    // int numAttsIn = numAtts;
+	// int numAttsOut = 12;
+
+    // Attribute atts[] = {IA, SA, SA, IA, SA, DA, SA, IA, IA, IA, DA, SA};
+
+    // Schema s("blah", 12, atts);
 
     int count = 0;
     // Schema out_sch ("catalog", "nation");
@@ -137,7 +142,7 @@ int main() {
 
     // out_j.ShutDown();
     pthread_join(thread1, NULL);
-    pthread_join(thread2, NULL);
+    // pthread_join(thread2, NULL);
 
     cout << "Records fetched: " << count << endl;
     // dbFile.Close();

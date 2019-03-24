@@ -120,7 +120,7 @@ void *BigQ::Worker(void *args) {
     unlink(tempFileName);
     // remove .data file too
     tempFileString += ".data";
-    unlink(tempFileString.c_str);
+    unlink(tempFileString.c_str());
     pthread_exit(NULL);
     return 0;
 }

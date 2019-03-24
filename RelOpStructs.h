@@ -37,4 +37,11 @@ struct JoinParams {
     Join *ref;
 };
 
+struct DuplicateRemovalParams {
+    Pipe *inPipe;
+    Pipe *outPipe;
+    Schema *mySchema;
+    DuplicateRemoval *ref;
+};
+
 #endif
