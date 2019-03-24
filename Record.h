@@ -30,6 +30,8 @@ class Record {
 
     friend  class BigQ;
 
+    friend class Sum;
+
 private:
     char *GetBits();
 

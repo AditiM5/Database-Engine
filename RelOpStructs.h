@@ -44,4 +44,11 @@ struct DuplicateRemovalParams {
     DuplicateRemoval *ref;
 };
 
+struct SumParams{
+    Pipe *inPipe;
+    Pipe *outPipe;
+    Function *computeMe;
+    Sum *ref;
+};
+
 #endif

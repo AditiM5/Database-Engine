@@ -473,7 +473,69 @@ void DuplicateRemoval::Use_n_Pages(int n) {
     this->num_pages = n;
 }
 
-void DuplicateRemoval::WaitUntilDone(){
+void DuplicateRemoval::WaitUntilDone() {
     pthread_join(thread, NULL);
 }
 
+void *SumProxyFunction(void *args) {
+    SumParams *params;
+    params = (SumParams *)args;
+    void *fooPtr = params->ref;
+    static_cast<Sum *>(fooPtr)->Worker(args);
+}
+
+void Sum::Run(Pipe &inPipe, Pipe &outPipe, Function &computeMe) {
+    SumParams *params = new SumParams;
+    params->inPipe = &inPipe;
+    params->outPipe = &outPipe;
+    params->computeMe = &computeMe;
+    params->ref = this;
+
+    pthread_create(&thread, NULL, SumProxyFunction, (void *)params);
+}
+
+void *Sum::Worker(void *args) {
+    SumParams *params = (SumParams *)args;
+
+    Pipe *inPipe = params->inPipe;
+    Pipe *outPipe = params->outPipe;
+    Function *computeMe = params->computeMe;
+
+    int result_i;
+    double result_d;
+    Type result;
+
+    while (inPipe->Remove(tempRec)) {
+        result = computeMe->Apply(*tempRec, result_i, result_d);
+    }
+
+    char *space = new (std::nothrow) char[PAGE_SIZE];
+    int totspace = sizeof(int) * 2;
+
+    if (result == Int) {
+        totspace += sizeof(int);
+        ((int *) space)[2] = result_i;
+    } else {
+        totspace += sizeof(double);
+        ((double *) space)[2] = result_d;
+    }
+
+    ((int *)space)[0] = totspace;
+    ((int *)space)[1] = 8;
+    
+    // our new record that has the sum
+    Record tempSum;
+
+    memcpy(tempSum.GetBits(), space, totspace);
+
+    outPipe->Insert(&tempSum);
+
+    outPipe->ShutDown();
+}
+
+void Sum::Use_n_Pages(int n) {
+}
+
+void Sum::WaitUntilDone() {
+    pthread_join(thread, NULL);
+}

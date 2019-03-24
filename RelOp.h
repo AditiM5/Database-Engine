@@ -90,10 +90,18 @@ class DuplicateRemoval : public RelationalOp {
     void Use_n_Pages(int n);
 };
 class Sum : public RelationalOp {
+    friend void *SumProxyFunction(void *foo_ptr, void *args);
+
+   private:
+    pthread_t thread;
+    Record *tempRec = new Record;
+    int num_pages;
+
    public:
-    void Run(Pipe &inPipe, Pipe &outPipe, Function &computeMe) {}
-    void WaitUntilDone() {}
-    void Use_n_Pages(int n) {}
+    void *Worker(void *args);
+    void Run(Pipe &inPipe, Pipe &outPipe, Function &computeMe);
+    void WaitUntilDone();
+    void Use_n_Pages(int n);
 };
 class GroupBy : public RelationalOp {
    public:
