@@ -360,7 +360,8 @@ void Record::Print(Schema *mySchema) {
 }
 
 int Record::NumberOfAtts(){
-    int num = ((int *) bits)[1] - 1;
+    int num = (((int *) bits)[1] - 4) / 4;
+
     return num;
 }
 

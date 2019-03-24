@@ -6,6 +6,7 @@
 #include <iostream>
 #include "File.h"
 #include "PriorityQueue.h"
+#include <stdlib.h>
 
 using namespace std;
 using namespace std::chrono;
@@ -60,8 +61,9 @@ void *BigQ::Worker(void *args) {
 
     Record *tempRec = new (std::nothrow) Record();
     File *file = new File();
+    int randomNum = rand() % 128;
     milliseconds ms = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
-    string tempFileString = "tempSortFile" + to_string(ms.count()) + ".bin";
+    string tempFileString = "temp/tempSortFile" + to_string(ms.count()) + to_string(randomNum) + ".bin";
     tempFileName = tempFileString.c_str();
     file->Open(0, tempFileName);
 
@@ -116,6 +118,9 @@ void *BigQ::Worker(void *args) {
     out->ShutDown();
     file->Close();
     unlink(tempFileName);
+    // remove .data file too
+    tempFileString += ".data";
+    unlink(tempFileString.c_str);
     pthread_exit(NULL);
     return 0;
 }

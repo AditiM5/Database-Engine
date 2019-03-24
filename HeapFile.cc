@@ -122,7 +122,7 @@ void HeapFile::MoveFirst() {
 }
 
 int HeapFile::Close() {
-    cout << "\n Closing HeapFile";
+    // cout << "\n Closing HeapFile";
     WriteCurrentPageToDisk();
     fsync(file->myFilDes);
     // returns 1 on success

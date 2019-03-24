@@ -188,69 +188,70 @@ void *Join::Worker(void *args) {
 
         // naming the 2 temp DBFile used for Buffering
         const char *temp_left_filename;
-        milliseconds ms = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
-        string tempFileString = "temp_left" + to_string(ms.count()) + ".bin";
-        temp_left_filename = tempFileString.c_str();
+        int randomNumL = rand() % 128;
+        milliseconds msL = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
+        string tempFileStringL = "temp_left" + to_string(msL.count()) + to_string(randomNumL) + ".bin";
+        temp_left_filename = tempFileStringL.c_str();
         string tempString(temp_left_filename);
-        cout << "left file: " << tempString << endl;
+        // cout << "left file: " << tempString << endl;
 
         const char *temp_right_filename;
-        ms = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
-        tempFileString = "temp_right" + to_string(ms.count()) + ".bin";
-        temp_right_filename = tempFileString.c_str();
-        cout << "right file: " << tempFileString << endl;
+        int randomNumR = rand() % 128;
+        milliseconds msR = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
+        string tempFileStringR = "temp_right" + to_string(msR.count()) + to_string(randomNumR) + ".bin";
+        temp_right_filename = tempFileStringR.c_str();
+        // cout << "right file: " << tempFileStringR << endl;
 
         DBFile left_buffer;
         left_buffer.Create(temp_left_filename, heap, NULL);
 
+        // cout << "Weeeeee!!!!" << endl;
+
         DBFile right_buffer;
         right_buffer.Create(temp_right_filename, heap, NULL);
 
-        cout << "Stage 2 : Count Recs" << endl;
+        // cout << "Stage 2 : Count Recs" << endl;
+
+        // cout << "Order Makers" << endl;
+        // left->Print();
+        // right->Print();
 
         // count for the number of recs matched in the right pipe
         int count = 0;
-        int right_check = 1;
-        outLeft->Remove(&tempRecLeft);
-        right_check = outRight->Remove(&tempRecRight);
-        while (!tempRecLeft.IsRecordEmpty()) {
+        int left_check = outLeft->Remove(&tempRecLeft);
+        int right_check = outRight->Remove(&tempRecRight);
+        while (left_check != 0) {
             count = 0;
             // cause remove from pipe has failed when == 0
             while (right_check != 0) {
-                cout << "Stage 2 : Right recs loop" << endl;
+                // cout << "Stage 2 : Right recs loop" << endl;
                 int result = ceng.Compare(&tempRecLeft, left, &tempRecRight, right);
-                cout << "result: " << result << endl;
+                // cout << "result: " << result << endl;
                 if (result == 0) {
                     count++;
                     right_buffer.Add(&tempRecRight);
-                    tempRecRight.ClearRecord();
                     right_check = outRight->Remove(&tempRecRight);
-                    // if(outRight->Remove(&tempRecRight) == 0) break;
-                    // continue;
-                } else if (result == 1) {
+                } else if (result == -1) {
                     break;
                 } else {
-                    tempRecRight.ClearRecord();
                     right_check = outRight->Remove(&tempRecRight);
-                    // if(outRight->Remove(&tempRecRight) == 0) break;
-                    // continue;
                 }
-
-                // if (outRight->isDone()) {
-                //     break;
-                // }
             }
-            cout << "Count: " << count << endl;
-            cout << "Stage 3: mergeing the buffer recs" << endl;
+
+            // cout << "Count: " << count << endl;
+            // cout << "Stage 3: mergeing the buffer recs" << endl;
             // tempRecRight has the first rec of the next iteration
 
             if (count != 0) {
+                // tempRec stores the first rec in left_buffer
                 tempRec->Copy(&tempRecLeft);
                 left_buffer.Add(&tempRecLeft);
                 // to get all the current Y values from left pipe
-                while (outLeft->Remove(&tempRecLeft)) {
+                left_check = outLeft->Remove(&tempRecLeft);
+                while (left_check != 0) {
                     if (ceng.Compare(tempRec, &tempRecLeft, left) == 0) {
                         left_buffer.Add(&tempRecLeft);
+                        left_check = outLeft->Remove(&tempRecLeft);
                     } else {
                         break;
                     }
@@ -263,18 +264,18 @@ void *Join::Worker(void *args) {
                 // get the first rec
                 left_buffer.GetNext(tempL);
                 int left_atts = tempL.NumberOfAtts();
-                cout << "Number of atts for left : " << left_atts << endl;
+                // cout << "Number of atts for left : " << left_atts << endl;
                 left_buffer.MoveFirst();
 
                 // get the first rec
                 right_buffer.GetNext(tempR);
                 int right_atts = tempR.NumberOfAtts();
-                cout << "Number of atts for right : " << right_atts << endl;
+                // cout << "Number of atts for right : " << right_atts << endl;
                 right_buffer.MoveFirst();
 
                 int *total_atts = new int[left_atts + right_atts];
 
-                cout << "the atts array: " << endl;
+                // cout << "the atts array: " << endl;
                 int k = 0;
                 for (int i = 0; i < (left_atts + right_atts); i++) {
                     if (i == left_atts) {
@@ -283,7 +284,7 @@ void *Join::Worker(void *args) {
                         k = 0;
                     }
                     *(total_atts + i) = k;
-                    cout << " i: " << i << " k: " << k << endl;
+                    // cout << " i: " << i << " k: " << k << endl;
                     k++;
                 }
 
@@ -291,26 +292,39 @@ void *Join::Worker(void *args) {
                     // for each left we want to iterate over all right
                     right_buffer.MoveFirst();
                     while (right_buffer.GetNext(tempR)) {
-                        tempL.MergeRecords(&tempL, &tempR, left_atts, right_atts, total_atts, (left_atts + right_atts),
+                        Record mergeRec;
+                        mergeRec.MergeRecords(&tempL, &tempR, left_atts, right_atts, total_atts, (left_atts + right_atts),
                                            left_atts);
-                        outPipe->Insert(&tempL);
+                        outPipe->Insert(&mergeRec);
                     }
                 }
+
                 // clear out the DBFiles
                 left_buffer.Close();
                 right_buffer.Close();
 
                 left_buffer.Create(temp_left_filename, heap, NULL);
                 right_buffer.Create(temp_right_filename, heap, NULL);
+            } else {
+                // Get next left record for the next outer loop iteration
+                left_check = outLeft->Remove(&tempRecLeft);
             }
+            // cout << "Last stage" << endl;
         }
 
         // clean up of tempfiles
-        // unlink(temp_left_filename);
-        // unlink(temp_right_filename);
+        unlink(temp_left_filename);
+        unlink(temp_right_filename);
+        // cleanup .data files
+        tempFileStringL += ".data";
+        unlink(tempFileStringL.c_str());
+        tempFileStringR += ".data";
+        unlink(tempFileStringR.c_str());
     } else {
         //TODO: BNL!!!!!
     }
+    outPipe->ShutDown();
+    pthread_exit(NULL);
 }
 
 void Join::WaitUntilDone() {
