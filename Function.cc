@@ -201,7 +201,13 @@ void Function :: GrowFromParseTree (struct FuncOperator *parseTree, Schema &mySc
 }
 
 void Function :: Print () {
+	cout << "NumOps in func: " << numOps << endl;
 
+	for(int i = 0; i < numOps; i++)
+	{
+		cout << "OpList[" <<  i << "]: " << opList[i].myOp << endl;
+	}
+	
 }
 
 Type Function :: Apply (Record &toMe, int &intResult, double &doubleResult) {
@@ -351,6 +357,7 @@ Type Function :: Apply (Record &toMe, int &intResult, double &doubleResult) {
 		return Int;
 	} else {
 		doubleResult = *((double *) lastPos);
+		// cout << doubleResult << endl;
 		return Double;
 	}
 	

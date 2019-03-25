@@ -131,14 +131,14 @@ int clear_pipe(Pipe &in_pipe, Schema *schema, Function &func, bool print) {
     return cnt;
 }
 
-int main_1() {
+int main() {
     cout << " query4 \n";
 
     char *pred_s = "(s_suppkey = s_suppkey)";
     cout << " stage 1A \n";
     // init_SF_s(pred_s, 100);
     DBFile dbfile;
-    dbfile.Open("temp/supplier.bin");
+    dbfile.Open("data-1GB/supplier.bin");
     dbfile.MoveFirst();
     init_lexical_parser(pred_s);
     if (yyparse() != 0) {
@@ -166,7 +166,7 @@ int main_1() {
 
     // init_SF_ps(pred_ps, 100);
     DBFile dbfile_ps;
-    dbfile_ps.Open("temp/partsupp.bin");
+    dbfile_ps.Open("data-1GB/partsupp.bin");
     dbfile_ps.MoveFirst();
     init_lexical_parser(pred_ps);
     if (yyparse() != 0) {
@@ -246,7 +246,7 @@ int main_1() {
     cout << " query4 returned " << cnt << " recs \n";
 }
 
-int main() {
+int main_1() {
     char *pred_s = "(s_suppkey = s_suppkey)";
     cout << " stage 1A \n";
     // init_SF_s(pred_s, 100);

@@ -238,7 +238,7 @@ void *Join::Worker(void *args) {
                 }
             }
 
-            // cout << "Count: " << count << endl;
+            // cout << "Count in Join: " << count << endl;
             // cout << "Stage 3: mergeing the buffer recs" << endl;
             // tempRecRight has the first rec of the next iteration
 
@@ -501,32 +501,59 @@ void *Sum::Worker(void *args) {
     Pipe *outPipe = params->outPipe;
     Function *computeMe = params->computeMe;
 
-    int result_i;
-    double result_d;
+    int result_i = 0;
+    double result_d = 0;
+    int temp_result_i = 0;
+    double temp_result_d = 0;
     Type result;
 
+    int count = 0;
+
     while (inPipe->Remove(tempRec)) {
-        result = computeMe->Apply(*tempRec, result_i, result_d);
+        result = computeMe->Apply(*tempRec, temp_result_i, temp_result_d);
+        if (result == Int) {
+            result_i += temp_result_i;
+        } else {
+            result_d += temp_result_d;
+        }
+        count++;
+        if (count % 1000 == 0) {
+            cout << "Sum count: " << count << endl;
+            cout << std::fixed << "Result i: " << result_i << " Result d: " << result_d << endl;
+        }
     }
+
+    cout << "Total Sum count: " << count << endl;
+    cout << std::fixed << "Result i: " << result_i << " Result d: " << result_d << endl;
 
     char *space = new (std::nothrow) char[PAGE_SIZE];
     int totspace = sizeof(int) * 2;
 
     if (result == Int) {
         totspace += sizeof(int);
-        ((int *) space)[2] = result_i;
+        ((int *)space)[0] = totspace;
     } else {
         totspace += sizeof(double);
-        ((double *) space)[2] = result_d;
+        ((int *)space)[0] = totspace;
     }
 
-    ((int *)space)[0] = totspace;
     ((int *)space)[1] = 8;
-    
+
+    if (result == Int) {
+        *((int *)&(space[8])) = result_i;
+    } else {
+        *((double *)&(space[8])) = result_d;
+    }
+
+    cout << "totspace: " << totspace << endl;
+
     // our new record that has the sum
     Record tempSum;
+    tempSum.bits = new char[totspace];
+    memcpy(tempSum.bits, space, totspace);
+    delete[] space;
 
-    memcpy(tempSum.GetBits(), space, totspace);
+    // cout << "Val in record: " << ((int *)tempSum.bits)[1] << endl;
 
     outPipe->Insert(&tempSum);
 
