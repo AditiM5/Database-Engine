@@ -54,6 +54,7 @@ int DBFile::Open(const char *f_path) {
         genericDBFile = new SortedFile();
     }
     genericDBFile->Open(f_path);
+    genericDBFile->MoveFirst();
 }
 
 void DBFile::MoveFirst() {

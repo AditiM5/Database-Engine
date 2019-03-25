@@ -1,11 +1,12 @@
 
 #include <stdlib.h>
+#include <unistd.h>
 #include <iostream>
 #include "Function.h"
-#include "Record.h"
 #include "Pipe.h"
-#include "pthread.h"
+#include "Record.h"
 #include "RelOp.h"
+#include "pthread.h"
 
 using namespace std;
 
@@ -13,13 +14,26 @@ Attribute IA = {"int", Int};
 Attribute SA = {"string", String};
 Attribute DA = {"double", Double};
 
+// extern "C" {
+// int yyparse(void);  // defined in y.tab.c
+// }
+
 extern "C" {
-int yyparse(void);  // defined in y.tab.c
+int yyparse(void);                      // defined in y.tab.c
+int yyfuncparse(void);                  // defined in yyfunc.tab.c
+void init_lexical_parser(char *);       // defined in lex.yy.c (from Lexer.l)
+void close_lexical_parser();            // defined in lex.yy.c
+void init_lexical_parser_func(char *);  // defined in lex.yyfunc.c (from Lexerfunc.l)
+void close_lexical_parser_func();       // defined in lex.yyfunc.c
 }
 
 extern struct AndList *final;
+extern struct FuncOperator *finalfunc;
+extern FILE *yyin;
 
-void* producer1(void *args) {
+// extern struct AndList *final;
+
+void *producer1(void *args) {
     Pipe *in = (Pipe *)args;
     FILE *tableFile = fopen("data/test.tbl", "r");
 
@@ -38,7 +52,7 @@ void* producer1(void *args) {
     pthread_exit(NULL);
 }
 
-void* producer2(void *args) {
+void *producer2(void *args) {
     Pipe *in = (Pipe *)args;
     FILE *tableFile = fopen("data-1GB/region.tbl", "r");
 
@@ -57,94 +71,215 @@ void* producer2(void *args) {
     pthread_exit(NULL);
 }
 
-int main() {
-    //try to parse the CNF
-    // cout << "Enter in your CNF: ";
-    // if (yyparse() != 0) {
-    //     cout << "Can't parse your CNF.\n";
-    //     exit(1);
-    // }
+void get_cnf(char *input, Schema *left, CNF &cnf_pred, Record &literal) {
+    init_lexical_parser(input);
+    if (yyparse() != 0) {
+        cout << " Error: can't parse your CNF " << input << endl;
+        exit(1);
+    }
+    cnf_pred.GrowFromParseTree(final, left, literal);  // constructs CNF predicate
+    close_lexical_parser();
+}
 
-    cout << "hello in main" << endl;
-    // suck up the schema from the file
-    Schema myschema1("catalog", "lineitem");
-    Schema myschema2("catalog", "region");
+void get_cnf(char *input, Schema *left, Schema *right, CNF &cnf_pred, Record &literal) {
+    init_lexical_parser(input);
+    if (yyparse() != 0) {
+        cout << " Error: can't parse your CNF " << input << endl;
+        exit(1);
+    }
+    cnf_pred.GrowFromParseTree(final, left, right, literal);  // constructs CNF predicate
+    close_lexical_parser();
+}
 
-    // grow the CNF expression from the parse tree
-    // CNF myComparison;
-    // Record literal;
-    // // myComparison.GrowFromParseTree(final, &myschema1, literal);
-    // myComparison.GrowFromParseTree(final, &myschema1, &myschema2, literal);
-    Pipe inL(100), inR(100), out_sp(100), out_p(100), out_sf(100), out_j(100);
+void get_cnf(char *input, Schema *left, Function &fn_pred) {
+    init_lexical_parser_func(input);
+    if (yyfuncparse() != 0) {
+        cout << " Error: can't parse your arithmetic expr. " << input << endl;
+        exit(1);
+    }
+    fn_pred.GrowFromParseTree(finalfunc, *left);  // constructs CNF predicate
+    close_lexical_parser_func();
+}
 
-    // OrderMaker left, right;
-    // myComparison.GetSortOrders(left, right);
+int clear_pipe(Pipe &in_pipe, Schema *schema, bool print) {
+    Record rec;
+    int cnt = 0;
+    while (in_pipe.Remove(&rec)) {
+        if (print) {
+            rec.Print(schema);
+        }
+        cnt++;
+    }
+    return cnt;
+}
 
+int clear_pipe(Pipe &in_pipe, Schema *schema, Function &func, bool print) {
+    Record rec;
+    int cnt = 0;
+    double sum = 0;
+    while (in_pipe.Remove(&rec)) {
+        if (print) {
+            rec.Print(schema);
+        }
+        int ival = 0;
+        double dval = 0;
+        func.Apply(rec, ival, dval);
+        sum += (ival + dval);
+        cnt++;
+    }
+    cout << " Sum: " << sum << endl;
+    return cnt;
+}
 
-    // int numAtts = 9;
-    // int keepMe[] = {0,1,7};
-    // int numAttsIn = numAtts;
-	// int numAttsOut = 3;
+int main_1() {
+    cout << " query4 \n";
 
-    // Attribute atts[] = {IA, SA, DA};
+    char *pred_s = "(s_suppkey = s_suppkey)";
+    cout << " stage 1A \n";
+    // init_SF_s(pred_s, 100);
+    DBFile dbfile;
+    dbfile.Open("temp/supplier.bin");
+    dbfile.MoveFirst();
+    init_lexical_parser(pred_s);
+    if (yyparse() != 0) {
+        cout << " Error: can't parse your CNF " << pred_s << endl;
+        exit(1);
+    }
+    CNF cnf_pred;
+    Record literal;
+    Schema myschema("catalog", "supplier");
+    cnf_pred.GrowFromParseTree(final, &myschema, literal);  // constructs CNF predicate
+    close_lexical_parser();
 
-    pthread_t thread1, thread2;
+    cout << " stage 1B \n";
 
-    pthread_create(&thread1, NULL, producer1, (void *)&inL);
-    // pthread_create(&thread2, NULL, producer2, (void *)&inR);
+    // SF_s.Run(dbf_s, _s, cnf_s, lit_s);  // 10k recs qualified
+    SelectFile sf;
+    Pipe input(1000);
+    Pipe output(1000);
+    sf.Run(dbfile, output, cnf_pred, literal);
+    // sf.WaitUntilDone();
 
-// cout << "hello 3 in main" << endl;
-    // DBFile dbFile;
-    // dbFile.Open("data-1GB/part.bin");
-    // dbFile.MoveFirst();
-    // SelectFile sf;
-    // SelectPipe sp;
-    Project p;
-    Join j;
-    DuplicateRemoval dr;
+    cout << " stage 1C \n";
 
-    Record tempRec;
+    char *pred_ps = "(ps_suppkey = ps_suppkey)";
 
-    // BigQ bigq(inL, out_j, left, 1);
+    // init_SF_ps(pred_ps, 100);
+    DBFile dbfile_ps;
+    dbfile_ps.Open("temp/partsupp.bin");
+    dbfile_ps.MoveFirst();
+    init_lexical_parser(pred_ps);
+    if (yyparse() != 0) {
+        cout << " Error: can't parse your CNF " << pred_ps << endl;
+        exit(1);
+    }
+    CNF cnf_pred_ps;
+    Record literal_ps;
+    Schema myschema_ps("catalog", "partsupp");
+    cnf_pred_ps.GrowFromParseTree(final, &myschema_ps, literal_ps);  // constructs CNF predicate
+    close_lexical_parser();
 
-    // sp.Run(in, out_sp, myComparison, literal);
+    SelectFile sf_ps;
+    Pipe input_ps(1000);
+    Pipe output_ps(1000);
+    sf_ps.Run(dbfile_ps, output_ps, cnf_pred_ps, literal_ps);
+    // sf_ps.WaitUntilDone();
 
-    // sf.Run(dbFile, out_sf, myComparison, literal);
-    // p.Run(out_sf, out_p, keepMe, numAttsIn, numAttsOut);
-    // cout << "Calling Join!!!" << endl;
-    // j.Use_n_Pages(10);
-    // j.Run(inL, inR, out_j, myComparison, literal);
-    // j.WaitUntilDone();
+    // join
+    cout << "Entering join..." << endl;
 
-    dr.Use_n_Pages(1);
+    cout << " stage 1D \n";
+    Join J;
+    // left _s
+    // right _ps
+    Pipe _s_ps(100);
+    CNF cnf_p_ps;
+    Record lit_p_ps;
+    get_cnf("(s_suppkey = ps_suppkey)", &myschema, &myschema_ps, cnf_p_ps, lit_p_ps);
 
-    dr.Run(inL, out_j, myschema1);
+    cout << " stage 2 \n";
 
+    int outAtts = 7 + 5;
+    Attribute ps_supplycost = {"ps_supplycost", Double};
+    Attribute joinatt[] = {IA, SA, SA, IA, SA, DA, SA, IA, IA, IA, ps_supplycost, SA};
+    Schema join_sch("join_sch", outAtts, joinatt);
 
-    // int numAtts = 12;
-    // int keepMe[] = {0,1,2,3,4,5,6,7,8,9,10,11};
-    // int numAttsIn = numAtts;
-	// int numAttsOut = 12;
+    cout << " stage 3 \n";
 
-    // Attribute atts[] = {IA, SA, SA, IA, SA, DA, SA, IA, IA, IA, DA, SA};
+    Sum T;
+    // _s (input pipe)
+    Pipe _out(1);
+    Function func;
+    char *str_sum = "(ps_supplycost)";
+    get_cnf(str_sum, &join_sch, func);
+    func.Print();
+    T.Use_n_Pages(1);
 
-    // Schema s("blah", 12, atts);
+    cout << "Stage 4" << endl;
+
+    // sf_ps.WaitUntilDone();
+
+    J.Use_n_Pages(1);
+
+    cout << "stage 5" << endl;
+
+    // sf_ps.WaitUntilDone();
+    // usleep(5000000);
+
+    // SF_ps.Run(dbf_ps, _ps, cnf_ps, lit_ps);  // 161 recs qualified
+    J.Run(output, output_ps, _s_ps, cnf_p_ps, lit_p_ps);
+    T.Run(_s_ps, _out, func);
+
+    // cout << "Join waiting.." << endl;
+    // J.WaitUntilDone();
 
     int count = 0;
-    // Schema out_sch ("catalog", "nation");
-    // cout << "Before printing" << endl;
+    Record temp;
+    // while (_out.Remove(&temp)) {
+    //     count++;
+    // }
+    cout << "Count in Test: " << endl;
+    T.WaitUntilDone();
 
-    while(out_j.Remove(&tempRec)){
-        // tempRec.Print(&s);
-        if (count % 1000 == 0) cout << count << endl;
+    Schema sum_sch("sum_sch", 1, &DA);
+    int cnt = clear_pipe(_out, &sum_sch, true);
+    cout << " query4 returned " << cnt << " recs \n";
+}
+
+int main() {
+    char *pred_s = "(s_suppkey = s_suppkey)";
+    cout << " stage 1A \n";
+    // init_SF_s(pred_s, 100);
+    DBFile dbfile;
+    dbfile.Open("temp/supplier.bin");
+    dbfile.MoveFirst();
+    init_lexical_parser(pred_s);
+    if (yyparse() != 0) {
+        cout << " Error: can't parse your CNF " << pred_s << endl;
+        exit(1);
+    }
+    CNF cnf_pred;
+    Record literal;
+    Schema myschema("catalog", "supplier");
+    cnf_pred.GrowFromParseTree(final, &myschema, literal);  // constructs CNF predicate
+    close_lexical_parser();
+
+    cout << " stage 1B \n";
+
+    // SF_s.Run(dbf_s, _s, cnf_s, lit_s);  // 10k recs qualified
+    SelectFile sf;
+    Pipe input(1000);
+    Pipe output(1000);
+    sf.Run(dbfile, output, cnf_pred, literal);
+    // sf.WaitUntilDone();
+
+    int count = 0;
+    Record tempRec;
+    while (output.Remove(&tempRec)) {
         count++;
+        // cout << "\n In this loop for supplier \n";
     }
 
-    // out_j.ShutDown();
-    pthread_join(thread1, NULL);
-    // pthread_join(thread2, NULL);
+    cout << "count: " << count << endl;
 
-    cout << "Records fetched: " << count << endl;
-    // dbFile.Close();
-   
 }
