@@ -1,10 +1,9 @@
 #include "Record.h"
 
-#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <iostream>
-
 
 Record::Record() {
     bits = NULL;
@@ -22,17 +21,15 @@ Record::~Record() {
     bits = NULL;
 }
 
-
 int Record::SuckNextRecord(Schema *mySchema, FILE *textFile) {
-
     // this is temporary storage
-    char *space = new(std::nothrow) char[PAGE_SIZE];
+    char *space = new (std::nothrow) char[PAGE_SIZE];
     if (space == NULL) {
         cout << "ERROR : Not enough memory. EXIT !!!\n";
         exit(1);
     }
 
-    char *recSpace = new(std::nothrow) char[PAGE_SIZE];
+    char *recSpace = new (std::nothrow) char[PAGE_SIZE];
     if (recSpace == NULL) {
         cout << "ERROR : Not enough memory. EXIT !!!\n";
         exit(1);
@@ -52,7 +49,6 @@ int Record::SuckNextRecord(Schema *mySchema, FILE *textFile) {
 
     // loop through all of the attributes
     for (int i = 0; i < n; i++) {
-
         // first we suck in the next attribute value
         int len = 0;
         while (1) {
@@ -70,7 +66,7 @@ int Record::SuckNextRecord(Schema *mySchema, FILE *textFile) {
         }
 
         // set up the pointer to the current attribute in the record
-        ((int *) recSpace)[i + 1] = currentPosInRec;
+        ((int *)recSpace)[i + 1] = currentPosInRec;
 
         // null terminate the string
         space[len] = 0;
@@ -78,23 +74,21 @@ int Record::SuckNextRecord(Schema *mySchema, FILE *textFile) {
 
         // then we convert the data to the correct binary representation
         if (atts[i].myType == Int) {
-            *((int *) &(recSpace[currentPosInRec])) = atoi(space);
+            *((int *)&(recSpace[currentPosInRec])) = atoi(space);
             currentPosInRec += sizeof(int);
 
         } else if (atts[i].myType == Double) {
-
             // make sure that we are starting at a double-aligned position;
             // if not, then we put some extra space in there
             while (currentPosInRec % sizeof(double) != 0) {
                 currentPosInRec += sizeof(int);
-                ((int *) recSpace)[i + 1] = currentPosInRec;
+                ((int *)recSpace)[i + 1] = currentPosInRec;
             }
 
-            *((double *) &(recSpace[currentPosInRec])) = atof(space);
+            *((double *)&(recSpace[currentPosInRec])) = atof(space);
             currentPosInRec += sizeof(double);
 
         } else if (atts[i].myType == String) {
-
             // align things to the size of an integer if needed
             if (len % sizeof(int) != 0) {
                 len += sizeof(int) - (len % sizeof(int));
@@ -102,16 +96,14 @@ int Record::SuckNextRecord(Schema *mySchema, FILE *textFile) {
 
             strcpy(&(recSpace[currentPosInRec]), space);
             currentPosInRec += len;
-
         }
-
     }
 
     // the last thing is to set up the pointer to just past the end of the reocrd
-    ((int *) recSpace)[0] = currentPosInRec;
+    ((int *)recSpace)[0] = currentPosInRec;
 
     // and copy over the bits
-    bits = new(std::nothrow) char[currentPosInRec];
+    bits = new (std::nothrow) char[currentPosInRec];
     if (bits == NULL) {
         cout << "ERROR : Not enough memory. EXIT !!!\n";
         exit(1);
@@ -125,7 +117,6 @@ int Record::SuckNextRecord(Schema *mySchema, FILE *textFile) {
     return 1;
 }
 
-
 void Record::SetBits(char *bits) {
     delete[] this->bits;
     this->bits = bits;
@@ -135,21 +126,17 @@ char *Record::GetBits(void) {
     return bits;
 }
 
-
 void Record::CopyBits(char *bits, int b_len) {
-
     delete[] this->bits;
 
-    this->bits = new(std::nothrow) char[b_len];
+    this->bits = new (std::nothrow) char[b_len];
     if (this->bits == NULL) {
         cout << "ERROR : Not enough memory. EXIT !!!\n";
         exit(1);
     }
 
     memcpy(this->bits, bits, b_len);
-
 }
-
 
 void Record::Consume(Record *fromMe) {
     delete[] bits;
@@ -157,17 +144,16 @@ void Record::Consume(Record *fromMe) {
     fromMe->bits = NULL;
 }
 
-
 void Record::Copy(Record *copyMe) {
     // this is a deep copy, so allocate the bits and move them over!
     delete[] bits;
-    bits = new(std::nothrow) char[((int *) copyMe->bits)[0]];
+    bits = new (std::nothrow) char[((int *)copyMe->bits)[0]];
     if (bits == NULL) {
         cout << "ERROR : Not enough memory. EXIT !!!\n";
         exit(1);
     }
 
-    memcpy(bits, copyMe->bits, ((int *) copyMe->bits)[0]);
+    memcpy(bits, copyMe->bits, ((int *)copyMe->bits)[0]);
 }
 
 void Record::Project(int *attsToKeep, int numAttsToKeep, int numAttsNow) {
@@ -178,22 +164,22 @@ void Record::Project(int *attsToKeep, int numAttsToKeep, int numAttsNow) {
         // if we are keeping the last record, be careful!
         if (attsToKeep[i] == numAttsNow - 1) {
             // in this case, take the length of the record and subtract the start pos
-            totSpace += ((int *) bits)[0] - ((int *) bits)[attsToKeep[i] + 1];
+            totSpace += ((int *)bits)[0] - ((int *)bits)[attsToKeep[i] + 1];
         } else {
             // in this case, subtract the start of the next field from the start of this field
-            totSpace += ((int *) bits)[attsToKeep[i] + 2] - ((int *) bits)[attsToKeep[i] + 1];
+            totSpace += ((int *)bits)[attsToKeep[i] + 2] - ((int *)bits)[attsToKeep[i] + 1];
         }
     }
 
     // now, allocate the new bits
-    char *newBits = new(std::nothrow) char[totSpace];
+    char *newBits = new (std::nothrow) char[totSpace];
     if (newBits == NULL) {
         cout << "ERROR : Not enough memory. EXIT !!!\n";
         exit(1);
     }
 
     // record the total length of the record
-    *((int *) newBits) = totSpace;
+    *((int *)newBits) = totSpace;
 
     // and copy all of the fields over
     int curPos = sizeof(int) * (numAttsToKeep + 1);
@@ -204,18 +190,18 @@ void Record::Project(int *attsToKeep, int numAttsToKeep, int numAttsNow) {
         // if we are keeping the last record, be careful!
         if (attsToKeep[i] == numAttsNow - 1) {
             // in this case, take the length of the record and subtract the start pos
-            attLen = ((int *) bits)[0] - ((int *) bits)[attsToKeep[i] + 1];
+            attLen = ((int *)bits)[0] - ((int *)bits)[attsToKeep[i] + 1];
 
         } else {
             // in this case, subtract the start of the next field from the start of this field
-            attLen = ((int *) bits)[attsToKeep[i] + 2] - ((int *) bits)[attsToKeep[i] + 1];
+            attLen = ((int *)bits)[attsToKeep[i] + 2] - ((int *)bits)[attsToKeep[i] + 1];
         }
 
         // set the start position of this field
-        ((int *) newBits)[i + 1] = curPos;
+        ((int *)newBits)[i + 1] = curPos;
 
         // and copy over the bits
-        memcpy(&(newBits[curPos]), &(bits[((int *) bits)[attsToKeep[i] + 1]]), attLen);
+        memcpy(&(newBits[curPos]), &(bits[((int *)bits)[attsToKeep[i] + 1]]), attLen);
 
         // note that we are moving along in the record
         curPos += attLen;
@@ -226,14 +212,11 @@ void Record::Project(int *attsToKeep, int numAttsToKeep, int numAttsNow) {
 
     // and attach the new ones
     bits = newBits;
-
 }
 
-
 // consumes right record and leaves the left record as it is
-void
-Record::MergeRecords(Record *left, Record *right, int numAttsLeft, int numAttsRight, int *attsToKeep, int numAttsToKeep,
-                     int startOfRight) {
+void Record::MergeRecords(Record *left, Record *right, int numAttsLeft, int numAttsRight, int *attsToKeep, int numAttsToKeep,
+                          int startOfRight) {
     delete[] bits;
     bits = NULL;
 
@@ -261,22 +244,22 @@ Record::MergeRecords(Record *left, Record *right, int numAttsLeft, int numAttsRi
         // if we are keeping the last record, be careful!
         if (attsToKeep[i] == numAttsNow - 1) {
             // in this case, take the length of the record and subtract the start pos
-            totSpace += ((int *) rec_bits)[0] - ((int *) rec_bits)[attsToKeep[i] + 1];
+            totSpace += ((int *)rec_bits)[0] - ((int *)rec_bits)[attsToKeep[i] + 1];
         } else {
             // in this case, subtract the start of the next field from the start of this field
-            totSpace += ((int *) rec_bits)[attsToKeep[i] + 2] - ((int *) rec_bits)[attsToKeep[i] + 1];
+            totSpace += ((int *)rec_bits)[attsToKeep[i] + 2] - ((int *)rec_bits)[attsToKeep[i] + 1];
         }
     }
 
     // now, allocate the new bits
-    bits = new(std::nothrow) char[totSpace + 1];
+    bits = new (std::nothrow) char[totSpace + 1];
     if (bits == NULL) {
         cout << "ERROR : Not enough memory. EXIT !!!\n";
         exit(1);
     }
 
     // record the total length of the record
-    *((int *) bits) = totSpace;
+    *((int *)bits) = totSpace;
 
     numAttsNow = numAttsLeft;
     rec_bits = left->bits;
@@ -295,38 +278,35 @@ Record::MergeRecords(Record *left, Record *right, int numAttsLeft, int numAttsRi
         // if we are keeping the last record, be careful!
         if (attsToKeep[i] == numAttsNow - 1) {
             // in this case, take the length of the record and subtract the start pos
-            attLen = ((int *) rec_bits)[0] - ((int *) rec_bits)[attsToKeep[i] + 1];
+            attLen = ((int *)rec_bits)[0] - ((int *)rec_bits)[attsToKeep[i] + 1];
         } else {
             // in this case, subtract the start of the next field from the start of this field
-            attLen = ((int *) rec_bits)[attsToKeep[i] + 2] - ((int *) rec_bits)[attsToKeep[i] + 1];
+            attLen = ((int *)rec_bits)[attsToKeep[i] + 2] - ((int *)rec_bits)[attsToKeep[i] + 1];
         }
 
         // set the start position of this field
-        ((int *) bits)[i + 1] = curPos;
+        ((int *)bits)[i + 1] = curPos;
 
         // and copy over the bits
-        memmove(&(bits[curPos]), &(rec_bits[((int *) rec_bits)[attsToKeep[i] + 1]]), attLen);
+        memmove(&(bits[curPos]), &(rec_bits[((int *)rec_bits)[attsToKeep[i] + 1]]), attLen);
 
         // note that we are moving along in the record
         curPos += attLen;
-
     }
 }
 
 void Record::Print(Schema *mySchema) {
-
     int n = mySchema->GetNumAtts();
     Attribute *atts = mySchema->GetAtts();
 
     // loop through all of the attributes
     for (int i = 0; i < n; i++) {
-
         // print the attribute name
         cout << atts[i].name << ": ";
 
         // use the i^th slot at the head of the record to get the
         // offset to the correct attribute in the record
-        int pointer = ((int *) bits)[i + 1];
+        int pointer = ((int *)bits)[i + 1];
 
         // here we determine the type, which given in the schema;
         // depending on the type we then print out the contents
@@ -334,17 +314,17 @@ void Record::Print(Schema *mySchema) {
 
         // first is integer
         if (atts[i].myType == Int) {
-            int *myInt = (int *) &(bits[pointer]);
+            int *myInt = (int *)&(bits[pointer]);
             cout << *myInt;
 
             // then is a double
         } else if (atts[i].myType == Double) {
-            double *myDouble = (double *) &(bits[pointer]);
+            double *myDouble = (double *)&(bits[pointer]);
             cout << *myDouble;
 
             // then is a character string
         } else if (atts[i].myType == String) {
-            char *myString = (char *) &(bits[pointer]);
+            char *myString = (char *)&(bits[pointer]);
             cout << myString;
         }
 
@@ -359,8 +339,50 @@ void Record::Print(Schema *mySchema) {
     cout << "\n";
 }
 
-int Record::NumberOfAtts(){
-    int num = (((int *) bits)[1] - 4) / 4;
+string Record::ToString(Schema *mySchema) {
+    int n = mySchema->GetNumAtts();
+    Attribute *atts = mySchema->GetAtts();
+
+    string temp = "";
+
+    // loop through all of the attributes
+    for (int i = 0; i < n; i++) {
+        // use the i^th slot at the head of the record to get the
+        // offset to the correct attribute in the record
+        int pointer = ((int *)bits)[i + 1];
+
+        // here we determine the type, which given in the schema;
+        // depending on the type we then print out the contents
+
+        // first is integer
+        if (atts[i].myType == Int) {
+            int *myInt = (int *)&(bits[pointer]);
+            temp += to_string(*myInt);
+
+            // then is a double
+        } else if (atts[i].myType == Double) {
+            double *myDouble = (double *)&(bits[pointer]);
+            string t = to_string(*myDouble);
+            t.erase(t.find_last_not_of('0') + 1, std::string::npos);
+            t.erase(t.find_last_not_of('.') + 1, std::string::npos);
+            temp += t;
+            // then is a character string
+        } else if (atts[i].myType == String) {
+            char *myString = (char *)&(bits[pointer]);
+            temp += string(myString);
+        }
+
+        temp += "|";
+    }
+
+    // cout << "Rec txt: " << temp << endl;
+
+    // s = temp.c_str();
+    return temp;
+}
+
+int Record::NumberOfAtts() {
+    int num = (((int *)bits)[1] - 4) / 4;
 
     return num;
 }
@@ -375,6 +397,3 @@ void Record::ClearRecord() {
 bool Record::IsRecordEmpty() {
     return bits == NULL;
 }
-
-
-

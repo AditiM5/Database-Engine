@@ -59,4 +59,11 @@ struct GroupByParams {
     GroupBy *ref;
 };
 
+struct WriteOutParams {
+    Pipe *inPipe;
+    FILE *outFile;
+    Schema *mySchema;
+    WriteOut *ref;
+};
+
 #endif

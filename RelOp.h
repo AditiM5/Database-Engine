@@ -119,9 +119,17 @@ class GroupBy : public RelationalOp {
     void Use_n_Pages(int n);
 };
 class WriteOut : public RelationalOp {
+    friend void *GroupByFunction(void *foo_ptr, void *args);
+
+   private:
+    pthread_t thread;
+    Record *tempRec = new Record;
+    int num_pages;
+
    public:
-    void Run(Pipe &inPipe, FILE *outFile, Schema &mySchema) {}
-    void WaitUntilDone() {}
+    void *Worker(void *args);
+    void Run(Pipe &inPipe, FILE *outFile, Schema &mySchema);
+    void WaitUntilDone();
     void Use_n_Pages(int n) {}
 };
 #endif

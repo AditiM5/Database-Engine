@@ -709,3 +709,38 @@ void GroupBy::BuildRecord(Record *sum, Record *record, Type result, int result_i
     // mergeRec.Print(&join_sch);
     sum->Consume(&mergeRec);
 }
+
+void WriteOut::WaitUntilDone() {
+    pthread_join(thread, NULL);
+}
+
+void *WriteOutProxyFunction(void *args) {
+    WriteOutParams *params;
+    params = (WriteOutParams *)args;
+    void *fooPtr = params->ref;
+    static_cast<WriteOut *>(fooPtr)->Worker(args);
+}
+
+void WriteOut::Run(Pipe &inPipe, FILE *outFile, Schema &mySchema) {
+    WriteOutParams *params = new WriteOutParams;
+    params->inPipe = &inPipe;
+    params->outFile = outFile;
+    params->mySchema = &mySchema;
+    params->ref = this;
+
+    pthread_create(&thread, NULL, WriteOutProxyFunction, (void *)params);
+}
+
+void* WriteOut::Worker(void *args) {
+    WriteOutParams *params = (WriteOutParams *)args;
+
+    Pipe *inPipe = params->inPipe;
+    FILE *outFile = params->outFile;
+    Schema *mySchema = params->mySchema;
+    string s;
+
+    while(inPipe->Remove(tempRec)) {
+        s = tempRec->ToString(mySchema);
+        fprintf(outFile, "%s\n", s.c_str());
+    }
+}
