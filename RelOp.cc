@@ -438,8 +438,6 @@ void *DuplicateRemoval::Worker(void *args) {
     tempRec.Copy(&curr_rec);
     outPipe->Insert(&tempRec);
 
-    // bigq_out->Remove(&tempRec);
-
     ComparisonEngine ceng;
     while (bigq_out->Remove(&tempRec)) {
         int result = ceng.Compare(&curr_rec, &tempRec, &sortOrder);
@@ -565,4 +563,149 @@ void Sum::Use_n_Pages(int n) {
 
 void Sum::WaitUntilDone() {
     pthread_join(thread, NULL);
+}
+
+void *GroupByProxyFunction(void *args) {
+    GroupByParams *params;
+    params = (GroupByParams *)args;
+    void *fooPtr = params->ref;
+    static_cast<GroupBy *>(fooPtr)->Worker(args);
+}
+
+void GroupBy::Run(Pipe &inPipe, Pipe &outPipe, OrderMaker &groupAtts, Function &computeMe) {
+    GroupByParams *params = new GroupByParams;
+    params->inPipe = &inPipe;
+    params->outPipe = &outPipe;
+    params->computeMe = &computeMe;
+    params->groupAtts = &groupAtts;
+    params->ref = this;
+
+    pthread_create(&thread, NULL, GroupByProxyFunction, (void *)params);
+}
+
+void *GroupBy::Worker(void *args) {
+    GroupByParams *params = (GroupByParams *)args;
+
+    Pipe *inPipe = params->inPipe;
+    Pipe *outPipe = params->outPipe;
+    OrderMaker *groupAtts = params->groupAtts;
+    Function *computeMe = params->computeMe;
+
+    Pipe bigq_out(100);
+
+    BigQ bigq(*inPipe, bigq_out, *groupAtts, num_pages);
+
+    Record curr_rec;
+    int result_i = 0, temp_result_i = 0;
+    double result_d = 0, temp_result_d = 0;
+
+    bigq_out.Remove(&curr_rec);
+    // dbfile.GetNext(curr_rec);
+    Type result_type;
+
+    result_type = computeMe->Apply(curr_rec, result_i, result_d);
+    // tempRec->Copy(&curr_rec);
+    // outPipe->Insert(tempRec);
+
+    int count = 0;
+
+    ComparisonEngine ceng;
+    while (bigq_out.Remove(tempRec)) {
+        // if (count % 1 == 0) cout << "Group by count: " << count << endl;
+        int result = ceng.Compare(&curr_rec, tempRec, groupAtts);
+
+        if (result == 0) {
+            result_type = computeMe->Apply(*tempRec, temp_result_i, temp_result_d);
+            result_i += temp_result_i;
+            result_d += temp_result_d;
+        } else if (result == -1) {
+            count++;
+            Record sum;
+            BuildRecord(&sum, &curr_rec, result_type, result_i, result_d, groupAtts);
+            outPipe->Insert(&sum);
+
+            curr_rec.Consume(tempRec);
+            result_i = 0;
+            result_d = 0;
+            result_type = computeMe->Apply(curr_rec, result_i, result_d);
+        }
+    }
+
+    Record sum;
+    BuildRecord(&sum, &curr_rec, result_type, result_i, result_d, groupAtts);
+    outPipe->Insert(&sum);
+    // count++;
+
+    // cout << "Group count: " << count << endl;
+
+    outPipe->ShutDown();
+}
+
+void GroupBy::Use_n_Pages(int n) {
+    this->num_pages = n;
+}
+
+void GroupBy::WaitUntilDone() {
+    pthread_join(thread, NULL);
+}
+
+void GroupBy::BuildRecord(Record *sum, Record *record, Type result, int result_i, double result_d, OrderMaker *groupAtts) {
+    char *space = new (std::nothrow) char[PAGE_SIZE];
+    int totspace = sizeof(int) * 2;
+
+    ((int *)space)[1] = 8;
+
+    if (result == Int) {
+        totspace += sizeof(int);
+        *((int *)&(space[8])) = result_i;
+    } else {
+        totspace += sizeof(double);
+        *((double *)&(space[8])) = result_d;
+    }
+
+    ((int *)space)[0] = totspace;
+
+    sum->bits = new char[totspace];
+    memcpy(sum->bits, space, totspace);
+    delete[] space;
+
+
+    // cout << "Group Atts" << endl;
+    // groupAtts->Print();
+    // cout << "Num atts: " << record->NumberOfAtts() << endl;
+
+    record->Project(groupAtts->whichAtts, groupAtts->numAtts, record->NumberOfAtts());
+
+    int left_atts = 1;
+    int right_atts = groupAtts->numAtts;
+    int *total_atts = new int[left_atts + right_atts];
+
+    // cout << "the atts array: " << endl;
+    int k = 0;
+    for (int i = 0; i < (left_atts + right_atts); i++) {
+        if (i == left_atts) {
+            // reset k so that array is 0..left_atts and 0..right_atts
+            // start of right therefore will be left_atts
+            k = 0;
+        }
+        *(total_atts + i) = k;
+        // cout << " i: " << i << " k: " << k << endl;
+        k++;
+    }
+
+    Attribute IA = {"int", Int};
+    // // Attribute joinatt[] = {IA};
+    // Schema blah("blah", 1, joinatt);
+    // cout << "Proj rec: ";
+    // record->Print(&blah);
+
+    Record mergeRec;
+    mergeRec.MergeRecords(sum, record, left_atts, right_atts, total_atts, (left_atts + right_atts), left_atts);
+
+    int outAtts = 2;
+    Attribute joinatt[] = {IA, IA};
+    Schema join_sch("join_sch", outAtts, joinatt);
+
+    // mergeRec.Print(&join_sch);
+    sum->Consume(&mergeRec);
 }

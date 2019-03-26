@@ -104,10 +104,19 @@ class Sum : public RelationalOp {
     void Use_n_Pages(int n);
 };
 class GroupBy : public RelationalOp {
+    friend void *GroupByFunction(void *foo_ptr, void *args);
+
+   private:
+    pthread_t thread;
+    Record *tempRec = new Record;
+    int num_pages;
+    void BuildRecord(Record *sum, Record *record, Type result, int result_i, double result_d, OrderMaker *groupAtts);
+
    public:
-    void Run(Pipe &inPipe, Pipe &outPipe, OrderMaker &groupAtts, Function &computeMe) {}
-    void WaitUntilDone() {}
-    void Use_n_Pages(int n) {}
+    void *Worker(void *args);
+    void Run(Pipe &inPipe, Pipe &outPipe, OrderMaker &groupAtts, Function &computeMe);
+    void WaitUntilDone();
+    void Use_n_Pages(int n);
 };
 class WriteOut : public RelationalOp {
    public:

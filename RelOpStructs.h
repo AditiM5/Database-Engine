@@ -44,11 +44,19 @@ struct DuplicateRemovalParams {
     DuplicateRemoval *ref;
 };
 
-struct SumParams{
+struct SumParams {
     Pipe *inPipe;
     Pipe *outPipe;
     Function *computeMe;
     Sum *ref;
+};
+
+struct GroupByParams {
+    Pipe *inPipe;
+    Pipe *outPipe;
+    OrderMaker *groupAtts;
+    Function *computeMe;
+    GroupBy *ref;
 };
 
 #endif
