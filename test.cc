@@ -100,11 +100,10 @@ void q1() {
     dbf_ps.MoveFirst();
 
     SF_ps.Run(dbf_ps, _ps, cnf_ps, lit_ps);
-    SF_ps.WaitUntilDone();
 
     int cnt = clear_pipe(_ps, ps->schema(), true);
     cout << "\n\n query1 returned " << cnt << " records \n";
-
+    SF_ps.WaitUntilDone();
     dbf_ps.Close();
 }
 
@@ -129,7 +128,7 @@ void q2() {
 
     Attribute att3[] = {IA, SA, DA};
     Schema out_sch("out_sch", numAttsOut, att3);
-    int cnt = clear_pipe(_p, p->schema(), true);
+    int cnt = clear_pipe(_out, &out_sch, true);
 
     cout << "\n\n query2 returned " << cnt << " records \n";
 
@@ -148,8 +147,9 @@ void q3() {
     Function func;
     char *str_sum = "(s_acctbal + (s_acctbal * 1.05))";
     get_cnf(str_sum, s->schema(), func);
-    func.Print();
     T.Use_n_Pages(1);
+
+
     SF_s.Run(dbf_s, _s, cnf_s, lit_s);
     T.Run(_s, _out, func);
 
@@ -168,18 +168,13 @@ void q3() {
 // where s_suppkey = ps_suppkey;
 // expected output: 4.00406e+08
 void q4() {
-    cout << " query4 \n";
     char *pred_s = "(s_suppkey = s_suppkey)";
-    cout << " stage 1A \n";
     init_SF_s(pred_s, 100);
-    cout << " stage 1B \n";
     SF_s.Run(dbf_s, _s, cnf_s, lit_s);  // 10k recs qualified
-    cout << " stage 1C \n";
 
     char *pred_ps = "(ps_suppkey = ps_suppkey)";
     init_SF_ps(pred_ps, 100);
 
-    cout << " stage 1D \n";
     Join J;
     // left _s
     // right _ps
@@ -188,23 +183,18 @@ void q4() {
     Record lit_p_ps;
     get_cnf("(s_suppkey = ps_suppkey)", s->schema(), ps->schema(), cnf_p_ps, lit_p_ps);
 
-    cout << " stage 2 \n";
     int outAtts = sAtts + psAtts;
     Attribute ps_supplycost = {"ps_supplycost", Double};
     Attribute joinatt[] = {IA, SA, SA, IA, SA, DA, SA, IA, IA, IA, ps_supplycost, SA};
     Schema join_sch("join_sch", outAtts, joinatt);
 
-    cout << " stage 3 \n";
     Sum T;
     // _s (input pipe)
     Pipe _out(1);
     Function func;
     char *str_sum = "(ps_supplycost)";
     get_cnf(str_sum, &join_sch, func);
-    func.Print();
     T.Use_n_Pages(1);
-
-    cout << "Stage 4" << endl;
 
     J.Use_n_Pages(1);
 
@@ -214,13 +204,6 @@ void q4() {
 
     SF_ps.WaitUntilDone();
     J.WaitUntilDone();
-
-    int count = 0;
-    Record temp;
-    while (_s_ps.Remove(&temp)) {
-        count++;
-    }
-    cout << "Count in Test: " << endl;
     T.WaitUntilDone();
 
     Schema sum_sch("sum_sch", 1, &DA);
@@ -292,17 +275,26 @@ void q6() {
 
     GroupBy G;
     // _s (input pipe)
-    Pipe _out(1);
+    Pipe _out(100);
     Function func;
     char *str_sum = "(ps_supplycost)";
     get_cnf(str_sum, &join_sch, func);
-    func.Print();
-    OrderMaker grp_order(&join_sch);
+
+    // GroupBy G;
+    char *pred_g = "(s_nationkey)";
+    CNF groupby_cnf;
+    Record literal2;
+    get_cnf (pred_g, &join_sch, groupby_cnf, literal2);
+
+    OrderMaker ordermaker, dummy;
+    groupby_cnf.GetSortOrders(ordermaker, dummy);
+
+    // OrderMaker grp_order(&join_sch);
     G.Use_n_Pages(1);
 
     SF_ps.Run(dbf_ps, _ps, cnf_ps, lit_ps);  // 161 recs qualified
     J.Run(_s, _ps, _s_ps, cnf_p_ps, lit_p_ps);
-    G.Run(_s_ps, _out, grp_order, func);
+    G.Run(_s_ps, _out, ordermaker, func);
 
     SF_ps.WaitUntilDone();
     J.WaitUntilDone();

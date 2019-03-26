@@ -119,12 +119,6 @@ void *Project::Worker(void *args) {
 
     Record *tempRec = new Record;
 
-    cout << "Temp rec addr: " << tempRec << endl;
-
-    cout << "Num atts " << numAttsInput << endl;
-    cout << "Is done? " << in->isDone() << endl;
-    cout << "Rec empty?: " << tempRec->IsRecordEmpty() << endl;
-
     ComparisonEngine ceng;
 
     while (in->Remove(tempRec)) {
@@ -163,7 +157,6 @@ void Join::Use_n_Pages(int n) {
 }
 
 void *Join::Worker(void *args) {
-    cout << "Entered Join Worker..." << endl;
     JoinParams *params = (JoinParams *)args;
     Pipe *inLeft = params->inPipeL;
     Pipe *inRight = params->inPipeR;
@@ -176,7 +169,6 @@ void *Join::Worker(void *args) {
     OrderMaker *right = new OrderMaker;
 
     if (selOp->GetSortOrders(*left, *right)) {
-        cout << "Stage 1 : Gotten the 2 sort orders..." << endl;
         // initialise 2 queues one for left and one for the right
         Pipe *outLeft = new Pipe(100);
         BigQ *q_left = new BigQ(*inLeft, *outLeft, *left, num_pages);
@@ -193,28 +185,18 @@ void *Join::Worker(void *args) {
         string tempFileStringL = "temp_left" + to_string(msL.count()) + to_string(randomNumL) + ".bin";
         temp_left_filename = tempFileStringL.c_str();
         string tempString(temp_left_filename);
-        // cout << "left file: " << tempString << endl;
 
         const char *temp_right_filename;
         int randomNumR = rand() % 128;
         milliseconds msR = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
         string tempFileStringR = "temp_right" + to_string(msR.count()) + to_string(randomNumR) + ".bin";
         temp_right_filename = tempFileStringR.c_str();
-        // cout << "right file: " << tempFileStringR << endl;
 
         DBFile left_buffer;
         left_buffer.Create(temp_left_filename, heap, NULL);
 
-        // cout << "Weeeeee!!!!" << endl;
-
         DBFile right_buffer;
         right_buffer.Create(temp_right_filename, heap, NULL);
-
-        // cout << "Stage 2 : Count Recs" << endl;
-
-        // cout << "Order Makers" << endl;
-        // left->Print();
-        // right->Print();
 
         // count for the number of recs matched in the right pipe
         int count = 0;
@@ -224,9 +206,7 @@ void *Join::Worker(void *args) {
             count = 0;
             // cause remove from pipe has failed when == 0
             while (right_check != 0) {
-                // cout << "Stage 2 : Right recs loop" << endl;
                 int result = ceng.Compare(&tempRecLeft, left, &tempRecRight, right);
-                // cout << "result: " << result << endl;
                 if (result == 0) {
                     count++;
                     right_buffer.Add(&tempRecRight);
@@ -237,9 +217,6 @@ void *Join::Worker(void *args) {
                     right_check = outRight->Remove(&tempRecRight);
                 }
             }
-
-            // cout << "Count in Join: " << count << endl;
-            // cout << "Stage 3: mergeing the buffer recs" << endl;
             // tempRecRight has the first rec of the next iteration
 
             if (count != 0) {
@@ -264,18 +241,15 @@ void *Join::Worker(void *args) {
                 // get the first rec
                 left_buffer.GetNext(tempL);
                 int left_atts = tempL.NumberOfAtts();
-                // cout << "Number of atts for left : " << left_atts << endl;
                 left_buffer.MoveFirst();
 
                 // get the first rec
                 right_buffer.GetNext(tempR);
                 int right_atts = tempR.NumberOfAtts();
-                // cout << "Number of atts for right : " << right_atts << endl;
                 right_buffer.MoveFirst();
 
                 int *total_atts = new int[left_atts + right_atts];
 
-                // cout << "the atts array: " << endl;
                 int k = 0;
                 for (int i = 0; i < (left_atts + right_atts); i++) {
                     if (i == left_atts) {
@@ -284,7 +258,6 @@ void *Join::Worker(void *args) {
                         k = 0;
                     }
                     *(total_atts + i) = k;
-                    // cout << " i: " << i << " k: " << k << endl;
                     k++;
                 }
 
@@ -309,7 +282,6 @@ void *Join::Worker(void *args) {
                 // Get next left record for the next outer loop iteration
                 left_check = outLeft->Remove(&tempRecLeft);
             }
-            // cout << "Last stage" << endl;
         }
 
         // clean up of tempfiles
@@ -325,7 +297,6 @@ void *Join::Worker(void *args) {
         DBFile left_buffer;
         DBFile right_buffer;
 
-        // temp_left_name = GenTempFileName();
         const char *temp_left_filename;
         int randomNumL = rand() % 128;
         milliseconds msL = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
@@ -333,7 +304,6 @@ void *Join::Worker(void *args) {
         temp_left_filename = tempFileStringL.c_str();
         string tempString(temp_left_filename);
 
-        // temp_right_name = GenTempFileName();
         const char *temp_right_filename;
         int randomNumR = rand() % 128;
         milliseconds msR = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
@@ -407,7 +377,6 @@ const char *RelationalOp::GenTempFileName() {
     milliseconds ms = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
     string tempFileString = "temp" + to_string(ms.count()) + to_string(randomNum) + ".bin";
     temp_filename = tempFileString.c_str();
-    cout << "New file name: " << tempFileString << endl;
     return temp_filename;
 }
 
@@ -505,8 +474,6 @@ void *Sum::Worker(void *args) {
     double temp_result_d = 0;
     Type result;
 
-    int count = 0;
-
     while (inPipe->Remove(tempRec)) {
         result = computeMe->Apply(*tempRec, temp_result_i, temp_result_d);
         if (result == Int) {
@@ -514,15 +481,7 @@ void *Sum::Worker(void *args) {
         } else {
             result_d += temp_result_d;
         }
-        count++;
-        if (count % 1000 == 0) {
-            cout << "Sum count: " << count << endl;
-            cout << std::fixed << "Result i: " << result_i << " Result d: " << result_d << endl;
-        }
     }
-
-    cout << "Total Sum count: " << count << endl;
-    cout << std::fixed << "Result i: " << result_i << " Result d: " << result_d << endl;
 
     char *space = new (std::nothrow) char[PAGE_SIZE];
     int totspace = sizeof(int) * 2;
@@ -543,15 +502,11 @@ void *Sum::Worker(void *args) {
         *((double *)&(space[8])) = result_d;
     }
 
-    cout << "totspace: " << totspace << endl;
-
     // our new record that has the sum
     Record tempSum;
     tempSum.bits = new char[totspace];
     memcpy(tempSum.bits, space, totspace);
     delete[] space;
-
-    // cout << "Val in record: " << ((int *)tempSum.bits)[1] << endl;
 
     outPipe->Insert(&tempSum);
 
@@ -600,18 +555,12 @@ void *GroupBy::Worker(void *args) {
     double result_d = 0, temp_result_d = 0;
 
     bigq_out.Remove(&curr_rec);
-    // dbfile.GetNext(curr_rec);
     Type result_type;
 
     result_type = computeMe->Apply(curr_rec, result_i, result_d);
-    // tempRec->Copy(&curr_rec);
-    // outPipe->Insert(tempRec);
-
-    int count = 0;
 
     ComparisonEngine ceng;
     while (bigq_out.Remove(tempRec)) {
-        // if (count % 1 == 0) cout << "Group by count: " << count << endl;
         int result = ceng.Compare(&curr_rec, tempRec, groupAtts);
 
         if (result == 0) {
@@ -619,7 +568,6 @@ void *GroupBy::Worker(void *args) {
             result_i += temp_result_i;
             result_d += temp_result_d;
         } else if (result == -1) {
-            count++;
             Record sum;
             BuildRecord(&sum, &curr_rec, result_type, result_i, result_d, groupAtts);
             outPipe->Insert(&sum);
@@ -634,10 +582,6 @@ void *GroupBy::Worker(void *args) {
     Record sum;
     BuildRecord(&sum, &curr_rec, result_type, result_i, result_d, groupAtts);
     outPipe->Insert(&sum);
-    // count++;
-
-    // cout << "Group count: " << count << endl;
-
     outPipe->ShutDown();
 }
 
@@ -669,18 +613,12 @@ void GroupBy::BuildRecord(Record *sum, Record *record, Type result, int result_i
     memcpy(sum->bits, space, totspace);
     delete[] space;
 
-
-    // cout << "Group Atts" << endl;
-    // groupAtts->Print();
-    // cout << "Num atts: " << record->NumberOfAtts() << endl;
-
     record->Project(groupAtts->whichAtts, groupAtts->numAtts, record->NumberOfAtts());
 
     int left_atts = 1;
     int right_atts = groupAtts->numAtts;
     int *total_atts = new int[left_atts + right_atts];
 
-    // cout << "the atts array: " << endl;
     int k = 0;
     for (int i = 0; i < (left_atts + right_atts); i++) {
         if (i == left_atts) {
@@ -689,15 +627,10 @@ void GroupBy::BuildRecord(Record *sum, Record *record, Type result, int result_i
             k = 0;
         }
         *(total_atts + i) = k;
-        // cout << " i: " << i << " k: " << k << endl;
         k++;
     }
 
     Attribute IA = {"int", Int};
-    // // Attribute joinatt[] = {IA};
-    // Schema blah("blah", 1, joinatt);
-    // cout << "Proj rec: ";
-    // record->Print(&blah);
 
     Record mergeRec;
     mergeRec.MergeRecords(sum, record, left_atts, right_atts, total_atts, (left_atts + right_atts), left_atts);
@@ -706,7 +639,6 @@ void GroupBy::BuildRecord(Record *sum, Record *record, Type result, int result_i
     Attribute joinatt[] = {IA, IA};
     Schema join_sch("join_sch", outAtts, joinatt);
 
-    // mergeRec.Print(&join_sch);
     sum->Consume(&mergeRec);
 }
 
