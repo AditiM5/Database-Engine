@@ -67,7 +67,7 @@ class Join : public RelationalOp {
    private:
     pthread_t thread;
     Record *tempRec = new Record;
-    int num_pages;
+    int num_pages = 10;
 
    public:
     void *Worker(void *args);
@@ -81,7 +81,7 @@ class DuplicateRemoval : public RelationalOp {
    private:
     pthread_t thread;
     Record *tempRec = new Record;
-    int num_pages;
+    int num_pages = 10;
 
    public:
     void *Worker(void *args);
@@ -95,7 +95,7 @@ class Sum : public RelationalOp {
    private:
     pthread_t thread;
     Record *tempRec = new Record;
-    int num_pages;
+    int num_pages = 10;
 
    public:
     void *Worker(void *args);
@@ -109,7 +109,7 @@ class GroupBy : public RelationalOp {
    private:
     pthread_t thread;
     Record *tempRec = new Record;
-    int num_pages;
+    int num_pages= 10;
     void BuildRecord(Record *sum, Record *record, Type result, int result_i, double result_d, OrderMaker *groupAtts);
 
    public:
@@ -124,7 +124,7 @@ class WriteOut : public RelationalOp {
    private:
     pthread_t thread;
     Record *tempRec = new Record;
-    int num_pages;
+    int num_pages = 10;
 
    public:
     void *Worker(void *args);

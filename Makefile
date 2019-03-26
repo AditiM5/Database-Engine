@@ -117,7 +117,7 @@ lex.yyfunc.o: LexerFunc.l
 
 # All tests produced by this Makefile.  Remember to add new tests you
 # created to the list.
-TESTS = DBFileTest
+TESTS = RelOpTest
 
 gtest : $(TESTS)
 
@@ -139,10 +139,17 @@ gtest_main.a : gtest-all.o gtest_main.o
 # gtest_main.a, depending on whether it defines its own main()
 # function.
 
-DBFileTest.o : $(USER_DIR)/DBFileTest.cc $(GTEST_HEADERS)
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(USER_DIR)/DBFileTest.cc
+# DBFileTest.o : $(USER_DIR)/DBFileTest.cc $(GTEST_HEADERS)
+# 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(USER_DIR)/DBFileTest.cc
 
-DBFileTest : Record.o Comparison.o ComparisonEngine.o Schema.o File.o Pipe.o BigQ.o GenericDBFile.o HeapFile.o SortedFile.o DBFile.o RecordPageNum.o PriorityQueue.o y.tab.o lex.yy.o DBFileTest.o gtest_main.a
+# DBFileTest : Record.o Comparison.o ComparisonEngine.o Schema.o File.o Pipe.o BigQ.o GenericDBFile.o HeapFile.o SortedFile.o DBFile.o RecordPageNum.o PriorityQueue.o y.tab.o lex.yy.o DBFileTest.o gtest_main.a
+# 	$(CC) $^ -lfl -lpthread -o $@
+
+
+RelOpTest.o : $(USER_DIR)/RelOpTest.cc $(GTEST_HEADERS)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(USER_DIR)/RelOpTest.cc
+
+RelOpTest : Record.o Comparison.o ComparisonEngine.o Schema.o File.o  Pipe.o BigQ.o RelOp.o GenericDBFile.o HeapFile.o SortedFile.o DBFile.o RecordPageNum.o PriorityQueue.o Function.o y.tab.o yyfunc.tab.o lex.yy.o lex.yyfunc.o RelOpTest.o gtest_main.a
 	$(CC) $^ -lfl -lpthread -o $@
 # end Google test targets
 
