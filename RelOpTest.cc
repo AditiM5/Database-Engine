@@ -5,6 +5,7 @@
 #include "DBFile.h"
 #include "Pipe.h"
 #include "pthread.h"
+#include <string>
 
 using namespace std;
 
