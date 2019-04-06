@@ -40,9 +40,20 @@ void RelStats::Write(FILE *file) {
 
 Statistics::Statistics() {
 }
+
 Statistics::Statistics(Statistics &copyMe) {
+    for (pair<string, RelStats *> element : copyMe.umap) {
+        RelStats *relstat = new RelStats();
+        element.second->Copy(*relstat);
+        this->umap.insert({element.first, relstat});
+    }
 }
 Statistics::~Statistics() {
+    //empty
+    for (pair<string, RelStats *> element : this->umap) {
+        delete element.second;
+    }
+    umap.clear();
 }
 
 void Statistics::AddRel(char *relName, int numTuples) {
@@ -61,8 +72,15 @@ void Statistics::AddAtt(char *relName, char *attName, int numDistincts) {
     string rel(relName);
     RelStats *temp = umap[rel];
     temp->AddAtt(attName, numDistincts);
+
+    //update distinct_lookup
+    distinct_lookup.insert({string(attName), numDistincts});
+
+    //update numtuples_lookup
+    numtuples_lookup.insert({string(attName), umap[rel]->num_tuples});
 }
 
+//TODO: fix this
 void Statistics::CopyRel(char *oldName, char *newName) {
     RelStats *old = umap[string(oldName)];
     RelStats *newRel = new RelStats();
@@ -70,6 +88,7 @@ void Statistics::CopyRel(char *oldName, char *newName) {
     umap.insert({string(newName), newRel});
 }
 
+//TODO: fix this
 void Statistics::Read(char *fromWhere) {
     FILE *stat_file = fopen(fromWhere, "r");
 
@@ -101,18 +120,78 @@ void Statistics::Read(char *fromWhere) {
 
 void Statistics::Write(char *toWhere) {
     FILE *stat_file = fopen(toWhere, "w");
-
     for (pair<string, RelStats *> element : umap) {
         fprintf(stat_file, "%s\n", "BEGIN");
         fprintf(stat_file, "%s %d\n", element.first.c_str(), element.second->num_tuples);
         element.second->Write(stat_file);
         fprintf(stat_file, "%s\n\n", "END");
     }
-
     fclose(stat_file);
 }
 
 void Statistics::Apply(struct AndList *parseTree, char *relNames[], int numToJoin) {
+    bool isJoin = false;
+    double factor = 1;
+    double result = 1;
+    int count = 0;
+
+    while (parseTree != NULL) {
+        struct OrList *left = parseTree->left;
+
+        struct ComparisonOp *cop = left->left;
+
+        struct Operand *right_cop = cop->right;
+        string right_key = string(right_cop->value);
+        // double right_tuple = numtuples_lookup[right_key];
+        // RelStats *right_rel = NULL;
+
+        struct Operand *left_cop = cop->left;
+        string left_key = string(left_cop->value);
+        double left_tuple = numtuples_lookup[left_key];
+        // RelStats *left_rel = NULL;
+
+        factor = 1;
+
+        while (left != NULL) {
+            // if (left_rel == NULL) {
+            //     cout << "Relation not found!" << endl;
+            //     exit(1);
+            // }
+
+            if (right_cop->code == 4) {
+                // then it is JOIN
+                isJoin = true;
+                double right_tuple = numtuples_lookup[right_key];
+
+            } else {
+                // it is a selection
+                isJoin = false;
+
+                if (cop->code == 3) {
+                    // means EQUALS operator
+                    double left_distinct = distinct_lookup[left_key];
+                    factor *= (1 - (1 / left_distinct));
+                } else {
+                    // means <, > operators
+                    factor *= (2 / 3);
+                }
+            }
+
+            left = left->rightOr;
+
+            //counting for every disjunction (AND)
+            count++;
+        }
+
+        parseTree = parseTree->rightAnd;
+
+        if(count == 1){
+            result = (left_tuple * (1 - factor));
+        }else{
+            result = result * (1 - factor);
+        }
+
+    }
 }
 double Statistics::Estimate(struct AndList *parseTree, char **relNames, int numToJoin) {
 }

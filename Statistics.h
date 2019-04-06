@@ -30,6 +30,13 @@ class Statistics {
 
    public:
     unordered_map<string, RelStats*> umap;
+    
+    // this lookmap will have all atribute's of all relations distinct values in one map
+    unordered_map<string, int> distinct_lookup;
+
+    // this maps the attribute to the relation's total tuples
+    // lineitem : l_orderkey - 1000 : where 1000 is the total tuples in lineitem relation
+    unordered_map<string, int> numtuples_lookup;
 
    public:
     Statistics();
