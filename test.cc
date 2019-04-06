@@ -3,9 +3,11 @@
 #include <iostream>
 #include "ParseTree.h"
 #include "Statistics.h"
-#include "y.tab.h"
 extern "C" struct YY_BUFFER_STATE *yy_scan_string(const char *);
-extern "C" int yyparse(void);
+extern "C" {
+#include "y.tab.h"
+int yyparse(void);
+}
 extern struct AndList *final;
 
 using namespace std;
@@ -114,7 +116,7 @@ void q1() {
 
     double result = s.Estimate(final, relName, 1);
     cout << "Your estimation Result  " << result;
-    cout << "\n Correct Answer: 8.5732e+5";
+    cout << "\n Correct Answer: 8.5732e+5\n";
 
     s.Apply(final, relName, 1);
 

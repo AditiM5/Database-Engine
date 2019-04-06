@@ -148,6 +148,8 @@ void Statistics::Apply(struct AndList *parseTree, char *relNames[], int numToJoi
         struct Operand *left_cop = cop->left;
         string left_key = string(left_cop->value);
         double left_tuple = numtuples_lookup[left_key];
+        cout << "Stage A" << endl;
+        cout << "Stage 1: left_tuple: " << left_tuple << endl;
         // RelStats *left_rel = NULL;
 
         factor = 1;
@@ -158,39 +160,63 @@ void Statistics::Apply(struct AndList *parseTree, char *relNames[], int numToJoi
             //     exit(1);
             // }
 
+            // string left_key = string(left_cop->value);
+            cop = left->left;
+            right_cop = cop->right;
+            left_cop = cop->left;
+            left_key = string(left_cop->value);
+            right_key = string(right_cop->value);
+
+            cout << "Stage B" << endl;
             if (right_cop->code == 4) {
                 // then it is JOIN
                 isJoin = true;
                 double right_tuple = numtuples_lookup[right_key];
+                cout << "Stage 2: right_tuple" << right_tuple << endl;
+                cout << "Stage C" << endl;
 
             } else {
+                cout << "Stage D" << endl;
                 // it is a selection
                 isJoin = false;
+                cout << "Cop code: " << cop->code << endl;
 
                 if (cop->code == 3) {
+                    cout << "Stage E" << endl;
                     // means EQUALS operator
                     double left_distinct = distinct_lookup[left_key];
-                    factor *= (1 - (1 / left_distinct));
+                    cout << "Stage 3: left_distinct " << left_distinct << endl;
+                    // double m = (double)result / left_distinct;
+                    factor *= (1 - ((double)1 / left_distinct));
                 } else {
+                    cout << "Stage F" << endl;
                     // means <, > operators
-                    factor *= (2 / 3);
+                    cout << "Not equals" << endl;
+                    factor *= ((double)2 / 3);
                 }
             }
+            cout << "Factor: " << factor << endl;
 
             left = left->rightOr;
 
             //counting for every disjunction (AND)
             count++;
+            cout << "Count: " << count << endl;
         }
+        // cout << "Count: " << count << endl;
 
         parseTree = parseTree->rightAnd;
 
-        if(count == 1){
+        if (count == 1) {
             result = (left_tuple * (1 - factor));
-        }else{
+        } else {
+            cout << "Calculating result" << endl;
             result = result * (1 - factor);
         }
+        // left_tuple = result;
+        cout << "Left Tuple: " << left_tuple << endl;
 
+        cout << "Result: " << result << endl;
     }
 }
 double Statistics::Estimate(struct AndList *parseTree, char **relNames, int numToJoin) {
