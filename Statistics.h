@@ -15,13 +15,13 @@ class RelStats {
 
 public:
     unordered_map<string, int> umap;
-    int num_tuples = 0;
+    double num_tuples = 0;
 
    public:
     RelStats();
     void UpdateNumTuples(int num_tuples);
     void AddAtt(char *attName, int numDistincts);
-    void Copy(RelStats &toMe);
+    void Copy(RelStats &toMe, char *newName);
     void Write(FILE *file);
 };
 
@@ -38,6 +38,9 @@ class Statistics {
     // lineitem : l_orderkey - 1000 : where 1000 is the total tuples in lineitem relation
     unordered_map<string, int> numtuples_lookup;
 
+    // this maps the attribute names to the relation 
+    unordered_map<string, string> reverse_lookup;
+
    public:
     Statistics();
     Statistics(Statistics &copyMe);  // Performs deep copy
@@ -50,6 +53,7 @@ class Statistics {
     void Read(char *fromWhere);
     void Write(char *toWhere);
 
+    void JoinRels(string relNames[], double join_result);
     void Apply(struct AndList *parseTree, char *relNames[], int numToJoin);
     double Estimate(struct AndList *parseTree, char **relNames, int numToJoin);
 };
