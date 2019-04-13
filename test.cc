@@ -123,10 +123,10 @@ void q1() {
     cout << "Your estimation Result  " << result;
     cout << "\n Correct Answer: 8.5732e+5\n";
 
-    s.Apply(final, relName, 1);
+    // s.Apply(final, relName, 1);
 
     // test write and read
-    s.Write(fileName);
+    // s.Write(fileName);
 }
 
 void q2() {
@@ -201,9 +201,9 @@ void q3() {
     yy_scan_string(cnf);
     yyparse();
 
-    // double result = s.Estimate(final, set3, 4);
-    // if (fabs(result - 60000000.0) > 0.1)
-    //     cout << "error in estimating Q3\n";
+    double result = s.Estimate(final, set3, 4);
+    if (fabs(result - 60000000.0) > 0.1)
+        cout << "error in estimating Q3\n";
 
     s.Apply(final, set3, 4);
 
@@ -261,9 +261,9 @@ void q4() {
     yy_scan_string(cnf);
     yyparse();
 
-    // double result = s.Estimate(final, relName, 5);
-    // if (fabs(result - 3200) > 0.1)
-    //     cout << "error in estimating Q4\n";
+    double result = s.Estimate(final, relName, 5);
+    if (fabs(result - 3200) > 0.1)
+        cout << "error in estimating Q4\n";
 
     s.Apply(final, relName, 5);
 
@@ -296,10 +296,10 @@ void q5() {
     yy_scan_string(cnf);
     yyparse();
 
-    // double result = s.Estimate(final, relName, 3);
+    double result = s.Estimate(final, relName, 3);
 
-    // if (fabs(result - 400081) > 0.1)
-    //     cout << "error in estimating Q5\n";
+    if (fabs(result - 400081) > 0.1)
+        cout << "error in estimating Q5\n";
 
     s.Apply(final, relName, 3);
 
@@ -336,8 +336,8 @@ void q6() {
 
     double result = s.Estimate(final, relName, 3);
 
-    // if (fabs(result - 32000) > 0.1)
-    //     cout << "error in estimating Q6\n";
+    if (fabs(result - 32000) > 0.1)
+        cout << "error in estimating Q6\n";
     s.Apply(final, relName, 3);
 
     s.Write(fileName);
@@ -362,8 +362,8 @@ void q7() {
     yyparse();
     double result = s.Estimate(final, relName, 2);
 
-    // if (fabs(result - 2000405) > 0.1)
-    //     cout << "error in estimating Q7\n";
+    if (fabs(result - 2000405) > 0.1)
+        cout << "error in estimating Q7\n";
 
     s.Apply(final, relName, 2);
     s.Write(fileName);
@@ -425,9 +425,9 @@ void q9() {
     yy_scan_string(cnf);
     yyparse();
 
-    // double result = s.Estimate(final, relName, 3);
-    // if (fabs(result - 4) > 0.5)
-    //     cout << "error in estimating Q9\n";
+    double result = s.Estimate(final, relName, 3);
+    if (fabs(result - 4) > 0.5)
+        cout << "error in estimating Q9\n";
 
     s.Apply(final, relName, 3);
 
@@ -471,9 +471,9 @@ void q10() {
     yy_scan_string(cnf);
     yyparse();
 
-    // double result = s.Estimate(final, relName, 4);
-    // if (fabs(result - 2000405) > 0.1)
-    //     cout << "error in estimating Q10\n";
+    double result = s.Estimate(final, relName, 4);
+    if (fabs(result - 2000405) > 0.1)
+        cout << "error in estimating Q10\n";
 
     s.Apply(final, relName, 4);
 
@@ -502,10 +502,10 @@ void q11() {
     yy_scan_string(cnf);
     yyparse();
 
-    // double result = s.Estimate(final, relName, 2);
+    double result = s.Estimate(final, relName, 2);
 
-    // if (fabs(result - 21432.9) > 0.5)
-    //     cout << "error in estimating Q11\n";
+    if (fabs(result - 21432.9) > 0.5)
+        cout << "error in estimating Q11\n";
     s.Apply(final, relName, 2);
 
     s.Write(fileName);

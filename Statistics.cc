@@ -28,7 +28,7 @@ void RelStats::AddAtt(char *attName, int numDistincts) {
 void RelStats::Copy(RelStats &toMe, char *newName) {
     toMe.num_tuples = this->num_tuples;
     for (pair<string, int> element : umap) {
-        string temp = string(newName) + "." + element.first;
+        string temp = newName != NULL ? string(newName) + "." + element.first : element.first;
         toMe.umap.insert({temp, element.second});
     }
 }
@@ -126,6 +126,8 @@ void Statistics::Read(char *fromWhere) {
         }
         umap.insert({relName, relStats});
     }
+
+
 }
 
 void Statistics::Write(char *toWhere) {
@@ -275,11 +277,181 @@ void Statistics::Apply(struct AndList *parseTree, char *relNames[], int numToJoi
 
             for (pair<string, int> element : umap[sel_relname]->umap) {
                 numtuples_lookup[element.first] = result;
+                cout << "Updating lookups with: " << result << endl;
             }
         }
         cout << "Final result: " << result;
     }
 }
 double Statistics::Estimate(struct AndList *parseTree, char **relNames, int numToJoin) {
-    return 0.0;
+    unordered_map<string, RelStats*> temp_umap;
+    unordered_map<string, int> temp_distinct_lookup;
+    unordered_map<string, int> temp_numtuples_lookup;
+    unordered_map<string, string> temp_reverse_lookup;
+
+    for (pair<string, RelStats*> element : umap) {
+        RelStats *temprel = new RelStats();
+        // char *tempstring = strdup(element.first.c_str());
+        element.second->Copy(*temprel, NULL);
+        temp_umap.insert({element.first, temprel});
+    }
+
+    for (pair<string, int> element : distinct_lookup) {
+        temp_distinct_lookup.insert(element);
+    }
+
+    for (pair<string, int> element : numtuples_lookup) {
+        
+        temp_numtuples_lookup.insert(element);
+    }
+
+    for (pair<string, string> element : reverse_lookup) {
+        cout << "1: " << element.first << " 2: " << element.second << endl;
+        temp_reverse_lookup.insert(element);
+    }
+
+
+    bool isJoin = false;
+    double factor = 1;
+    double result = 1;
+    double join_result = 0;
+    int count = 0;
+
+    while (parseTree != NULL) {
+        cout << "Stage A" << endl;
+        struct OrList *left = parseTree->left;
+        struct ComparisonOp *cop = left->left;
+
+        cout << "Stage B" << endl;
+        struct Operand *right_cop = cop->right;
+        string right_key = string(right_cop->value);
+
+        cout << "Stage C" << endl;
+        struct Operand *left_cop = cop->left;
+        string left_key = string(left_cop->value);
+        cout << "Looking up left key: " << left_key << endl;
+        double left_tuple = temp_numtuples_lookup[left_key];
+
+        result = left_tuple;
+        cout << "left_tuple: " << result << endl;
+
+        cout << "Stage D" << endl;
+
+        factor = 1;
+        // current relation on which selection is done
+        string sel_relname;
+
+        while (left != NULL) {
+            // left
+            cout << "Left" << endl;
+            cop = left->left;
+            left_cop = cop->left;
+            left_key = string(left_cop->value);
+            double left_distinct = temp_distinct_lookup[left_key];
+
+            // right
+            cout << "Right" << endl;
+            right_cop = cop->right;
+            right_key = string(right_cop->value);
+
+            if (right_cop->code == 4) {
+                cout << "Starting Join... " << endl;
+                isJoin = true;
+                double right_tuple = temp_numtuples_lookup[right_key];
+                double right_distinct = temp_distinct_lookup[right_key];
+                join_result = left_tuple * right_tuple / max(left_distinct, right_distinct);
+
+                string rel_names[] = {temp_reverse_lookup[left_key], temp_reverse_lookup[right_key]};
+
+                cout << "Join rels.. " << endl;
+                
+                cout << "IN Join Rels" << endl;
+                cout << "First rel: " << rel_names[0] << endl;
+                cout << "second rel: " << string(rel_names[1]) << endl;
+
+                RelStats *left_rel = temp_umap[string(rel_names[0])];
+
+                cout << "Hello there" << endl;
+                RelStats *right_rel = temp_umap[string(rel_names[1])];
+
+                left_rel->num_tuples = join_result;
+
+                string newRelName = string(rel_names[0]) + "_" + string(rel_names[1]);
+
+                cout << "Stage : 1" << endl;
+
+                for (pair<string, int> element : right_rel->umap) {
+                    left_rel->umap.insert(element);
+                }
+                cout << "Stage : 2" << endl;
+
+                for (pair<string, int> element : left_rel->umap) {
+                    auto it1 = temp_reverse_lookup.find(element.first);
+                    it1->second = newRelName;
+
+                    auto it2 = temp_numtuples_lookup.find(element.first);
+                    it2->second = join_result;
+                }
+
+                cout << "Stage : 3" << endl;
+
+                auto it = temp_umap.find(string(rel_names[0]));
+                swap(temp_umap[newRelName], it->second);
+                temp_umap.erase(it);
+
+                cout << "Stage : 4" << endl;
+                temp_umap.erase(string(rel_names[1]));
+                cout << "End of JOin rels" << endl;
+
+            } else {
+                // it is a selection
+                isJoin = false;
+                cout << "Sel _ rel names " << endl;
+                cout << "left_key: " << left_key << endl;
+                sel_relname = temp_reverse_lookup[left_key];
+
+                if (cop->code == 3) {
+                    // means EQUALS operator
+                    // double left_distinct = distinct_lookup[left_key];
+                    factor *= (1 - ((double)1 / left_distinct));
+                } else {
+                    // means <, > operators
+                    factor *= ((double)2 / 3);
+                }
+            }
+
+            cout << "Stage E" << endl;
+            left = left->rightOr;
+
+            //counting for every disjunction (AND)
+            count++;
+        }
+        parseTree = parseTree->rightAnd;
+
+        cout << "Stage F" << endl;
+        // if (count == 1) {
+        //     result = (left_tuple * (1 - factor));
+        // } else {
+        // }
+
+        cout << "Stage G" << endl;
+        if (!isJoin) {
+            result = result * (1 - factor);
+            cout << "Result : " << result << endl;
+            cout << "sel_relname: " << sel_relname << endl;
+            RelStats *temp = temp_umap[sel_relname];
+            temp->num_tuples = result;
+
+            // cout << "Relstats numtuples: " << temp->num_tuples <<endl;
+            cout << "Umap size : " << temp_umap[sel_relname]->umap.size() << endl;
+
+            for (pair<string, int> element : temp_umap[sel_relname]->umap) {
+                cout << "Updating lookups: rel: " << element.first << " result: " << result << endl;
+                temp_numtuples_lookup[element.first] = result;
+            }
+        }
+        // cout << "Final result: " << result;
+    }
+
+    return isJoin ? join_result : result;
 }

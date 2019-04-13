@@ -41,6 +41,8 @@ class Statistics {
     // this maps the attribute names to the relation 
     unordered_map<string, string> reverse_lookup;
 
+    // void CopyMap(unordered_map copyMe, unordered_map intoMe);
+
    public:
     Statistics();
     Statistics(Statistics &copyMe);  // Performs deep copy
