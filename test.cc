@@ -158,8 +158,6 @@ void q2() {
     if (fabs(result - 1500000) > 0.1)
         cout << "error in estimating Q2\n";
     s.Apply(final, relName, 3);
-
-    s.Write(fileName);
 }
 
 // Note there is a self join
@@ -208,8 +206,6 @@ void q3() {
     s.Apply(final, set3, 4);
 
     s.Write(fileName);
-
-    cout << "Written" << endl;
 }
 
 void q4() {
@@ -268,7 +264,6 @@ void q4() {
     s.Apply(final, relName, 5);
 
     s.Write(fileName);
-    cout << "Written!!!" << endl;
 }
 
 void q5() {
@@ -306,15 +301,13 @@ void q5() {
     s.Apply(final, relName, 3);
 
     s.Write(fileName);
-
-    cout << "Written " << endl;
 }
 
 void q6() {
     Statistics s;
     char *relName[] = {"partsupp", "supplier", "nation"};
 
-    s.Read(fileName);
+    // s.Read(fileName);
 
     s.AddRel(relName[0], 800000);
     s.AddAtt(relName[0], "ps_suppkey", 10000);
@@ -343,20 +336,20 @@ void q6() {
     s.Apply(final, relName, 3);
 
     s.Write(fileName);
-    cout << "Written" << endl;
 }
 
 void q7() {
     Statistics s;
     char *relName[] = {"orders", "lineitem"};
 
-    s.Read(fileName);
+    // s.Read(fileName);
 
     s.AddRel(relName[0], 1500000);
     s.AddAtt(relName[0], "o_orderkey", 1500000);
 
     s.AddRel(relName[1], 6001215);
     s.AddAtt(relName[1], "l_orderkey", 1500000);
+    s.AddAtt(relName[1], "l_receiptdate", 2554);
 
     char *cnf = "(l_receiptdate >'1995-02-01' ) AND (l_orderkey = o_orderkey)";
 
@@ -370,7 +363,6 @@ void q7() {
     s.Apply(final, relName, 2);
     s.Write(fileName);
 
-    cout << "Written" << endl;
 }
 
 // Note  OR conditions are not independent.
@@ -402,9 +394,8 @@ void q8() {
     s.Apply(final, relName, 2);
 
     s.Write(fileName);
-
-    cout << "Written" << endl;
 }
+
 void q9() {
     Statistics s;
     char *relName[] = {"part", "partsupp", "supplier"};
@@ -436,15 +427,13 @@ void q9() {
     s.Apply(final, relName, 3);
 
     s.Write(fileName);
-
-    cout << "Written" << endl;
 }
 
 void q10() {
     Statistics s;
     char *relName[] = {"customer", "orders", "lineitem", "nation"};
 
-    s.Read(fileName);
+    // s.Read(fileName);
 
     s.AddRel(relName[0], 150000);
     s.AddAtt(relName[0], "c_custkey", 150000);
@@ -453,6 +442,7 @@ void q10() {
     s.AddRel(relName[1], 1500000);
     s.AddAtt(relName[1], "o_orderkey", 1500000);
     s.AddAtt(relName[1], "o_custkey", 150000);
+    s.AddAtt(relName[1], "o_orderdate", 2406);
 
     s.AddRel(relName[2], 6001215);
     s.AddAtt(relName[2], "l_orderkey", 1500000);
@@ -482,8 +472,6 @@ void q10() {
     s.Apply(final, relName, 4);
 
     s.Write(fileName);
-
-    cout << "Written" << endl;
 }
 
 void q11() {
@@ -513,8 +501,6 @@ void q11() {
     s.Apply(final, relName, 2);
 
     s.Write(fileName);
-
-    cout << "Written" << endl;
 }
 
 int main(int argc, char *argv[]) {

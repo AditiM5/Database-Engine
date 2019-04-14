@@ -121,7 +121,7 @@ lex.yyfunc.o: LexerFunc.l
 
 # All tests produced by this Makefile.  Remember to add new tests you
 # created to the list.
-TESTS = RelOpTest
+TESTS = StatisticsTest
 
 gtest : $(TESTS)
 
@@ -150,12 +150,18 @@ gtest_main.a : gtest-all.o gtest_main.o
 # 	$(CC) $^ -lfl -lpthread -o $@
 
 
-RelOpTest.o : $(USER_DIR)/RelOpTest.cc $(GTEST_HEADERS)
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(USER_DIR)/RelOpTest.cc
+# RelOpTest.o : $(USER_DIR)/RelOpTest.cc $(GTEST_HEADERS)
+# 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(USER_DIR)/RelOpTest.cc
 
-RelOpTest : Record.o Comparison.o ComparisonEngine.o Schema.o File.o  Pipe.o BigQ.o RelOp.o GenericDBFile.o HeapFile.o SortedFile.o DBFile.o RecordPageNum.o PriorityQueue.o Function.o y.tab.o yyfunc.tab.o lex.yy.o lex.yyfunc.o RelOpTest.o gtest_main.a
+# RelOpTest : Record.o Comparison.o ComparisonEngine.o Schema.o File.o  Pipe.o BigQ.o RelOp.o GenericDBFile.o HeapFile.o SortedFile.o DBFile.o RecordPageNum.o PriorityQueue.o Function.o y.tab.o yyfunc.tab.o lex.yy.o lex.yyfunc.o RelOpTest.o gtest_main.a
+# 	$(CC) $^ -lfl -lpthread -o $@
+# # end Google test targets
+
+StatisticsTest.o : $(USER_DIR)/StatisticsTest.cc $(GTEST_HEADERS)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(USER_DIR)/StatisticsTest.cc
+
+StatisticsTest : Record.o Comparison.o ComparisonEngine.o Schema.o File.o  Pipe.o BigQ.o RelOp.o GenericDBFile.o HeapFile.o SortedFile.o DBFile.o RecordPageNum.o PriorityQueue.o Function.o Statistics.o y.tab.o yyfunc.tab.o lex.yy.o lex.yyfunc.o StatisticsTest.o gtest_main.a
 	$(CC) $^ -lfl -lpthread -o $@
-# end Google test targets
 
 clean: 
 	rm -f *.o
