@@ -123,10 +123,10 @@ void q1() {
     cout << "Your estimation Result  " << result;
     cout << "\n Correct Answer: 8.5732e+5\n";
 
-    // s.Apply(final, relName, 1);
+    s.Apply(final, relName, 1);
 
     // test write and read
-    // s.Write(fileName);
+    s.Write(fileName);
 }
 
 void q2() {
@@ -298,8 +298,10 @@ void q5() {
 
     double result = s.Estimate(final, relName, 3);
 
-    if (fabs(result - 400081) > 0.1)
+    if (fabs(result - 400081) > 0.1) {
+        cout << "Result: " << result << endl;
         cout << "error in estimating Q5\n";
+    }
 
     s.Apply(final, relName, 3);
 
@@ -376,7 +378,7 @@ void q8() {
     Statistics s;
     char *relName[] = {"part", "partsupp"};
 
-    s.Read(fileName);
+    // s.Read(fileName);
 
     s.AddRel(relName[0], 200000);
     s.AddAtt(relName[0], "p_partkey", 200000);
@@ -392,8 +394,10 @@ void q8() {
 
     double result = s.Estimate(final, relName, 2);
 
-    // if (fabs(result - 48000) > 0.1)
-    //     cout << "error in estimating Q8\n";
+    if (fabs(result - 48000) > 0.1) {
+        cout << "error in estimating Q8\n";
+        cout << "Result: " << result << endl;
+    }
 
     s.Apply(final, relName, 2);
 
@@ -486,7 +490,7 @@ void q11() {
     Statistics s;
     char *relName[] = {"part", "lineitem"};
 
-    s.Read(fileName);
+    // s.Read(fileName);
 
     s.AddRel(relName[0], 200000);
     s.AddAtt(relName[0], "p_partkey", 200000);

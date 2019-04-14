@@ -125,8 +125,13 @@ void Statistics::Read(char *fromWhere) {
             fscanf(stat_file, "%s", space);
         }
         umap.insert({relName, relStats});
-    }
 
+        for (pair<string, int> element : relStats->umap) {
+            distinct_lookup.insert(element);
+            numtuples_lookup.insert({element.first, relStats->num_tuples});
+            reverse_lookup.insert({element.first, relName});
+        } 
+    }
 
 }
 
