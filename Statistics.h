@@ -28,7 +28,7 @@ public:
 class Statistics {
     friend class RelStats;
 
-   public:
+   private:
     unordered_map<string, RelStats*> umap;
     
     // this lookmap will have all atribute's of all relations distinct values in one map
