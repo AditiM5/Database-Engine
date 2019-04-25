@@ -4,6 +4,7 @@
 #include <iostream>
 
 #include "Comparison.h"
+#include "Defs.h"
 
 Comparison::Comparison() {
 }
@@ -91,16 +92,18 @@ OrderMaker ::OrderMaker(Schema *schema) {
 }
 
 void OrderMaker ::Print() {
-    printf("NumAtts = %5d\n", numAtts);
+    cout << "\n    NumAtts = " << numAtts;
     for (int i = 0; i < numAtts; i++) {
-        printf("%3d: %5d ", i, whichAtts[i]);
+        cout << "\n    " << i << ": " << whichAtts[i];
         if (whichTypes[i] == Int)
-            printf("Int\n");
+            cout << " - Int";
         else if (whichTypes[i] == Double)
-            printf("Double\n");
+            cout << " - Double";
         else
-            printf("String\n");
+            cout << " - String";
     }
+    cout << "\n";
+    cout << "\n";
 }
 
 void CNF::CreateQueryOrderMaker(OrderMaker *sortOrder,  OrderMaker *createMe) {
