@@ -1,4 +1,5 @@
 #include "Statistics.h"
+// #include "QueryPlanUtils.h"
 
 // using namespace std;
 
@@ -129,9 +130,8 @@ void Statistics::Read(char *fromWhere) {
             distinct_lookup.insert(element);
             numtuples_lookup.insert({element.first, relStats->num_tuples});
             reverse_lookup.insert({element.first, relName});
-        } 
+        }
     }
-
 }
 
 void Statistics::Write(char *toWhere) {
@@ -174,6 +174,7 @@ void Statistics::JoinRels(string relNames[], double join_result) {
 }
 
 void Statistics::Apply(struct AndList *parseTree, char *relNames[], int numToJoin) {
+    cout << "\n Inside Apply...";
     bool isJoin = false;
     double factor = 1;
     double result = 1;
@@ -195,7 +196,6 @@ void Statistics::Apply(struct AndList *parseTree, char *relNames[], int numToJoi
         factor = 1;
         // current relation on which selection is done
         string sel_relname;
-
         while (left != NULL) {
             // left
             cop = left->left;
@@ -207,7 +207,7 @@ void Statistics::Apply(struct AndList *parseTree, char *relNames[], int numToJoi
             right_cop = cop->right;
             right_key = string(right_cop->value);
 
-            if (right_cop->code == 4) {
+            if (right_cop->code == NAME) {
                 isJoin = true;
                 double right_tuple = numtuples_lookup[right_key];
                 double right_distinct = distinct_lookup[right_key];
@@ -222,7 +222,7 @@ void Statistics::Apply(struct AndList *parseTree, char *relNames[], int numToJoi
                 isJoin = false;
                 sel_relname = reverse_lookup[left_key];
 
-                if (cop->code == 3) {
+                if (cop->code == EQUALS) {
                     // means EQUALS operator
                     factor *= (1 - ((double)1 / left_distinct));
                 } else {
@@ -232,7 +232,6 @@ void Statistics::Apply(struct AndList *parseTree, char *relNames[], int numToJoi
             }
 
             left = left->rightOr;
-
             //counting for every disjunction (AND)
             count++;
         }
@@ -249,13 +248,16 @@ void Statistics::Apply(struct AndList *parseTree, char *relNames[], int numToJoi
         }
     }
 }
+
 double Statistics::Estimate(struct AndList *parseTree, char **relNames, int numToJoin) {
-    unordered_map<string, RelStats*> temp_umap;
+    unordered_map<string, RelStats *> temp_umap;
     unordered_map<string, int> temp_distinct_lookup;
-    unordered_map<string, int> temp_numtuples_lookup;
+    unordered_map<string, int> *temp_numtuples_lookup = new unordered_map<string, int>;
     unordered_map<string, string> temp_reverse_lookup;
 
-    for (pair<string, RelStats*> element : umap) {
+    // // printing the ANDLIST DEBUG
+    // printAndList(parseTree);
+    for (pair<string, RelStats *> element : umap) {
         RelStats *temprel = new RelStats();
         element.second->Copy(*temprel, NULL);
         temp_umap.insert({element.first, temprel});
@@ -266,14 +268,12 @@ double Statistics::Estimate(struct AndList *parseTree, char **relNames, int numT
     }
 
     for (pair<string, int> element : numtuples_lookup) {
-        
-        temp_numtuples_lookup.insert(element);
+        temp_numtuples_lookup->insert(element);
     }
 
     for (pair<string, string> element : reverse_lookup) {
         temp_reverse_lookup.insert(element);
     }
-
 
     bool isJoin = false;
     double factor = 1;
@@ -290,7 +290,7 @@ double Statistics::Estimate(struct AndList *parseTree, char **relNames, int numT
 
         struct Operand *left_cop = cop->left;
         string left_key = string(left_cop->value);
-        double left_tuple = temp_numtuples_lookup[left_key];
+        double left_tuple = temp_numtuples_lookup->at(left_key);
 
         result = left_tuple;
 
@@ -309,9 +309,9 @@ double Statistics::Estimate(struct AndList *parseTree, char **relNames, int numT
             right_cop = cop->right;
             right_key = string(right_cop->value);
 
-            if (right_cop->code == 4) {
+            if (right_cop->code == NAME) {
                 isJoin = true;
-                double right_tuple = temp_numtuples_lookup[right_key];
+                double right_tuple = temp_numtuples_lookup->at(right_key);
                 double right_distinct = temp_distinct_lookup[right_key];
                 join_result = left_tuple * right_tuple / max(left_distinct, right_distinct);
 
@@ -332,8 +332,7 @@ double Statistics::Estimate(struct AndList *parseTree, char **relNames, int numT
                 for (pair<string, int> element : left_rel->umap) {
                     auto it1 = temp_reverse_lookup.find(element.first);
                     it1->second = newRelName;
-
-                    auto it2 = temp_numtuples_lookup.find(element.first);
+                    auto it2 = temp_numtuples_lookup->find(element.first);
                     it2->second = join_result;
                 }
 
@@ -347,7 +346,7 @@ double Statistics::Estimate(struct AndList *parseTree, char **relNames, int numT
                 isJoin = false;
                 sel_relname = temp_reverse_lookup[left_key];
 
-                if (cop->code == 3) {
+                if (cop->code == EQUALS) {
                     // means EQUALS operator
                     factor *= (1 - ((double)1 / left_distinct));
                 } else {
@@ -369,9 +368,13 @@ double Statistics::Estimate(struct AndList *parseTree, char **relNames, int numT
             temp->num_tuples = result;
 
             for (pair<string, int> element : temp_umap[sel_relname]->umap) {
-                temp_numtuples_lookup[element.first] = result;
+                temp_numtuples_lookup->at(element.first) = result;
             }
         }
     }
+    temp_distinct_lookup.clear();
+    temp_numtuples_lookup->clear();
+    temp_reverse_lookup.clear();
+
     return isJoin ? join_result : result;
 }
