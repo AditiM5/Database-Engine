@@ -35,10 +35,12 @@ Attribute *Schema ::GetAtts() {
 }
 
 Schema ::Schema(char *fpath, int num_atts, Attribute *atts) {
-    fileName = strdup(fpath);
+    // fileName = strdup(fpath);
+
     numAtts = num_atts;
-    myAtts = new Attribute[numAtts];
-    for (int i = 0; i < numAtts; i++) {
+    myAtts = new Attribute[num_atts];
+
+    for (int i = 0; i < num_atts; i++) {
         if (atts[i].myType == Int) {
             myAtts[i].myType = Int;
         } else if (atts[i].myType == Double) {

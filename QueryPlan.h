@@ -339,11 +339,75 @@ class JoinNode : public GenericNode {
     }
 };
 
+class DistinctNode : public GenericNode {
+   public:
+    Pipe *inputPipe;
+    Schema *inSchema;
+    DuplicateRemoval duprem;
+
+    DistinctNode(GenericNode *root, struct NameList *attsToSelect) {
+        cout << "\n Distinct Stage 1";
+        inputPipe = root->outputPipe;
+        outschema = root->outschema;
+
+        Attribute *atts = new Attribute[outschema->GetNumAtts()];
+
+        int numatts = 0;
+        cout << "\n Distinct Stage 2";
+        while (attsToSelect != NULL) {
+            searchAtt(attsToSelect->name, outschema, (atts + numatts));
+            numatts++;
+            attsToSelect = attsToSelect->next;
+        }
+        cout << "\n Distinct Stage 3";
+        char *filename = "DistinctSchema";
+        inSchema = new Schema(filename, numatts, atts);
+    }
+
+    void execute() {
+        duprem.Run(*inputPipe, *outputPipe, *inSchema);
+    }
+
+    void WaitUntilDone() {
+        duprem.WaitUntilDone();
+    }
+
+    void Print() {
+        cout << "\n Duplicate Removal Node: ";
+        printOutputSchema(outschema);
+    }
+};
+
 class SumNode : public GenericNode {
 };
 
 class GroupByNode : public GenericNode {
     OrderMaker *groupAtts;
+};
+
+class FunctionNode : public GenericNode {
+   public:
+    Pipe *inputpipe;
+    Function func;
+    Sum sum;
+
+    FunctionNode(GenericNode *root, FuncOperator *finalFunction) {
+        inputpipe = root->outputPipe;
+        func.GrowFromParseTree(finalFunction, *(root->outschema));
+    }
+
+    void execute() {
+        sum.Run(*inputpipe, *outputPipe, func);
+    }
+
+    void WaitUntilDone() {
+        sum.WaitUntilDone();
+    }
+
+    void Print() {
+        cout << "\n Function Node";
+        func.Print();
+    }
 };
 
 class Query {
@@ -530,6 +594,38 @@ void Query::AndListEval(struct AndList *candidates) {
     AndListEval(candidates);
 }
 
+void getAttsFromFunc(struct FuncOperator *finalFunction, struct NameList *atts, struct NameList *head) {
+    cout << "\n Code: " << finalFunction->code;
+
+    if (finalFunction->leftOperand != NULL) {
+        cout << "\n Left Operand Code: " << (finalFunction->leftOperand->code);
+        cout << "\n Left Operand Value: " << string(finalFunction->leftOperand->value);
+        struct NameList *temp;
+        if (head == NULL) {
+            head = new NameList;
+            head->name = strdup(finalFunction->leftOperand->value);
+            atts = head;
+        } else {
+            temp = new NameList;
+            temp->name = strdup(finalFunction->leftOperand->value);
+            atts->next = temp;
+            atts = temp;
+        }
+    }
+
+    if (finalFunction->leftOperator != NULL) {
+        cout << "\n Left Operator: ";
+        getAttsFromFunc(finalFunction->leftOperator, atts, head);
+    }
+
+    if (finalFunction->right != NULL) {
+        cout << "\n Right Operator: ";
+        getAttsFromFunc(finalFunction->right, atts, head);
+    }
+
+    cout << endl;
+}
+
 void Query ::QueryPlan() {
     int numRels = 0;
     TableList *t = tables;
@@ -548,12 +644,36 @@ void Query ::QueryPlan() {
 
     // after here you should have a root
 
+    // check for non aggr distinct
+    cout << "\n Stage: Distinct";
+    if (distinctAtts == 1) {
+        DistinctNode *dn = new DistinctNode(root, attsToSelect);
+        dn->lChild = root;
+        root = dn;
+    }
+
+    if (distinctFunc == 1) {
+        struct NameList *atts, *head;
+        getAttsFromFunc(finalFunction, atts, head);
+        DistinctNode *dn = new DistinctNode(root, head);
+        dn->lChild = root;
+        root = dn;
+
+        FunctionNode *fn = new FunctionNode(root, finalFunction);
+        fn->lChild = root;
+        root = fn;
+        cout << "\n Distinct func set";
+    } else if (finalFunction != NULL) {
+        cleanFuncOperator(finalFunction);
+        FunctionNode *fn = new FunctionNode(root, finalFunction);
+        fn->lChild = root;
+        root = fn;
+    }
+
     // for projections
     if (attsToSelect) {
         ProjectNode(attsToSelect, root);
     }
-
-    
 
     cout << "\n Printing the current tree: ";
     postOrderPrint(root);
@@ -569,5 +689,6 @@ void Query::postOrderPrint(GenericNode *currentNode) {
     postOrderPrint(currentNode->lChild);
     postOrderPrint(currentNode->rChild);
     currentNode->Print();
+    // cout<< "\n Node";
     //   currentNode->Run();
 }

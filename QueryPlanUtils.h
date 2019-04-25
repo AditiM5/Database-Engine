@@ -62,6 +62,18 @@ void printAndList(struct AndList *al) {
     cout << endl;
 }
 
+char *removeDot(char *str) {
+    string temp = string(str);
+    string attName;
+    if (temp.find(".") != string::npos) {
+        attName = temp.substr(temp.find(".") + 1, string::npos);
+        str = new char[attName.length() + 1];
+        strcpy(str, attName.c_str());
+        cout << "\n AttName new (without the .): " << string(str);
+    }
+    return str;
+}
+
 void removeDot(struct Operand *op) {
     string temp = string(op->value);
     string attName;
@@ -72,6 +84,47 @@ void removeDot(struct Operand *op) {
         strcpy(op->value, attName.c_str());
         cout << "\n AttName new (without the .): " << string(op->value);
     }
+}
+
+void cleanFuncOperator(struct FuncOperator *finalFunction) {
+
+    if (finalFunction->leftOperand != NULL) {
+        finalFunction->leftOperand->value = removeDot(finalFunction->leftOperand->value);
+    }
+
+    if (finalFunction->leftOperator != NULL) {
+        cleanFuncOperator(finalFunction->leftOperator);
+    }
+
+    if (finalFunction->right != NULL) {
+        cleanFuncOperator(finalFunction->right);
+    }
+
+}
+
+void searchAtt(char *attname, Schema *s, Attribute *copyToMe) {
+    cout << "\n Distinct Stage 5";
+    cout << "\n Attname: " << string(attname);
+    // remove the dot before searching
+    attname = removeDot(attname);
+    cout << "\n After dot removal attname: " << string(attname);
+
+    // search for the current attname in the schema
+    Attribute *atts = s->GetAtts();
+    for (int i = 0; i < s->GetNumAtts(); i++) {
+        // cout << "\n Names in Loop: " << string((atts + i)->name);
+        // cout << "\n Types in Loop: " << (atts + i)->myType;
+
+        if (strcmp(attname, (atts + i)->name) == 0) {
+            copyToMe->myType = (atts + i)->myType;
+            copyToMe->name = strdup((atts + i)->name);
+
+            cout << "\n Name: " << string(copyToMe->name);
+            cout << "\n Type: " << copyToMe->myType;
+            return;
+        }
+    }
+    return;
 }
 
 // remove the ____._____ from the AndList
