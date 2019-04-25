@@ -58,7 +58,7 @@ Schema ::Schema(char *fpath, int num_atts, Attribute *atts) {
 
 Schema ::Schema(const char *fName, const char *relName) {
     FILE *foo = fopen(fName, "r");
-
+    schemaName.assign(relName);
     // this is enough space to hold any tokens
     char space[200];
 

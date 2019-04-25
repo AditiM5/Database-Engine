@@ -3,11 +3,16 @@
 #define SCHEMA_H
 
 #include <stdio.h>
+#include <string>
 #include "Record.h"
 #include "Schema.h"
 #include "File.h"
 #include "Comparison.h"
 #include "ComparisonEngine.h"
+#include "Defs.h"
+
+using namespace std;
+
 
 struct Attribute {
 
@@ -29,6 +34,7 @@ class Schema {
 
 public:
 
+	string schemaName = "";
 	// gets the set of attributes, but be careful with this, since it leads
 	// to aliasing!!!
 	Attribute *GetAtts ();

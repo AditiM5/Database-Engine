@@ -19,15 +19,24 @@ extern struct NameList *attsToSelect;       // the set of attributes in the SELE
 extern int distinctAtts;                    // 1 if there is a DISTINCT in a non-aggregate query
 extern int distinctFunc;                    // 1 if there is a DISTINCT in an aggregate query
 
+unordered_map<Pipe *, int> inputpipemap;
+unordered_map<Pipe *, int> outputpipemap;
+
+// max ID of inpuit and output pipes
+int inp = 0, outp = 0;
+
 class GenericNode {
    public:
     Pipe *outputPipe = new Pipe(PIPE_SIZE);
+    // input pipes;
+    Pipe *leftPipe = NULL, *rightPipe = NULL;
     GenericNode *lChild = NULL;
     GenericNode *rChild = NULL;
     Schema *outschema;
     virtual void execute() = 0;
     virtual void WaitUntilDone() = 0;
     virtual void Print() = 0;
+    void printPipeIDs();
 };
 
 class SelectPipeNode : public GenericNode {
@@ -35,10 +44,9 @@ class SelectPipeNode : public GenericNode {
     SelectPipe selectPipe;
     CNF cnf;
     Record literal;
-    Pipe *in = new Pipe(PIPE_SIZE);
 
     SelectPipeNode(Pipe *in, Schema *schema, struct AndList *curr, GenericNode *root) {
-        this->in = in;
+        this->leftPipe = in;
         this->outschema = schema;
 
         removeMapping(curr->left);
@@ -51,7 +59,7 @@ class SelectPipeNode : public GenericNode {
     }
 
     void execute() {
-        selectPipe.Run(*in, *outputPipe, cnf, literal);
+        selectPipe.Run(*leftPipe, *outputPipe, cnf, literal);
     }
 
     void WaitUntilDone() {
@@ -60,6 +68,9 @@ class SelectPipeNode : public GenericNode {
 
     void Print() {
         cout << "\n SelectPipeNode: ";
+        printPipeIDs();
+        printOutputSchema(outschema);
+        cout << "\n Select CNF: ";
         cnf.Print();
     }
 };
@@ -95,6 +106,9 @@ class SelectFileNode : public GenericNode {
 
     void Print() {
         cout << "\n SelectFileNode: ";
+        printPipeIDs();
+        printOutputSchema(outschema);
+        cout << "\n Select CNF: ";
         cnf.Print();
     }
 };
@@ -107,10 +121,9 @@ class ProjectNode : public GenericNode {
     // ProjectNode.Run()
     int *keepMe;
     int numAttsIn, numAttsOut;
-    Pipe *inputPipe;
 
     ProjectNode(NameList *atts, GenericNode *&root) {
-        inputPipe = root->outputPipe;
+        leftPipe = root->outputPipe;
 
         NameList tempNameList = *atts;  // create a temporary copy of atts because it will be destroyed
                                         // when we walk it to determine atts below
@@ -161,7 +174,7 @@ class ProjectNode : public GenericNode {
     }
 
     void execute() {
-        project.Run(*inputPipe, *outputPipe, keepMe, numAttsIn, numAttsOut);
+        project.Run(*leftPipe, *outputPipe, keepMe, numAttsIn, numAttsOut);
     }
 
     void WaitUntilDone() {
@@ -170,13 +183,12 @@ class ProjectNode : public GenericNode {
 
     void Print() {
         cout << "\n ProjectNode : ";
+        printPipeIDs();
         printOutputSchema(outschema);
     }
 };
 class JoinNode : public GenericNode {
    public:
-    Pipe *left;
-    Pipe *right;
     CNF cnf;
     Record literal;
     Join join;
@@ -196,7 +208,8 @@ class JoinNode : public GenericNode {
 
             Schema *myschema = new Schema("catalog", rel2.c_str());
             DBFile *dbfile = new DBFile();
-            const char *dir = ("data/" + rel2 + ".bin").c_str();
+            string temp_dir = "data/" + rel2 + ".bin";
+            const char *dir = temp_dir.c_str();
             dbfile->Open(dir);
             dbfile->MoveFirst();
 
@@ -209,7 +222,8 @@ class JoinNode : public GenericNode {
 
             Schema *myschema = new Schema("catalog", rel1.c_str());
             DBFile *dbfile = new DBFile();
-            const char *dir = ("data/" + rel1 + ".bin").c_str();
+            string temp_dir = "data/" + rel1 + ".bin";
+            const char *dir = temp_dir.c_str();
             dbfile->Open(dir);
             dbfile->MoveFirst();
 
@@ -222,7 +236,8 @@ class JoinNode : public GenericNode {
             // for left node
             Schema *myschema = new Schema("catalog", rel1.c_str());
             DBFile *dbfile = new DBFile();
-            const char *dir = ("data/" + rel1 + ".bin").c_str();
+            string temp_dir = "data/" + rel1 + ".bin";
+            const char *dir = temp_dir.c_str();
             dbfile->Open(dir);
             dbfile->MoveFirst();
             lNode = new SelectFileNode(dbfile, myschema, NULL);
@@ -231,7 +246,8 @@ class JoinNode : public GenericNode {
             // for right node
             myschema = new Schema("catalog", rel2.c_str());
             dbfile = new DBFile();
-            dir = ("data/" + rel2 + ".bin").c_str();
+            temp_dir = "data/" + rel2 + ".bin";
+            dir = temp_dir.c_str();
             dbfile->Open(dir);
             dbfile->MoveFirst();
             rNode = new SelectFileNode(dbfile, myschema, NULL);
@@ -240,9 +256,8 @@ class JoinNode : public GenericNode {
 
         lSchema = lNode->outschema;
         rSchema = rNode->outschema;
-        this->left = lNode->outputPipe;
-        this->right = rNode->outputPipe;
-
+        this->leftPipe = lNode->outputPipe;
+        this->rightPipe = rNode->outputPipe;
 
         // change mappings for rel1 , rel2 and for a new one called rel1_rel2
         this->lChild = relToNode[rel1];
@@ -280,7 +295,7 @@ class JoinNode : public GenericNode {
     }
 
     void execute() {
-        join.Run(*left, *right, *outputPipe, cnf, literal);
+        join.Run(*leftPipe, *rightPipe, *outputPipe, cnf, literal);
     }
 
     void WaitUntilDone() {
@@ -289,18 +304,20 @@ class JoinNode : public GenericNode {
 
     void Print() {
         cout << "\n Join Node: ";
+        printPipeIDs();
         printOutputSchema(outschema);
+        cout << "\n Join CNF: ";
+        cnf.Print();
     }
 };
 
 class DistinctNode : public GenericNode {
    public:
-    Pipe *inputPipe;
     Schema *inSchema;
     DuplicateRemoval duprem;
 
     DistinctNode(GenericNode *root, struct NameList *attsToSelect) {
-        inputPipe = root->outputPipe;
+        leftPipe = root->outputPipe;
         outschema = root->outschema;
         struct NameList *head = attsToSelect;
 
@@ -317,7 +334,7 @@ class DistinctNode : public GenericNode {
     }
 
     void execute() {
-        duprem.Run(*inputPipe, *outputPipe, *inSchema);
+        duprem.Run(*leftPipe, *outputPipe, *inSchema);
     }
 
     void WaitUntilDone() {
@@ -326,6 +343,7 @@ class DistinctNode : public GenericNode {
 
     void Print() {
         cout << "\n Distinct Node: ";
+        printPipeIDs();
         printOutputSchema(outschema);
     }
 };
@@ -333,13 +351,12 @@ class DistinctNode : public GenericNode {
 class GroupByNode : public GenericNode {
    public:
     OrderMaker *om;
-    Pipe *inputPipe;
     Schema *inSchema;
     Function func;
     GroupBy gb;
 
     GroupByNode(GenericNode *root, struct NameList *groupingAtts, struct FuncOperator *finalFunction) {
-        inputPipe = root->outputPipe;
+        leftPipe = root->outputPipe;
         cleanFuncOperator(finalFunction);
         func.GrowFromParseTree(finalFunction, *(root->outschema));
         struct NameList *head = attsToSelect;
@@ -360,7 +377,7 @@ class GroupByNode : public GenericNode {
     }
 
     void execute() {
-        gb.Run(*inputPipe, *outputPipe, *om, func);
+        gb.Run(*leftPipe, *outputPipe, *om, func);
     }
 
     void WaitUntilDone() {
@@ -369,7 +386,10 @@ class GroupByNode : public GenericNode {
 
     void Print() {
         cout << "\n GroupBy Node: ";
+        printPipeIDs();
+        cout << " Order Maker: ";
         om->Print();
+        cout << " Function: \n";
         func.Print();
     }
 };
@@ -377,17 +397,16 @@ class GroupByNode : public GenericNode {
 // does the Function computation
 class FunctionNode : public GenericNode {
    public:
-    Pipe *inputpipe;
     Function func;
     Sum sum;
 
     FunctionNode(GenericNode *root, FuncOperator *finalFunction) {
-        inputpipe = root->outputPipe;
+        leftPipe = root->outputPipe;
         func.GrowFromParseTree(finalFunction, *(root->outschema));
     }
 
     void execute() {
-        sum.Run(*inputpipe, *outputPipe, func);
+        sum.Run(*leftPipe, *outputPipe, func);
     }
 
     void WaitUntilDone() {
@@ -396,6 +415,7 @@ class FunctionNode : public GenericNode {
 
     void Print() {
         cout << "\n Function Node: ";
+        printPipeIDs();
         func.Print();
     }
 };
@@ -413,6 +433,9 @@ class Query {
     void AndListEval(struct AndList *candidates);
     GenericNode *CreateTreeNode(struct AndList *curr, int numToJoin);
     void postOrderPrint(GenericNode *root);
+    void inOrderPrint(GenericNode *currentNode);
+    void assignPipeIDs(GenericNode *root);
+    // void printPipeIDs(GenericNode *node);
 
     Query(Statistics *stats) {
         this->stats = stats;
@@ -445,9 +468,9 @@ GenericNode *Query ::CreateTreeNode(struct AndList *curr, int numToJoin) {
             // new - get schema from Catalog
             Schema *myschema = new Schema("catalog", rel1.c_str());
             DBFile *dbfile = new DBFile();
-            const char *dir = ("data/" + rel1 + ".bin").c_str();
+            string temp_dir = "data/" + rel1 + ".bin";
+            const char *dir = temp_dir.c_str();
             dbfile->Open(dir);
-            dbfile->MoveFirst();
             node = new SelectFileNode(dbfile, myschema, curr);
         }
 
@@ -566,14 +589,14 @@ void Query ::QueryPlan() {
 
     // check for non aggr distinct
     if (distinctAtts == 1) {
-        cout << "\n Stage: Distinct non aggr";
+        // cout << "\n Stage: Distinct non aggr";
         DistinctNode *dn = new DistinctNode(root, attsToSelect);
         dn->lChild = root;
         root = dn;
     }
 
     if (distinctFunc == 1) {
-        cout << "\n Stage: Distinct aggr";
+        // cout << "\n Stage: Distinct aggr";
         struct NameList *atts, *head;
         getAttsFromFunc(finalFunction, atts, head);
         DistinctNode *dn = new DistinctNode(root, head);
@@ -583,15 +606,15 @@ void Query ::QueryPlan() {
         FunctionNode *fn = new FunctionNode(root, finalFunction);
         fn->lChild = root;
         root = fn;
-        cout << "\n Distinct func set";
+        // cout << "\n Distinct func set";
     } else if (finalFunction != NULL && groupingAtts == NULL) {
-        cout << "\n Stage: Function";
+        // cout << "\n Stage: Function";
         cleanFuncOperator(finalFunction);
         FunctionNode *fn = new FunctionNode(root, finalFunction);
         fn->lChild = root;
         root = fn;
     } else if (finalFunction != NULL && groupingAtts != NULL) {
-        cout << "\n Stage: Func + GroupBy";
+        // cout << "\n Stage: Func + GroupBy";
         GroupByNode *gbn = new GroupByNode(root, groupingAtts, finalFunction);
         gbn->lChild = root;
         root = gbn;
@@ -599,14 +622,16 @@ void Query ::QueryPlan() {
 
     // for projections
     if (attsToSelect != NULL) {
-        cout << "\n Project Node: ";
+        // cout << "\n Project Node: ";
         ProjectNode *pn = new ProjectNode(attsToSelect, root);
         pn->lChild = root;
         root = pn;
     }
 
-    cout << "\n Printing the current tree: ";
-    postOrderPrint(root);
+    assignPipeIDs(root);
+
+    cout << "\n Printing the current tree(In-Order): ";
+    inOrderPrint(root);
 }
 
 /*------------------------------------------------------------------------------
@@ -619,6 +644,55 @@ void Query::postOrderPrint(GenericNode *currentNode) {
     postOrderPrint(currentNode->lChild);
     postOrderPrint(currentNode->rChild);
     currentNode->Print();
-    // cout<< "\n Node";
-    //   currentNode->Run();
+}
+
+void Query::inOrderPrint(GenericNode *currentNode) {
+    if (!currentNode) {
+        return;
+    }
+    inOrderPrint(currentNode->lChild);
+    currentNode->Print();
+    inOrderPrint(currentNode->rChild);
+}
+
+void Query::assignPipeIDs(GenericNode *node) {
+    if (!node) {
+        return;
+    }
+    assignPipeIDs(node->lChild);
+    assignPipeIDs(node->rChild);
+
+    if (node->outputPipe != NULL) {
+        if (outputpipemap.count(node->outputPipe) == 0) {
+            outputpipemap[node->outputPipe] = outp++;
+        }
+    }
+
+    if (node->leftPipe != NULL) {
+        if (inputpipemap.count(node->leftPipe) == 0) {
+            inputpipemap[node->leftPipe] == inp++;
+        }
+    }
+
+    if (node->rightPipe != NULL) {
+        if (inputpipemap.count(node->rightPipe) == 0) {
+            inputpipemap[node->rightPipe] == inp++;
+        }
+    }
+}
+
+void GenericNode::printPipeIDs() {
+    if (leftPipe != NULL) {
+        cout << "\n Left Input Pipe ID: " << outputpipemap[leftPipe];
+    }
+
+    if (rightPipe != NULL) {
+        cout << "\n Right Input Pipe ID: " << outputpipemap[rightPipe];
+    }
+
+    if (outputPipe != NULL) {
+        cout << "\n Output Pipe ID: " << outputpipemap[outputPipe];
+    }
+
+    cout << "\n";
 }

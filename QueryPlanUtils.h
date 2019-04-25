@@ -1,7 +1,9 @@
 #include <iostream>
+#include <string.h>
 #include "Function.h"
 #include "ParseFunc.h"
 #include "ParseTree.h"
+#include <string>
 
 using namespace std;
 
@@ -132,7 +134,7 @@ void removeMapping(struct OrList *orlist) {
  * Helper function to print output schema of each node
  ******************************************************************************/
 void printOutputSchema(Schema *s) {
-    cout << "Output Schema: " << endl;
+    cout << " Output Schema: " << s->schemaName << endl; 
     for (int i = 0; i < s->GetNumAtts(); i++) {
         Attribute *att = s->GetAtts();
         cout << "    " << att[i].name << ": ";
