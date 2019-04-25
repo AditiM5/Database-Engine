@@ -1,0 +1,106 @@
+
+ Printing the current tree(In-Order): 
+ SelectFileNode: 
+ Output Pipe ID: 0
+ Output Schema: part
+    p_partkey: Int
+    p_name: String
+    p_mfgr: String
+    p_brand: String
+    p_type: String
+    p_size: Int
+    p_container: String
+    p_retailprice: Double
+    p_comment: String
+
+ Select CNF: ( ) 
+
+ Join Node: 
+ Left Input Pipe ID: 0
+ Right Input Pipe ID: 3
+ Output Pipe ID: 4
+ Output Schema: 
+    p_partkey: Int
+    p_name: String
+    p_mfgr: String
+    p_brand: String
+    p_type: String
+    p_size: Int
+    p_container: String
+    p_retailprice: Double
+    p_comment: String
+    s_suppkey: Int
+    s_name: String
+    s_address: String
+    s_nationkey: Int
+    s_phone: String
+    s_acctbal: Double
+    s_comment: String
+    ps_partkey: Int
+    ps_suppkey: Int
+    ps_availqty: Int
+    ps_supplycost: Double
+    ps_comment: String
+
+ Join CNF: ( Att 0 from left record = Att 7 from right record (Int)) 
+
+ SelectFileNode: 
+ Output Pipe ID: 1
+ Output Schema: supplier
+    s_suppkey: Int
+    s_name: String
+    s_address: String
+    s_nationkey: Int
+    s_phone: String
+    s_acctbal: Double
+    s_comment: String
+
+ Select CNF: ( Att 5 from left record > Att 0 from literal record (Double)) 
+
+ Join Node: 
+ Left Input Pipe ID: 1
+ Right Input Pipe ID: 2
+ Output Pipe ID: 3
+ Output Schema: 
+    s_suppkey: Int
+    s_name: String
+    s_address: String
+    s_nationkey: Int
+    s_phone: String
+    s_acctbal: Double
+    s_comment: String
+    ps_partkey: Int
+    ps_suppkey: Int
+    ps_availqty: Int
+    ps_supplycost: Double
+    ps_comment: String
+
+ Join CNF: ( Att 0 from left record = Att 1 from right record (Int)) 
+
+ SelectFileNode: 
+ Output Pipe ID: 2
+ Output Schema: partsupp
+    ps_partkey: Int
+    ps_suppkey: Int
+    ps_availqty: Int
+    ps_supplycost: Double
+    ps_comment: String
+
+ Select CNF: ( ) 
+
+ GroupBy Node: 
+ Left Input Pipe ID: 4
+ Output Pipe ID: 5
+ Order Maker: 
+    NumAtts = 1
+    0: 0 - Int
+
+ Function: 
+    NumOps in func: 1
+    OpList[0]: 1
+
+ ProjectNode : 
+ Left Input Pipe ID: 5
+ Output Pipe ID: 6
+ Output Schema: 
+    s_suppkey: Int

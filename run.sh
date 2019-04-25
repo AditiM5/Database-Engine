@@ -1,3 +1,3 @@
-make clean
+#!/bin/bash
 make main
 ./main

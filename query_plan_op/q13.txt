@@ -1,0 +1,41 @@
+
+ Printing the current tree(In-Order): 
+ SelectFileNode: 
+ Output Pipe ID: 0
+ Output Schema: nation
+    n_nationkey: Int
+    n_name: String
+    n_regionkey: Int
+    n_comment: String
+
+ Select CNF: ( Att 0 from left record > Att 0 from literal record (Int)) 
+
+ Join Node: 
+ Left Input Pipe ID: 0
+ Right Input Pipe ID: 1
+ Output Pipe ID: 2
+ Output Schema: 
+    n_nationkey: Int
+    n_name: String
+    n_regionkey: Int
+    n_comment: String
+    r_regionkey: Int
+    r_name: String
+    r_comment: String
+
+ Join CNF: ( Att 2 from left record = Att 0 from right record (Int)) 
+
+ SelectFileNode: 
+ Output Pipe ID: 1
+ Output Schema: region
+    r_regionkey: Int
+    r_name: String
+    r_comment: String
+
+ Select CNF: ( ) 
+
+ ProjectNode : 
+ Left Input Pipe ID: 2
+ Output Pipe ID: 3
+ Output Schema: 
+    n_name: String

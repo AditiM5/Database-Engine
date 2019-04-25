@@ -1,0 +1,242 @@
+
+ Printing the current tree(In-Order): 
+ SelectFileNode: 
+ Output Pipe ID: 0
+ Output Schema: lineitem
+    l_orderkey: Int
+    l_partkey: Int
+    l_suppkey: Int
+    l_linenumber: Int
+    l_quantity: Double
+    l_extendedprice: Double
+    l_discount: Double
+    l_tax: Double
+    l_returnflag: String
+    l_linestatus: String
+    l_shipdate: String
+    l_commitdate: String
+    l_receiptdate: String
+    l_shipinstruct: String
+    l_shipmode: String
+    l_comment: String
+
+ Select CNF: ( ) 
+
+ Join Node: 
+ Left Input Pipe ID: 0
+ Right Input Pipe ID: 7
+ Output Pipe ID: 8
+ Output Schema: 
+    l_orderkey: Int
+    l_partkey: Int
+    l_suppkey: Int
+    l_linenumber: Int
+    l_quantity: Double
+    l_extendedprice: Double
+    l_discount: Double
+    l_tax: Double
+    l_returnflag: String
+    l_linestatus: String
+    l_shipdate: String
+    l_commitdate: String
+    l_receiptdate: String
+    l_shipinstruct: String
+    l_shipmode: String
+    l_comment: String
+    o_orderkey: Int
+    o_custkey: Int
+    o_orderstatus: String
+    o_totalprice: Double
+    o_orderdate: String
+    o_orderpriority: String
+    o_clerk: String
+    o_shippriority: Int
+    o_comment: String
+    c_custkey: Int
+    c_name: String
+    c_address: String
+    c_nationkey: Int
+    c_phone: String
+    c_acctbal: Double
+    c_mktsegment: String
+    c_comment: String
+    n_nationkey: Int
+    n_name: String
+    n_regionkey: Int
+    n_comment: String
+    r_regionkey: Int
+    r_name: String
+    r_comment: String
+
+ Join CNF: ( Att 0 from left record = Att 0 from right record (Int)) 
+
+ SelectFileNode: 
+ Output Pipe ID: 1
+ Output Schema: orders
+    o_orderkey: Int
+    o_custkey: Int
+    o_orderstatus: String
+    o_totalprice: Double
+    o_orderdate: String
+    o_orderpriority: String
+    o_clerk: String
+    o_shippriority: Int
+    o_comment: String
+
+ Select CNF: ( ) 
+
+ Join Node: 
+ Left Input Pipe ID: 1
+ Right Input Pipe ID: 6
+ Output Pipe ID: 7
+ Output Schema: 
+    o_orderkey: Int
+    o_custkey: Int
+    o_orderstatus: String
+    o_totalprice: Double
+    o_orderdate: String
+    o_orderpriority: String
+    o_clerk: String
+    o_shippriority: Int
+    o_comment: String
+    c_custkey: Int
+    c_name: String
+    c_address: String
+    c_nationkey: Int
+    c_phone: String
+    c_acctbal: Double
+    c_mktsegment: String
+    c_comment: String
+    n_nationkey: Int
+    n_name: String
+    n_regionkey: Int
+    n_comment: String
+    r_regionkey: Int
+    r_name: String
+    r_comment: String
+
+ Join CNF: ( Att 1 from left record = Att 0 from right record (Int)) 
+
+ SelectFileNode: 
+ Output Pipe ID: 2
+ Output Schema: customer
+    c_custkey: Int
+    c_name: String
+    c_address: String
+    c_nationkey: Int
+    c_phone: String
+    c_acctbal: Double
+    c_mktsegment: String
+    c_comment: String
+
+ Select CNF: ( ) 
+
+ Join Node: 
+ Left Input Pipe ID: 2
+ Right Input Pipe ID: 5
+ Output Pipe ID: 6
+ Output Schema: 
+    c_custkey: Int
+    c_name: String
+    c_address: String
+    c_nationkey: Int
+    c_phone: String
+    c_acctbal: Double
+    c_mktsegment: String
+    c_comment: String
+    n_nationkey: Int
+    n_name: String
+    n_regionkey: Int
+    n_comment: String
+    r_regionkey: Int
+    r_name: String
+    r_comment: String
+
+ Join CNF: ( Att 3 from left record = Att 0 from right record (Int)) 
+
+ SelectFileNode: 
+ Output Pipe ID: 3
+ Output Schema: nation
+    n_nationkey: Int
+    n_name: String
+    n_regionkey: Int
+    n_comment: String
+
+ Select CNF: ( ) 
+
+ Join Node: 
+ Left Input Pipe ID: 3
+ Right Input Pipe ID: 4
+ Output Pipe ID: 5
+ Output Schema: 
+    n_nationkey: Int
+    n_name: String
+    n_regionkey: Int
+    n_comment: String
+    r_regionkey: Int
+    r_name: String
+    r_comment: String
+
+ Join CNF: ( Att 2 from left record = Att 0 from right record (Int)) 
+
+ SelectFileNode: 
+ Output Pipe ID: 4
+ Output Schema: region
+    r_regionkey: Int
+    r_name: String
+    r_comment: String
+
+ Select CNF: ( Att 0 from left record = Att 0 from literal record (Int)) 
+
+ SelectPipeNode: 
+ Left Input Pipe ID: 8
+ Output Pipe ID: 9
+ Output Schema: 
+    l_orderkey: Int
+    l_partkey: Int
+    l_suppkey: Int
+    l_linenumber: Int
+    l_quantity: Double
+    l_extendedprice: Double
+    l_discount: Double
+    l_tax: Double
+    l_returnflag: String
+    l_linestatus: String
+    l_shipdate: String
+    l_commitdate: String
+    l_receiptdate: String
+    l_shipinstruct: String
+    l_shipmode: String
+    l_comment: String
+    o_orderkey: Int
+    o_custkey: Int
+    o_orderstatus: String
+    o_totalprice: Double
+    o_orderdate: String
+    o_orderpriority: String
+    o_clerk: String
+    o_shippriority: Int
+    o_comment: String
+    c_custkey: Int
+    c_name: String
+    c_address: String
+    c_nationkey: Int
+    c_phone: String
+    c_acctbal: Double
+    c_mktsegment: String
+    c_comment: String
+    n_nationkey: Int
+    n_name: String
+    n_regionkey: Int
+    n_comment: String
+    r_regionkey: Int
+    r_name: String
+    r_comment: String
+
+ Select CNF: ( Att 16 from left record < Att 0 from literal record (Int)) 
+
+ ProjectNode : 
+ Left Input Pipe ID: 9
+ Output Pipe ID: 10
+ Output Schema: 
+    l_discount: Double

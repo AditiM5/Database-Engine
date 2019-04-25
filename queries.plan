@@ -71,18 +71,18 @@ WHERE (l.l_discount<0.07) AND (l.l_quantity < 24.0)
 Our Queries
 
 
-(1)
+(11)
 SELECT c1.c_name, c1.c_address 
 FROM customer AS c1, customer AS c2 
 WHERE (c1.c_nationkey = c2.c_nationkey)
 
 
-(2)
+(12)
 SELECT ps.ps_supplycost, s.suppkey 
 FROM supplier AS s, partsupp AS ps 
 WHERE (s.s_suppkey = ps.ps_suppkey) AND (s.s_acctbal > 2500.0)
 
-(3)
+(13)
 SELECT n.n_name
 FROM nation AS n, region AS r
 WHERE (n.n_regionkey = r.r_regionkey) AND (n.n_nationkey > 5)

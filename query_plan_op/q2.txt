@@ -1,0 +1,184 @@
+
+ Printing the current tree(In-Order): 
+ SelectFileNode: 
+ Output Pipe ID: 0
+ Output Schema: lineitem
+    l_orderkey: Int
+    l_partkey: Int
+    l_suppkey: Int
+    l_linenumber: Int
+    l_quantity: Double
+    l_extendedprice: Double
+    l_discount: Double
+    l_tax: Double
+    l_returnflag: String
+    l_linestatus: String
+    l_shipdate: String
+    l_commitdate: String
+    l_receiptdate: String
+    l_shipinstruct: String
+    l_shipmode: String
+    l_comment: String
+
+ Select CNF: ( ) 
+
+ Join Node: 
+ Left Input Pipe ID: 0
+ Right Input Pipe ID: 3
+ Output Pipe ID: 4
+ Output Schema: 
+    l_orderkey: Int
+    l_partkey: Int
+    l_suppkey: Int
+    l_linenumber: Int
+    l_quantity: Double
+    l_extendedprice: Double
+    l_discount: Double
+    l_tax: Double
+    l_returnflag: String
+    l_linestatus: String
+    l_shipdate: String
+    l_commitdate: String
+    l_receiptdate: String
+    l_shipinstruct: String
+    l_shipmode: String
+    l_comment: String
+    c_custkey: Int
+    c_name: String
+    c_address: String
+    c_nationkey: Int
+    c_phone: String
+    c_acctbal: Double
+    c_mktsegment: String
+    c_comment: String
+    o_orderkey: Int
+    o_custkey: Int
+    o_orderstatus: String
+    o_totalprice: Double
+    o_orderdate: String
+    o_orderpriority: String
+    o_clerk: String
+    o_shippriority: Int
+    o_comment: String
+
+ Join CNF: ( Att 0 from left record = Att 8 from right record (Int)) 
+
+ SelectFileNode: 
+ Output Pipe ID: 1
+ Output Schema: customer
+    c_custkey: Int
+    c_name: String
+    c_address: String
+    c_nationkey: Int
+    c_phone: String
+    c_acctbal: Double
+    c_mktsegment: String
+    c_comment: String
+
+ Select CNF: ( Att 6 from left record = Att 0 from literal record (String)) 
+
+ Join Node: 
+ Left Input Pipe ID: 1
+ Right Input Pipe ID: 2
+ Output Pipe ID: 3
+ Output Schema: 
+    c_custkey: Int
+    c_name: String
+    c_address: String
+    c_nationkey: Int
+    c_phone: String
+    c_acctbal: Double
+    c_mktsegment: String
+    c_comment: String
+    o_orderkey: Int
+    o_custkey: Int
+    o_orderstatus: String
+    o_totalprice: Double
+    o_orderdate: String
+    o_orderpriority: String
+    o_clerk: String
+    o_shippriority: Int
+    o_comment: String
+
+ Join CNF: ( Att 0 from left record = Att 1 from right record (Int)) 
+
+ SelectFileNode: 
+ Output Pipe ID: 2
+ Output Schema: orders
+    o_orderkey: Int
+    o_custkey: Int
+    o_orderstatus: String
+    o_totalprice: Double
+    o_orderdate: String
+    o_orderpriority: String
+    o_clerk: String
+    o_shippriority: Int
+    o_comment: String
+
+ Select CNF: ( ) 
+
+ SelectPipeNode: 
+ Left Input Pipe ID: 4
+ Output Pipe ID: 5
+ Output Schema: 
+    l_orderkey: Int
+    l_partkey: Int
+    l_suppkey: Int
+    l_linenumber: Int
+    l_quantity: Double
+    l_extendedprice: Double
+    l_discount: Double
+    l_tax: Double
+    l_returnflag: String
+    l_linestatus: String
+    l_shipdate: String
+    l_commitdate: String
+    l_receiptdate: String
+    l_shipinstruct: String
+    l_shipmode: String
+    l_comment: String
+    c_custkey: Int
+    c_name: String
+    c_address: String
+    c_nationkey: Int
+    c_phone: String
+    c_acctbal: Double
+    c_mktsegment: String
+    c_comment: String
+    o_orderkey: Int
+    o_custkey: Int
+    o_orderstatus: String
+    o_totalprice: Double
+    o_orderdate: String
+    o_orderpriority: String
+    o_clerk: String
+    o_shippriority: Int
+    o_comment: String
+
+ Select CNF: ( Att 0 from left record < Att 0 from literal record (Int) OR Att 24 from left record < Att 1 from literal record (Int)) 
+
+ GroupBy Node: 
+ Left Input Pipe ID: 5
+ Output Pipe ID: 6
+ Order Maker: 
+    NumAtts = 3
+    0: 0 - Int
+    1: 2 - Int
+    2: 1 - String
+
+ Function: 
+    NumOps in func: 6
+    OpList[0]: 1
+    OpList[1]: 0
+    OpList[2]: 1
+    OpList[3]: 3
+    OpList[4]: 10
+    OpList[5]: 13
+
+ ProjectNode : 
+ Left Input Pipe ID: 6
+ Output Pipe ID: 7
+ Output Schema: 
+    o_shippriority: Int
+    o_orderdate: String
+    l_orderkey: Int

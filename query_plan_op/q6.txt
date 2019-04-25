@@ -1,0 +1,29 @@
+
+ Printing the current tree(In-Order): 
+ SelectFileNode: 
+ Output Pipe ID: 0
+ Output Schema: lineitem
+    l_orderkey: Int
+    l_partkey: Int
+    l_suppkey: Int
+    l_linenumber: Int
+    l_quantity: Double
+    l_extendedprice: Double
+    l_discount: Double
+    l_tax: Double
+    l_returnflag: String
+    l_linestatus: String
+    l_shipdate: String
+    l_commitdate: String
+    l_receiptdate: String
+    l_shipinstruct: String
+    l_shipmode: String
+    l_comment: String
+
+ Select CNF: ( Att 4 from left record > Att 0 from literal record (Double)) 
+
+ ProjectNode : 
+ Left Input Pipe ID: 0
+ Output Pipe ID: 1
+ Output Schema: 
+    l_orderkey: Int

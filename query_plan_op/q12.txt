@@ -1,0 +1,52 @@
+
+ Printing the current tree(In-Order): 
+ SelectFileNode: 
+ Output Pipe ID: 0
+ Output Schema: supplier
+    s_suppkey: Int
+    s_name: String
+    s_address: String
+    s_nationkey: Int
+    s_phone: String
+    s_acctbal: Double
+    s_comment: String
+
+ Select CNF: ( Att 5 from left record > Att 0 from literal record (Double)) 
+
+ Join Node: 
+ Left Input Pipe ID: 0
+ Right Input Pipe ID: 1
+ Output Pipe ID: 2
+ Output Schema: 
+    s_suppkey: Int
+    s_name: String
+    s_address: String
+    s_nationkey: Int
+    s_phone: String
+    s_acctbal: Double
+    s_comment: String
+    ps_partkey: Int
+    ps_suppkey: Int
+    ps_availqty: Int
+    ps_supplycost: Double
+    ps_comment: String
+
+ Join CNF: ( Att 0 from left record = Att 1 from right record (Int)) 
+
+ SelectFileNode: 
+ Output Pipe ID: 1
+ Output Schema: partsupp
+    ps_partkey: Int
+    ps_suppkey: Int
+    ps_availqty: Int
+    ps_supplycost: Double
+    ps_comment: String
+
+ Select CNF: ( ) 
+
+ ProjectNode : 
+ Left Input Pipe ID: 2
+ Output Pipe ID: 3
+ Output Schema: 
+    suppkey: Int
+    ps_supplycost: Double

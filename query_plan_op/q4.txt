@@ -1,0 +1,82 @@
+
+ Printing the current tree(In-Order): 
+ SelectFileNode: 
+ Output Pipe ID: 0
+ Output Schema: customer
+    c_custkey: Int
+    c_name: String
+    c_address: String
+    c_nationkey: Int
+    c_phone: String
+    c_acctbal: Double
+    c_mktsegment: String
+    c_comment: String
+
+ Select CNF: ( Att 1 from left record = Att 0 from literal record (String)) 
+
+ Join Node: 
+ Left Input Pipe ID: 0
+ Right Input Pipe ID: 0
+ Output Pipe ID: 1
+ Output Schema: 
+    c_custkey: Int
+    c_name: String
+    c_address: String
+    c_nationkey: Int
+    c_phone: String
+    c_acctbal: Double
+    c_mktsegment: String
+    c_comment: String
+    c_custkey: Int
+    c_name: String
+    c_address: String
+    c_nationkey: Int
+    c_phone: String
+    c_acctbal: Double
+    c_mktsegment: String
+    c_comment: String
+
+ Join CNF: ( Att 3 from left record = Att 3 from left record (Int)) 
+
+ SelectFileNode: 
+ Output Pipe ID: 0
+ Output Schema: customer
+    c_custkey: Int
+    c_name: String
+    c_address: String
+    c_nationkey: Int
+    c_phone: String
+    c_acctbal: Double
+    c_mktsegment: String
+    c_comment: String
+
+ Select CNF: ( Att 1 from left record = Att 0 from literal record (String)) 
+
+ Distinct Node: 
+ Left Input Pipe ID: 1
+ Output Pipe ID: 2
+ Output Schema: 
+    c_custkey: Int
+    c_name: String
+    c_address: String
+    c_nationkey: Int
+    c_phone: String
+    c_acctbal: Double
+    c_mktsegment: String
+    c_comment: String
+    c_custkey: Int
+    c_name: String
+    c_address: String
+    c_nationkey: Int
+    c_phone: String
+    c_acctbal: Double
+    c_mktsegment: String
+    c_comment: String
+
+ ProjectNode : 
+ Left Input Pipe ID: 2
+ Output Pipe ID: 3
+ Output Schema: 
+    c_acctbal: Double
+    c_address: String
+    c_name: String
