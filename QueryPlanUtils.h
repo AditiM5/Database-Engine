@@ -69,7 +69,6 @@ char *removeDot(char *str) {
         attName = temp.substr(temp.find(".") + 1, string::npos);
         str = new char[attName.length() + 1];
         strcpy(str, attName.c_str());
-        cout << "\n AttName new (without the .): " << string(str);
     }
     return str;
 }
@@ -82,12 +81,10 @@ void removeDot(struct Operand *op) {
         delete[] op->value;
         op->value = new char[attName.length() + 1];
         strcpy(op->value, attName.c_str());
-        cout << "\n AttName new (without the .): " << string(op->value);
     }
 }
 
 void cleanFuncOperator(struct FuncOperator *finalFunction) {
-
     if (finalFunction->leftOperand != NULL) {
         finalFunction->leftOperand->value = removeDot(finalFunction->leftOperand->value);
     }
@@ -99,28 +96,18 @@ void cleanFuncOperator(struct FuncOperator *finalFunction) {
     if (finalFunction->right != NULL) {
         cleanFuncOperator(finalFunction->right);
     }
-
 }
 
 void searchAtt(char *attname, Schema *s, Attribute *copyToMe) {
-    cout << "\n Distinct Stage 5";
-    cout << "\n Attname: " << string(attname);
     // remove the dot before searching
     attname = removeDot(attname);
-    cout << "\n After dot removal attname: " << string(attname);
 
     // search for the current attname in the schema
     Attribute *atts = s->GetAtts();
     for (int i = 0; i < s->GetNumAtts(); i++) {
-        // cout << "\n Names in Loop: " << string((atts + i)->name);
-        // cout << "\n Types in Loop: " << (atts + i)->myType;
-
         if (strcmp(attname, (atts + i)->name) == 0) {
             copyToMe->myType = (atts + i)->myType;
             copyToMe->name = strdup((atts + i)->name);
-
-            cout << "\n Name: " << string(copyToMe->name);
-            cout << "\n Type: " << copyToMe->myType;
             return;
         }
     }
@@ -129,13 +116,12 @@ void searchAtt(char *attname, Schema *s, Attribute *copyToMe) {
 
 // remove the ____._____ from the AndList
 void removeMapping(struct OrList *orlist) {
-    cout << "\n In remove Mapping...";
     string attName;
     while (orlist != NULL) {
-        if (orlist->left->left->code == 3) {
+        if (orlist->left->left->code == NAME) {
             removeDot(orlist->left->left);
         }
-        if (orlist->left->right->code == 3) {
+        if (orlist->left->right->code == NAME) {
             removeDot(orlist->left->right);
         }
         orlist = orlist->rightOr;
@@ -162,5 +148,29 @@ void printOutputSchema(Schema *s) {
                 cout << "String" << endl;
                 break;
         }
+    }
+}
+
+void getAttsFromFunc(struct FuncOperator *finalFunction, struct NameList *atts, struct NameList *head) {
+    if (finalFunction->leftOperand != NULL) {
+        struct NameList *temp;
+        if (head == NULL) {
+            head = new NameList;
+            head->name = strdup(finalFunction->leftOperand->value);
+            atts = head;
+        } else {
+            temp = new NameList;
+            temp->name = strdup(finalFunction->leftOperand->value);
+            atts->next = temp;
+            atts = temp;
+        }
+    }
+
+    if (finalFunction->leftOperator != NULL) {
+        getAttsFromFunc(finalFunction->leftOperator, atts, head);
+    }
+
+    if (finalFunction->right != NULL) {
+        getAttsFromFunc(finalFunction->right, atts, head);
     }
 }

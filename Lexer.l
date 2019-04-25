@@ -97,7 +97,6 @@ void yyerror(char*s);
                         } else {
                                 yylval.actualChars = strdup(yytext + 1);
                                 yylval.actualChars[strlen(yylval.actualChars) - 1] = 0;
-                                printf("%s", yylval.actualChars);
                                 return(String);
                         }
                         }

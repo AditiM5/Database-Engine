@@ -174,7 +174,6 @@ void Statistics::JoinRels(string relNames[], double join_result) {
 }
 
 void Statistics::Apply(struct AndList *parseTree, char *relNames[], int numToJoin) {
-    cout << "\n Inside Apply...";
     bool isJoin = false;
     double factor = 1;
     double result = 1;
