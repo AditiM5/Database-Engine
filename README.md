@@ -1,6 +1,5 @@
 # README
 ## Test cases being handled:
-Test cases being handled:
 
 1. SELECT SUM (ps.ps_supplycost), s.s_suppkey 
 FROM part AS p, supplier AS s, partsupp AS ps 
