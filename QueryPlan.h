@@ -436,6 +436,7 @@ class Query {
     void inOrderPrint(GenericNode *currentNode);
     void assignPipeIDs(GenericNode *root);
     // void printPipeIDs(GenericNode *node);
+    void cleanup();
 
     Query(Statistics *stats) {
         this->stats = stats;
@@ -632,6 +633,8 @@ void Query ::QueryPlan() {
 
     cout << "\n Printing the current tree(In-Order): ";
     inOrderPrint(root);
+
+    cleanup();
 }
 
 /*------------------------------------------------------------------------------
@@ -695,4 +698,19 @@ void GenericNode::printPipeIDs() {
     }
 
     cout << "\n";
+}
+
+void Query::cleanup() {
+    inputpipemap.clear();
+    outputpipemap.clear();
+    inp = 0;
+    outp = 0;
+
+    finalFunction = NULL;
+    tables = NULL;
+    boolean = NULL;
+    groupingAtts = NULL;
+    attsToSelect = NULL;
+    distinctAtts = 0;
+    distinctFunc = 0;
 }
