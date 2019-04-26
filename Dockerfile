@@ -18,6 +18,12 @@ RUN cmake CMakeLists.txt && make && cp *.a /usr/lib
 
 COPY catalog Makefile *.l *.y /opt/build/
 
+COPY query_plan_op/*.txt /opt/build/query_plan_op/
+
+COPY data/ /opt/build/data/
+
+COPY Statistics.txt /opt/build/
+
 COPY *.h /opt/build/
 
 COPY *.cc /opt/build/
