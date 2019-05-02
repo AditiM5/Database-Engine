@@ -100,6 +100,14 @@ void cleanFuncOperator(struct FuncOperator *finalFunction) {
     }
 }
 
+void cleanNameList(struct NameList *nl) {
+    while (nl != NULL) {
+        nl->name =  removeDot(nl->name);
+        nl = nl->next;
+    }
+    cout << endl;
+}
+
 void searchAtt(char *attname, Schema *s, Attribute *copyToMe) {
     // remove the dot before searching
     attname = removeDot(attname);

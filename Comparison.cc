@@ -91,6 +91,15 @@ OrderMaker ::OrderMaker(Schema *schema) {
     }
 }
 
+OrderMaker ::OrderMaker(int numAtts, int whichAtts[], Type whichTypes[]) {
+    this->numAtts = numAtts;
+
+    for(int i = 0; i < numAtts; i++) {
+        this->whichAtts[i] = whichAtts[i];
+        this->whichTypes[i] = whichTypes[i];
+    }
+}
+
 void OrderMaker ::Print() {
     cout << "\n    NumAtts = " << numAtts;
     for (int i = 0; i < numAtts; i++) {

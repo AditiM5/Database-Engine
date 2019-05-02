@@ -55,6 +55,8 @@ class OrderMaker {
     // based upon ALL of their attributes
     OrderMaker(Schema *schema);
 
+    OrderMaker(int numAtts, int whichAtts[], Type whichTypes[]);
+
     // print to the screen
     void Print();
 };

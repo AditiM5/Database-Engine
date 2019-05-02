@@ -39,6 +39,11 @@ class GenericNode {
     void printPipeIDs();
 };
 
+Attribute IA = {"int", Int};
+Attribute DA = {"double", Double};
+
+string data_dir = "data-1GB/";
+
 class SelectPipeNode : public GenericNode {
    public:
     SelectPipe selectPipe;
@@ -208,7 +213,7 @@ class JoinNode : public GenericNode {
 
             Schema *myschema = new Schema("catalog", rel2.c_str());
             DBFile *dbfile = new DBFile();
-            string temp_dir = "data/" + rel2 + ".bin";
+            string temp_dir = data_dir + rel2 + ".bin";
             const char *dir = temp_dir.c_str();
             dbfile->Open(dir);
             dbfile->MoveFirst();
@@ -222,7 +227,7 @@ class JoinNode : public GenericNode {
 
             Schema *myschema = new Schema("catalog", rel1.c_str());
             DBFile *dbfile = new DBFile();
-            string temp_dir = "data/" + rel1 + ".bin";
+            string temp_dir = data_dir + rel1 + ".bin";
             const char *dir = temp_dir.c_str();
             dbfile->Open(dir);
             dbfile->MoveFirst();
@@ -236,7 +241,7 @@ class JoinNode : public GenericNode {
             // for left node
             Schema *myschema = new Schema("catalog", rel1.c_str());
             DBFile *dbfile = new DBFile();
-            string temp_dir = "data/" + rel1 + ".bin";
+            string temp_dir = data_dir + rel1 + ".bin";
             const char *dir = temp_dir.c_str();
             dbfile->Open(dir);
             dbfile->MoveFirst();
@@ -246,7 +251,7 @@ class JoinNode : public GenericNode {
             // for right node
             myschema = new Schema("catalog", rel2.c_str());
             dbfile = new DBFile();
-            temp_dir = "data/" + rel2 + ".bin";
+            temp_dir = data_dir + rel2 + ".bin";
             dir = temp_dir.c_str();
             dbfile->Open(dir);
             dbfile->MoveFirst();
@@ -359,21 +364,48 @@ class GroupByNode : public GenericNode {
         leftPipe = root->outputPipe;
         cleanFuncOperator(finalFunction);
         func.GrowFromParseTree(finalFunction, *(root->outschema));
-        struct NameList *head = attsToSelect;
-        //TODO: Figure out OutSchema
+        struct NameList *head = groupingAtts;
+
+        cleanNameList(groupingAtts);
+
         outschema = root->outschema;
 
         Attribute *atts = new Attribute[outschema->GetNumAtts()];
 
+        int whichAtts[MAX_ANDS];
+        Type whichTypes[MAX_ANDS];
         int numatts = 0;
         while (head != NULL) {
-            searchAtt(head->name, outschema, (atts + numatts));
+            atts[numatts].myType = outschema->FindType(head->name);
+            atts[numatts].name = strdup(head->name);
+
+            whichAtts[numatts] = outschema->Find(head->name);
+            whichTypes[numatts] =  outschema->FindType(head->name);
             numatts++;
             head = head->next;
         }
-        char *filename = "GroupBySchema";
-        inSchema = new Schema(filename, numatts, atts);
-        om = new OrderMaker(inSchema);
+
+        om = new OrderMaker(numatts, whichAtts, whichTypes);
+
+        // output schema has the aggregate function value as one of it's atts
+        int numattsout = numatts + 1;
+
+        Attribute *outatts = new Attribute[numatts];
+
+        if (func.isInt() == 1) {
+            outatts[0].myType = Int;
+            outatts[0].name = "int";
+        } else {
+            outatts[0].myType = Double;
+            outatts[0].name = "double";
+        }
+
+        for (int i = 0; i < numatts; i++) {
+            outatts[i + 1].myType = atts[i].myType;
+            outatts[i + 1].name = strdup(atts[i].name);
+        }
+
+        outschema = new Schema("GroupByOutSchema", numattsout, outatts);
     }
 
     void execute() {
@@ -391,6 +423,7 @@ class GroupByNode : public GenericNode {
         om->Print();
         cout << " Function: \n";
         func.Print();
+        printOutputSchema(outschema);
     }
 };
 
@@ -403,6 +436,17 @@ class FunctionNode : public GenericNode {
     FunctionNode(GenericNode *root, FuncOperator *finalFunction) {
         leftPipe = root->outputPipe;
         func.GrowFromParseTree(finalFunction, *(root->outschema));
+
+        int outAtts = 1;
+        Attribute funcatt[1];
+
+        if (func.isInt() == 1) {
+            funcatt[0] = {IA};
+        } else {
+            funcatt[0] = {DA};
+        }
+
+        outschema = new Schema("func_sch", outAtts, funcatt);
     }
 
     void execute() {
@@ -437,6 +481,8 @@ class Query {
     void assignPipeIDs(GenericNode *root);
     // void printPipeIDs(GenericNode *node);
     void cleanup();
+    void execute();
+    void postOrderExecute(GenericNode *root);
 
     Query(Statistics *stats) {
         this->stats = stats;
@@ -469,7 +515,7 @@ GenericNode *Query ::CreateTreeNode(struct AndList *curr, int numToJoin) {
             // new - get schema from Catalog
             Schema *myschema = new Schema("catalog", rel1.c_str());
             DBFile *dbfile = new DBFile();
-            string temp_dir = "data/" + rel1 + ".bin";
+            string temp_dir = data_dir + rel1 + ".bin";
             const char *dir = temp_dir.c_str();
             dbfile->Open(dir);
             node = new SelectFileNode(dbfile, myschema, curr);
@@ -622,7 +668,7 @@ void Query ::QueryPlan() {
     }
 
     // for projections
-    if (attsToSelect != NULL) {
+    if (attsToSelect != NULL && groupingAtts == NULL) {
         // cout << "\n Project Node: ";
         ProjectNode *pn = new ProjectNode(attsToSelect, root);
         pn->lChild = root;
@@ -713,4 +759,21 @@ void Query::cleanup() {
     attsToSelect = NULL;
     distinctAtts = 0;
     distinctFunc = 0;
+}
+
+void Query::execute() {
+    postOrderExecute(root);
+
+    // root->WaitUntilDone();
+}
+
+void Query::postOrderExecute(GenericNode *root) {
+    if (root == NULL) {
+        return;
+    }
+
+    postOrderExecute(root->lChild);
+    postOrderExecute(root->rChild);
+
+    root->execute();
 }
