@@ -45,6 +45,27 @@ struct TableList {
 	struct TableList *next;
 };
 
+struct SchemaList {
+
+  // this is the original attribute name
+  char *attName;
+
+  // this is the type
+  char *type;
+
+  // and this the next alias
+  struct SchemaList *next;
+};
+
+
+struct CreateTableType{
+  char* heapOrSorted; // "HEAP": create the database as a heap dbfile
+                      // "SORTED": create the database as a sorted dbfile
+  struct AndList *sortingAtts; // the set of attributes in CREATE TABLE that we are sorting on (if sorted file;
+                               // if heap, this is NULL)
+};
+
+
 struct NameList {
 
 	// this is the name

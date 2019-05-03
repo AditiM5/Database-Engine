@@ -20,6 +20,21 @@
 	int distinctAtts; // 1 if there is a DISTINCT in a non-aggregate query 
 	int distinctFunc;  // 1 if there is a DISTINCT in an aggregate query
 
+
+    struct SchemaList *schemas; // the list of tables and aliases in the query
+    struct CreateTableType* createTableType; // type of table to create along with sorting attributes (if any)
+    char* bulkFileName; // bulk loading file name string
+    char* outputFileName; // output file name or STDOUT string
+    int commandFlag; // 1 if the command is a create table command.
+                   // 2 if the command is a Insert into command
+                   // 3 if the command is a drop table command
+                   // 4 if the command is a set output command
+                   // 5 if the command is a SQL command
+                   // 6 if the command is 'quit'
+                   // 7 if the command is 'setupdemo'
+                   // 8 if the command is 'UPDATE STATISTICS'
+  int NumAtt=0;
+
 %}
 
 // this stores all of the types returned by production rules
@@ -34,12 +49,22 @@
 	struct NameList *myNames;
 	char *actualChars;
 	char whichOne;
+
+    struct SchemaList *mySchemas;
+    struct CreateTableType* tableType;
 }
 
 %token <actualChars> Name
 %token <actualChars> Float
 %token <actualChars> Int
 %token <actualChars> String
+%token CREATE
+%token TABLE  
+%token SET
+%token OUTPUT
+%token INSERT
+%token INTO
+%token DROP
 %token SELECT
 %token GROUP 
 %token DISTINCT
@@ -50,6 +75,14 @@
 %token AS
 %token AND
 %token OR
+%token QUIT
+%token SETUPDEMO
+%token NONE
+%token STDOUT
+%token ON
+%token UPDATE
+%token STATISTICS
+%token FOR
 
 %type <myOrList> OrList
 %type <myAndList> AndList
@@ -59,26 +92,129 @@
 %type <myComparison> BoolComp
 %type <myComparison> Condition
 %type <myTables> Tables
+%type <mySchemas> Schema
 %type <myBoolOperand> Literal
 %type <myNames> Atts
+%type <tableType> TableType
+%type <myAndList> SortingAtts
 
-%start SQL
+%start COMMANDLINE
 
-
-//******************************************************************************
-// SECTION 3
-//******************************************************************************
 /* This is the PRODUCTION RULES section which defines how to "understand" the 
  * input language and what action to take for each "statment"
  */
 
 %%
 
+COMMANDLINE: SQL 
+| INS_LOAD
+| CR_TABLE
+| QUIT_PROGRAM
+| SET_OUTPUT
+| DR_TABLE;
+
+
+QUIT_PROGRAM: QUIT
+{
+  commandFlag=6;
+};
+
+CR_TABLE: CREATE TABLE Tables '(' Schema ')' AS TableType
+{
+  tables=$3;
+  schemas=$5;
+  createTableType=$8;
+  commandFlag=1;
+};
+
+TableType: Name // for heap
+{
+  $$ = (struct CreateTableType *) malloc (sizeof (struct CreateTableType));
+  $$->heapOrSorted = $1;
+  $$->sortingAtts = NULL;
+}
+| Name ON AndList // for sorted
+{
+  $$ = (struct CreateTableType *) malloc (sizeof (struct CreateTableType));
+  $$->heapOrSorted = $1;
+  $$->sortingAtts = $3;
+};
+
+
+SortingAtts: '(' OrList ')'
+{
+	// just return the OrList!
+	$$ = (struct AndList *) malloc (sizeof (struct AndList));
+	$$->left = $2;
+	$$->rightAnd = NULL;
+}
+
+| '(' OrList ')' AND AndList
+{
+	// here we need to pre-pend the OrList to the AndList
+	// first we allocate space for this node
+	$$ = (struct AndList *) malloc (sizeof (struct AndList));
+
+	// hang the OrList off of the left
+	$$->left = $2;
+
+	// hang the AndList off of the right
+	$$->rightAnd = $5;
+};
+
+Schema: Name Name
+{
+  $$ = (struct SchemaList *) malloc (sizeof (struct SchemaList));
+  $$->attName = $1;
+  $$->type = $2;
+  $$->next = NULL;
+  NumAtt++;
+}
+| Name Name ',' Schema
+{
+  $$ = (struct SchemaList *) malloc (sizeof (struct SchemaList));
+  $$->attName = $1;
+  $$->type = $2;
+  $$->next = $4;
+  NumAtt++;
+};
+
+INS_LOAD: INSERT String INTO Tables
+{
+  tables=$4;
+  bulkFileName=$2;
+  commandFlag=2;
+};
+
+DR_TABLE: DROP TABLE Tables
+{
+  tables=$3;
+  commandFlag=3;
+};
+
+SET_OUTPUT: SET OUTPUT String
+{
+  outputFileName=$3;
+// outputFileName="jelly.data";
+  commandFlag=4;
+}
+| SET OUTPUT STDOUT
+{
+  outputFileName="STDOUT";
+  commandFlag=4;
+}
+| SET OUTPUT NONE
+{
+  outputFileName="NONE";
+  commandFlag=4;
+};
+
 SQL: SELECT WhatIWant FROM Tables WHERE AndList
 {
 	tables = $4;
 	boolean = $6;	
 	groupingAtts = NULL;
+    commandFlag = 5;
 }
 
 | SELECT WhatIWant FROM Tables WHERE AndList GROUP BY Atts
@@ -140,21 +276,29 @@ Atts: Name
 	$$->next = $1;
 }
 
-Tables: Name AS Name 
+Tables: Name  
 {
-	$$ = (struct TableList *) malloc (sizeof (struct TableList));
-	$$->tableName = $1;
-	$$->aliasAs = $3;
-	$$->next = NULL;
+  $$ = (struct TableList *) malloc (sizeof (struct TableList));
+  $$->tableName = $1;
+  $$->aliasAs = NULL;
+  $$->next = NULL;
+}
+| Name AS Name 
+{
+  $$ = (struct TableList *) malloc (sizeof (struct TableList));
+  $$->tableName = $1;
+  $$->aliasAs = $3;
+  $$->next = NULL;
 }
 
 | Tables ',' Name AS Name
 {
-	$$ = (struct TableList *) malloc (sizeof (struct TableList));
-	$$->tableName = $3;
-	$$->aliasAs = $5;
-	$$->next = $1;
-}
+  $$ = (struct TableList *) malloc (sizeof (struct TableList));
+  $$->tableName = $3;
+  $$->aliasAs = $5;
+  $$->next = $1;
+};
+
 
 
 

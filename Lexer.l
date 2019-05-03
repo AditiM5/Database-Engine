@@ -35,6 +35,20 @@ void yyerror(char*s);
 
 %%
 
+"CREATE"		return(CREATE);
+
+"TABLE"			return(TABLE);
+
+"INSERT"		return(INSERT);
+
+"INTO"			return(INTO);
+
+"DROP"			return(DROP);
+
+"SET"			return(SET);
+
+"OUTPUT"		return(OUTPUT);
+
 "SELECT"		return(SELECT);
 
 "FROM"			return(FROM);
@@ -54,6 +68,22 @@ void yyerror(char*s);
 "OR"			return(OR);
 
 "AS"			return(AS);
+
+"quit"    return(QUIT);
+
+"NONE"			return(NONE);
+
+"STDOUT"			return(STDOUT);
+
+"setupdemo"			return(SETUPDEMO);
+
+"ON"			return(ON);
+
+"UPDATE"			return(UPDATE);
+
+"STATISTICS"			return(STATISTICS);
+
+"for"			return(FOR);
 
 "("			return('(');
 
