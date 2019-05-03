@@ -43,6 +43,7 @@ char *cat_file = "catalog";
 // std out
 std::streambuf *coutbuf;
 bool flag_exec = true;
+bool op_stdout = true;
 
 std::streambuf *stream_buffer_cout = NULL;
 fstream file;
@@ -202,7 +203,21 @@ void printQueryOutput(Query *q) {
         if (count % 1000 == 0) cout << "\n"
                                     << count++;
     }
+
     cout << "\n " << count;
+}
+
+void printQueryOutputToFile(Query *q) {
+    cout << "\n Printing output of the query";
+
+    FILE *file = fopen(outputFileName, "w");
+
+    WriteOut wo;
+    wo.Run(*(q->root->outputPipe), file, *(q->root->outschema));
+    wo.WaitUntilDone();
+
+    fclose(file);
+    // cout << "\n " << count;
 }
 
 void dropTable() {
@@ -267,14 +282,16 @@ void chooseOutput() {
     // outputFileName = (char *) temp.c_str();
     if (strcmp(outputFileName, "STDOUT") == 0) {
         // reset
-        resetOutput();
+        // resetOutput();
         flag_exec = true;
+        op_stdout = true;
     } else if (strcmp(outputFileName, "NONE") == 0) {
         flag_exec = false;
     } else {
         cout << "\n To reset to STDOUT type \'SET OUTPUT STDOUT\' \n";
         flag_exec = true;
-        setOutput();
+        op_stdout = false;
+        // setOutput();
     }
 }
 
@@ -350,7 +367,10 @@ int main() {
                 if (flag_exec == true) {
                     q->execute();
                     cout << "\n I'm executing your SQL Query";
-                    printQueryOutput(q);
+                    if(op_stdout == true)
+                        printQueryOutput(q);
+                    else
+                        printQueryOutputToFile(q);
                 }
                 q->cleanup();
                 delete q;
@@ -361,7 +381,7 @@ int main() {
                 cout << "\n BYE, exiting";
                 if (dbfile != NULL)
                     dbfile->Close();
-                resetOutput();
+                // resetOutput();
                 exit(0);
                 break;
 
