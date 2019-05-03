@@ -63,6 +63,7 @@ void *SelectFile::Worker(void *args) {
         }
     }
     out->ShutDown();
+    inFile->Close();
 }
 
 void *SelectFileProxyFunction(void *args) {

@@ -31,7 +31,7 @@ extern struct CreateTableType *createTableType;  // type of table to create alon
 extern char *bulkFileName;                       // bulk loading file name string
 extern char *outputFileName;                     // output file name or STDOUT string
 extern int commandFlag;                          // 1 if the command is a create table command.
-  
+
 extern int NumAtt;
 
 // set to store all the relations been added so far
@@ -43,6 +43,9 @@ char *cat_file = "catalog";
 // std out
 std::streambuf *coutbuf;
 bool flag_exec = true;
+
+std::streambuf *stream_buffer_cout = NULL;
+fstream file;
 
 int main1() {
     std::ofstream out("query_plan_op/q13.txt");
@@ -106,6 +109,8 @@ Schema *createTable(DBFile *dbfile) {
     }
 
     rels.insert(tableName);
+
+    dbfile->Close();
 
     return schema;
 }
@@ -187,12 +192,12 @@ void insert(DBFile *dbfile) {
     cout << "\n Hey I loaded the file!";
 }
 
-void printQueryOutput(Query q) {
+void printQueryOutput(Query *q) {
     cout << "\n Printing output of the query";
     Record tempRec;
     int count = 0;
-    while (q.root->outputPipe->Remove(&tempRec)) {
-        tempRec.Print(q.root->outschema);
+    while (q->root->outputPipe->Remove(&tempRec)) {
+        tempRec.Print(q->root->outschema);
         count++;
         if (count % 1000 == 0) cout << "\n"
                                     << count++;
@@ -235,15 +240,26 @@ void dropTable() {
 }
 
 void setOutput() {
-    std::cout.flush();
-    std::ofstream out(outputFileName);
-    coutbuf = std::cout.rdbuf();  //save old buf
-    std::cout.rdbuf(NN.rdbuf());
+    // std::cout.flush();
+    // std::ofstream out(outputFileName);
+    // coutbuf = std::cout.rdbuf();  //save old buf
+    // std::cout.rdbuf(out.rdbuf());
+
+    file.open(outputFileName, ios::out);
+
+    stream_buffer_cout = std::cout.rdbuf();
+    streambuf *stream_buffer_file = file.rdbuf();
+    std::cout.rdbuf(stream_buffer_file);
 }
 
 void resetOutput() {
-    std::cout.flush();
-    std::cout.rdbuf(coutbuf);
+    // std::cout.rdbuf(coutbuf);
+    if (stream_buffer_cout != NULL) {
+        std::cout.flush();
+        std::cout.rdbuf(stream_buffer_cout);
+        file.close();
+        stream_buffer_cout = NULL;
+    }
 }
 
 void chooseOutput() {
@@ -252,29 +268,31 @@ void chooseOutput() {
     if (strcmp(outputFileName, "STDOUT") == 0) {
         // reset
         resetOutput();
+        flag_exec = true;
     } else if (strcmp(outputFileName, "NONE") == 0) {
         flag_exec = false;
     } else {
+        cout << "\n To reset to STDOUT type \'SET OUTPUT STDOUT\' \n";
+        flag_exec = true;
         setOutput();
     }
 }
 
 int main() {
     // set it to stdout
-    std::ofstream temp("qkwuhegfvhaegr.txt");
-    coutbuf = std::cout.rdbuf();  //save old buf
-    std::cout.rdbuf(temp.rdbuf());
+    // std::ofstream temp("qkwuhegfvhaegr.txt");
+    // coutbuf = std::cout.rdbuf();  //save old buf
+    // std::cout.rdbuf(temp.rdbuf());
 
-    std::cout.rdbuf(coutbuf);
+    // std::cout.rdbuf(coutbuf);
 
     // run infinite loop to check for things
     DBFile *dbfile = NULL;
     Schema *schema = NULL;
 
     char *statFileName = "Statistics.txt";
-    Statistics *stats = new Statistics;
-    stats->Read(statFileName);
-    Query q(stats);
+    Statistics *stats = NULL;
+    Query *q = NULL;
 
     cout << "\n Query Constructor.......";
 
@@ -320,30 +338,30 @@ int main() {
                 break;
 
             case 4:
-                // cout << "\n output file name: " << string(outputFileName);
-                if (strcmp(outputFileName, "STDOUT") == 0) {
-                    // reset
-                    resetOutput();
-                } else if (strcmp(outputFileName, "NONE") == 0) {
-                    flag_exec = false;
-                } else {
-                    setOutput();
-                }
+                chooseOutput();
                 break;
 
             case 5:
-                q.QueryPlan();
+                stats = new Statistics;
+                stats->Read(statFileName);
+                q = new Query(stats);
+
+                q->QueryPlan();
                 if (flag_exec == true) {
-                    q.execute();
+                    q->execute();
                     cout << "\n I'm executing your SQL Query";
                     printQueryOutput(q);
                 }
+                q->cleanup();
+                delete q;
+                delete stats;
                 break;
 
             case 6:
                 cout << "\n BYE, exiting";
                 if (dbfile != NULL)
                     dbfile->Close();
+                resetOutput();
                 exit(0);
                 break;
 

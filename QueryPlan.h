@@ -42,7 +42,7 @@ class GenericNode {
 Attribute IA = {"int", Int};
 Attribute DA = {"double", Double};
 
-string data_dir = "data-1GB/";
+string data_dir = "data-myTable/";
 
 class SelectPipeNode : public GenericNode {
    public:
@@ -680,7 +680,7 @@ void Query ::QueryPlan() {
     cout << "\n Printing the current tree(In-Order): ";
     inOrderPrint(root);
 
-    cleanup();
+    // cleanup();
 }
 
 /*------------------------------------------------------------------------------
@@ -752,6 +752,9 @@ void Query::cleanup() {
     inp = 0;
     outp = 0;
 
+    delete root;
+    root = NULL;
+
     finalFunction = NULL;
     tables = NULL;
     boolean = NULL;
@@ -759,6 +762,7 @@ void Query::cleanup() {
     attsToSelect = NULL;
     distinctAtts = 0;
     distinctFunc = 0;
+
 }
 
 void Query::execute() {
