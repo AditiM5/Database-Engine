@@ -1,21 +1,20 @@
-#include "TwoWayList.h"
-#include "Record.h"
-#include "Schema.h"
-#include "File.h"
+#include "HeapFile.h"
 #include "Comparison.h"
 #include "ComparisonEngine.h"
-#include "HeapFile.h"
 #include "Defs.h"
+#include "File.h"
+#include "Record.h"
+#include "Schema.h"
+#include "TwoWayList.h"
 
 #include <stdlib.h>
 #include <unistd.h>
 #include <iostream>
 
-
 using namespace std;
 
 HeapFile::HeapFile() {
-    currentPage = new(std::nothrow) Page();
+    currentPage = new (std::nothrow) Page();
 }
 
 int HeapFile::Create(const char *f_path, void *startup) {
@@ -44,16 +43,16 @@ void HeapFile::Load(Schema &f_schema, const char *loadpath) {
         // check for page overflow
         if (!currentPage->Append(&temp)) {
             WriteCurrentPageToDisk();
-            // empty the page out 
+            // empty the page out
             delete currentPage;
-            currentPage = new(std::nothrow) Page();
+            currentPage = new (std::nothrow) Page();
             // append record to empty page
             currentPage->Append(&temp);
         }
     }
 
     WriteCurrentPageToDisk();
-//    MoveFirst();
+    //    MoveFirst();
 }
 
 int HeapFile::Open(const char *f_path) {
@@ -76,7 +75,7 @@ void HeapFile::Add(Record *rec) {
         currPageNum++;
         // empty the page out
         delete currentPage;
-        currentPage = new(std::nothrow) Page();
+        currentPage = new (std::nothrow) Page();
         // append record to empty page
         currentPage->Append(rec);
     }
@@ -117,7 +116,9 @@ int HeapFile::GetNext(Record &fetchme, CNF &cnf, Record &literal) {
 
 void HeapFile::MoveFirst() {
     WriteCurrentPageToDisk();
-    file->GetPage(currentPage, 0);
+    if (file->GetLength() != 0) {
+        file->GetPage(currentPage, 0);
+    }
     currPageNum = 0;
 }
 

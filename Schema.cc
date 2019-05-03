@@ -35,7 +35,7 @@ Attribute *Schema ::GetAtts() {
 }
 
 Schema ::Schema(char *fpath, int num_atts, Attribute *atts) {
-    // fileName = strdup(fpath);
+    fileName = strdup(fpath);
 
     numAtts = num_atts;
     myAtts = new Attribute[num_atts];
@@ -150,3 +150,8 @@ Schema ::~Schema() {
     delete[] myAtts;
     myAtts = 0;
 }
+
+
+string Schema :: getfileName(){
+    return string(fileName);
+} 

@@ -59,6 +59,9 @@ public:
 	// place a lexicographic ordering on the records using this type of schema
 	int GetSortOrder (OrderMaker &order);
 
+
+    string getfileName();
+
 	~Schema ();
 
 };
