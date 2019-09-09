@@ -10,9 +10,7 @@ ANSWER: 2.74243e+08 (5.91 sec)
 ============================================================
 
 (q2)
-SELECT SUM (c.c_acctbal)
-FROM customer AS c, orders AS o
-WHERE (c.c_custkey = o.o_custkey) AND (o.o_totalprice < 10000.0)
+SELECT SUM (c.c_acctbal) FROM customer AS c, orders AS o WHERE (c.c_custkey = o.o_custkey) AND (o.o_totalprice < 10000.0)
 
 ANSWER: 1.33123e+08 (17.31 sec) 
 

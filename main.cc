@@ -48,21 +48,39 @@ bool op_stdout = true;
 std::streambuf *stream_buffer_cout = NULL;
 fstream file;
 
-int main1() {
-    std::ofstream out("query_plan_op/q13.txt");
-    std::streambuf *coutbuf = std::cout.rdbuf();  //save old buf
-    std::cout.rdbuf(out.rdbuf());
+void printQueryOutput(Query *q) {
+    cout << "\n Printing output of the query";
+    Record tempRec;
+    int count = 0;
+    while (q->root->outputPipe->Remove(&tempRec)) {
+        tempRec.Print(q->root->outschema);
+        count++;
+        if (count % 1000 == 0) cout << "\n"
+                                    << count++;
+    }
 
-    char *query = "CREATE TABLE mytable (att1 INTEGER, att2 DOUBLE, att3 STRING) AS HEAP";
+    cout << "\n " << count;
+}
+
+int main1() {
+    // std::ofstream out("query_plan_op/q13.txt");
+    // std::streambuf *coutbuf = std::cout.rdbuf();  //save old buf
+    // std::cout.rdbuf(out.rdbuf());
+
+    // char *query = "CREATE TABLE mytable (att1 INTEGER, att2 DOUBLE, att3 STRING) AS HEAP";
     // yy_scan_string(query);
+
+    cout << "\n Enter Query to Run: \n";
     yyparse();
     char *statFileName = "Statistics.txt";
     Statistics *stats = new Statistics;
     stats->Read(statFileName);
     Query q(stats);
     q.QueryPlan();
+    q.execute();
+    printQueryOutput(&q);
 
-    std::cout.rdbuf(coutbuf);
+    // std::cout.rdbuf(coutbuf);
 
     return 0;
 }
@@ -193,20 +211,6 @@ void insert(DBFile *dbfile) {
     cout << "\n Hey I loaded the file!";
 }
 
-void printQueryOutput(Query *q) {
-    cout << "\n Printing output of the query";
-    Record tempRec;
-    int count = 0;
-    while (q->root->outputPipe->Remove(&tempRec)) {
-        tempRec.Print(q->root->outschema);
-        count++;
-        if (count % 1000 == 0) cout << "\n"
-                                    << count++;
-    }
-
-    cout << "\n " << count;
-}
-
 void printQueryOutputToFile(Query *q) {
     cout << "\n Printing output of the query";
 
@@ -295,6 +299,17 @@ void chooseOutput() {
     }
 }
 
+bool checkrels() {
+    TableList *head = tables;
+
+    while(head != NULL) {
+        if(rels.count(string(head->tableName)) == 0) return false;
+        head = head->next;
+    }
+
+    return true;
+}
+
 int main() {
     // set it to stdout
     // std::ofstream temp("qkwuhegfvhaegr.txt");
@@ -359,6 +374,10 @@ int main() {
                 break;
 
             case 5:
+                if(checkrels() == false) {
+                    cout << "\n Table doesn't exist";
+                    break;
+                }
                 stats = new Statistics;
                 stats->Read(statFileName);
                 q = new Query(stats);
@@ -367,7 +386,7 @@ int main() {
                 if (flag_exec == true) {
                     q->execute();
                     cout << "\n I'm executing your SQL Query";
-                    if(op_stdout == true)
+                    if (op_stdout == true)
                         printQueryOutput(q);
                     else
                         printQueryOutputToFile(q);
@@ -382,6 +401,7 @@ int main() {
                 if (dbfile != NULL)
                     dbfile->Close();
                 // resetOutput();
+                cout << endl;
                 exit(0);
                 break;
 

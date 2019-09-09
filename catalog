@@ -1,13 +1,5 @@
 
 BEGIN
-region
-region.tbl
-r_regionkey Int
-r_name String
-r_comment String
-END
-
-BEGIN
 nation
 nation.tbl
 n_nationkey Int
@@ -100,3 +92,10 @@ l_shipmode String
 l_comment String
 END
 
+BEGIN
+region
+region.tbl
+r_regionkey Int
+r_name String
+r_comment String
+END
