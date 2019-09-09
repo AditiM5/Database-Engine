@@ -2,7 +2,7 @@
 
 #### This is a Disk file-based Database Engine which supports a subset of customized SQL-like query language allowing creation and dropping of tables, and bulk insertion of data.
 
-## Test cases being handled:
+## Sample Queries
 
 1. SELECT SUM (ps.ps_supplycost), s.s_suppkey 
 FROM part AS p, supplier AS s, partsupp AS ps 
@@ -41,29 +41,6 @@ WHERE (l.l_orderkey = o.o_orderkey) AND (o.o_custkey = c.c_custkey) AND (c.c_nat
 FROM lineitem AS l, orders AS o, customer AS c, nation AS n, region AS r 
 WHERE (l.l_orderkey = o.o_orderkey) AND (o.o_custkey = c.c_custkey) AND (c.c_nationkey = n.n_nationkey) AND (n.n_regionkey = r.r_regionkey) AND (r.r_regionkey = 1) AND (o.o_orderkey < 10000)
 
-
-9. SELECT SUM (l.l_discount) 
-FROM customer AS c, orders AS o, lineitem AS l
-WHERE (c.c_custkey = o.o_custkey) AND (o.o_orderkey = l.l_orderkey) AND (c.c_name = 'Customer#000070919') AND (l.l_quantity > 30.0) AND (l.l_discount < 0.03)
-
-
-10. SELECT SUM (l.l_extendedprice * l.l_discount) 
-FROM lineitem AS l 
-WHERE (l.l_discount<0.07) AND (l.l_quantity < 24.0)
-
-
-11. SELECT c1.c_name, c1.c_address 
-FROM customer AS c1, customer AS c2 
-WHERE (c1.c_nationkey = c2.c_nationkey)
-
-
-12. SELECT ps.ps_supplycost, s.suppkey 
-FROM supplier AS s, partsupp AS ps 
-WHERE (s.s_suppkey = ps.ps_suppkey) AND (s.s_acctbal > 2500.0)
-
-13. SELECT n.n_name
-FROM nation AS n, region AS r
-WHERE (n.n_regionkey = r.r_regionkey) AND (n.n_nationkey > 5)
 
 ### Gtest
 #### Gtest file is called QueryPlanTest.cc
