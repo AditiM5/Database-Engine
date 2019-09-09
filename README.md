@@ -1,4 +1,7 @@
 # README
+
+#### This is a Disk file-based Database Engine which supports a subset of customized SQL-like query language allowing creation and dropping of tables, and bulk insertion of data.
+
 ## Test cases being handled:
 
 1. SELECT SUM (ps.ps_supplycost), s.s_suppkey 
