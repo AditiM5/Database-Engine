@@ -3,7 +3,7 @@
 #### This is a Disk file-based Database Engine which supports a subset of customized SQL-like query language allowing creation and dropping of tables, and bulk insertion of data.
 
 ## Sample Queries
-
+```
 1. SELECT SUM (ps.ps_supplycost), s.s_suppkey 
 FROM part AS p, supplier AS s, partsupp AS ps 
 WHERE (p.p_partkey = ps.ps_partkey) AND (s.s_suppkey = ps.ps_suppkey) AND (s.s_acctbal > 2500.0) 
@@ -41,6 +41,7 @@ WHERE (l.l_orderkey = o.o_orderkey) AND (o.o_custkey = c.c_custkey) AND (c.c_nat
 FROM lineitem AS l, orders AS o, customer AS c, nation AS n, region AS r 
 WHERE (l.l_orderkey = o.o_orderkey) AND (o.o_custkey = c.c_custkey) AND (c.c_nationkey = n.n_nationkey) AND (n.n_regionkey = r.r_regionkey) AND (r.r_regionkey = 1) AND (o.o_orderkey < 10000)
 
+```
 
 ### Gtest
 #### Gtest file is called QueryPlanTest.cc
