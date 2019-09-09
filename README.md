@@ -43,7 +43,7 @@ WHERE (l.l_orderkey = o.o_orderkey) AND (o.o_custkey = c.c_custkey) AND (c.c_nat
 
 ```
 
-### Gtest
+## Gtest
 #### Gtest file is called QueryPlanTest.cc
 #### Running gtest file:
 
